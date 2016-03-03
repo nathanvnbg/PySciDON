@@ -1,5 +1,8 @@
 
 from CalibrationData import CalibrationData
+from HDFGroup import HDFGroup
+from HDFDataset import HDFDataset
+
 
 class CalibrationFile:
     def __init__(self):
@@ -39,7 +42,7 @@ class CalibrationFile:
             self._data.append(cd)
 
 
-    def convertRaw(self, f):
+    def convertRaw(self, f, gp):
         nRead = 0
 
         #for i in range(0, len(self._data)):
@@ -47,6 +50,7 @@ class CalibrationFile:
         #print("file:", f)
 
         for i in range(0, len(self._data)):
+            v = 0
             cd = self._data[i]
 
             if cd._fieldLength == -1:
@@ -59,7 +63,7 @@ class CalibrationFile:
                 end = f[nRead:].find(delimiter)
                 #print("read:", nRead, end)
                 b = f[nRead:nRead+end]
-                cd.convertRaw(b)
+                v = cd.convertRaw(b)
 
                 nRead += end
 
@@ -68,8 +72,15 @@ class CalibrationFile:
                     if cd._fieldLength != 0:
                         b = f[nRead:nRead+cd._fieldLength]
                         #print(nRead, cd._fieldLength, b)
-                        cd.convertRaw(b)
+                        v = cd.convertRaw(b)
                 nRead  += cd._fieldLength
+
+            if cd._fitType.lower() != b"none" and cd._fitType.lower() != b"delimiter":
+                cdtype = cd._type.lower()
+                if cdtype != b"instrument" and cdtype != b"vlf_instrument" and \
+                   cdtype != b"sn" and cdtype != b"vlf_sn":
+                    ds = gp.getDataset(cd._type)
+                    ds._data.append(v)
 
         return nRead
 

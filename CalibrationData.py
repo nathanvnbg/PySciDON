@@ -32,32 +32,46 @@ class CalibrationData:
         self._coefficients = line.split()
         
     def convertRaw(self, b):
+        v = 0
         dataType = self._dataType.lower()
         if dataType == b"bu":
-            print("bu", int.from_bytes(b, byteorder='big', signed=False))
+            v = int.from_bytes(b, byteorder='big', signed=False)
+            #print("bu", v)
         elif dataType == b"bule":
-            print("bule", int.from_bytes(b, byteorder='little', signed=False))
+            v = int.from_bytes(b, byteorder='little', signed=False)
+            #print("bule", v)
         elif dataType == b"bs":
-            print("bs", int.from_bytes(b, byteorder='big', signed=True))
+            v = int.from_bytes(b, byteorder='big', signed=True)
+            #print("bs", v)
         elif dataType == b"bsle":
-            print("bsle", int.from_bytes(b, byteorder='little', signed=True))
+            v = int.from_bytes(b, byteorder='little', signed=True)
+            #print("bsle", v)
         elif dataType == b"bf":
-            print("bf", struct.unpack("f", b)[0])
+            v = struct.unpack("f", b)[0]
+            #print("bf", v)
         elif dataType == b"bd":
-            print("bd", struct.unpack("d", b)[0])
+            v = struct.unpack("d", b)[0]
+            #print("bd", v)
         elif dataType == b"hs":
-            print("hs", int(b.encode('hex'), 16))
+            v = int(b.encode('hex'), 16)
+            #print("hs", v)
         elif dataType == b"hu":
-            print("hu", int(b.encode('hex'), 16))
+            v = int(b.encode('hex'), 16)
+            #print("hu", v)
         elif dataType == b"ai":
-            print("ai", int(b))
+            v = int(b)
+            #print("ai", v)
         elif dataType == b"au":
-            print("au", int(b))
+            v = int(b)
+            #print("au", v)
         elif dataType == b"af":
-            print("af", float(b))
+            v = float(b)
+            #print("af", v)
         elif dataType == b"as":
-            print("as", b)
+            v = b
+            #print("as", v)
         else:
+            v = -1
             print("dataType unknown: ", dataType)
-            
-            
+        return v
+
