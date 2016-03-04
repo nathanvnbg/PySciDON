@@ -28,14 +28,14 @@ def readCalibrationFile(fp):
     return calibrationMap
 
 def readSATHDR(b):
-    end = b.find(b"\0")
+    end = b.find(bytes(b"\x0D\x0A".decode("unicode_escape"), "utf-8"))
     sp1 = b.find(b" ")
     sp2 = b.rfind(b" ")
-    str1 = b[sp1+1:sp2]
-    str2 = b[sp2+2:end-3]
+    str1 = b[sp1+1:sp2].decode("utf-8")
+    str2 = b[sp2+2:end-1].decode("utf-8")
     #print(str1, str2)
     if len(str1) == 0:
-        str1 = b"Missing"
+        str1 = "Missing"
     return (str2, str1)
     
 
@@ -49,17 +49,17 @@ def readRawFile(filepath, calibrationMap):
     context.append((b"HED488A.cal", b"Reference", b"Air", b"Surface", b"ShutterDark", b"SATHED0488"))
     context.append((b"GPRMC_NoMode.tdf", b"GPS", b"None", b"None", b"None", b"$GPRMC"))
     contextMap = {}
-    contextMap[b"SATHSL0386"] = HDFGroup()
-    contextMap[b"SATHSL0385"] = HDFGroup()
-    contextMap[b"SATHED0488"] = HDFGroup()
-    contextMap[b"$GPRMC"] = HDFGroup()
-    contextMap[b"SATHSL0386"]._id = b"SAS"
-    contextMap[b"SATHSL0385"]._id = b"SAS2"
-    contextMap[b"SATHED0488"]._id = b"Reference"
-    contextMap[b"$GPRMC"]._id = b"GPS"
+    contextMap["SATHSL0386"] = HDFGroup()
+    contextMap["SATHSL0385"] = HDFGroup()
+    contextMap["SATHED0488"] = HDFGroup()
+    contextMap["$GPRMC"] = HDFGroup()
+    contextMap["SATHSL0386"]._id = "SAS"
+    contextMap["SATHSL0385"]._id = "SAS2"
+    contextMap["SATHED0488"]._id = "Reference"
+    contextMap["$GPRMC"]._id = "GPS"
 
     root = HDFGroup()
-    root._id = b"/"
+    root._id = "/"
     #root._attributes.append((b"PROSOFT", "Prosoft"));
     #root._attributes.append((b"PROSOFT_INSTRUMENT_CONFIG", "Prosoft"));
     #root._attributes.append((b"PROSOFT_PARAMETERS_FILE_NAME", "Prosoft"));
@@ -81,15 +81,15 @@ def readRawFile(filepath, calibrationMap):
 
             #print b
             for i in range(0, 32):
-                testString = b[i:].lower()
+                testString = b[i:].upper()
                 #print("test: ", testString[:6])
             
                 if i == 31:
                     fp.read(32)
                     break
 
-                if testString.startswith(b"sathdr"):
-                    print("sathdr")
+                if testString.startswith(b"SATHDR"):
+                    print("SATHDR")
                     if i > 0:
                         fp.read(i)
                     b = fp.read(128)
@@ -99,7 +99,7 @@ def readRawFile(filepath, calibrationMap):
                     break
                 else:
                     for key in calibrationMap:
-                        if testString.startswith(key.lower()):
+                        if testString.startswith(key.upper().encode("utf-8")):
                             if i > 0:
                                 fp.read(i)
 
@@ -120,15 +120,15 @@ def readRawFile(filepath, calibrationMap):
                     if i == 32:
                         break
 
-    root._attributes.append((b"PROCESSING_LEVEL", "1a"));
+    root._attributes.append(("PROCESSING_LEVEL", "1a"));
     dt = datetime.now()
     dtstr = dt.strftime("%d-%b-%Y %H:%M:%S")
-    root._attributes.append((b"FILE_CREATION_TIME", dtstr));
+    root._attributes.append(("FILE_CREATION_TIME", dtstr));
 
-    root._groups.append(contextMap[b"SATHSL0386"])
-    root._groups.append(contextMap[b"SATHSL0385"])
-    root._groups.append(contextMap[b"SATHED0488"])
-    root._groups.append(contextMap[b"$GPRMC"])
+    root._groups.append(contextMap["SATHSL0386"])
+    root._groups.append(contextMap["SATHSL0385"])
+    root._groups.append(contextMap["SATHED0488"])
+    root._groups.append(contextMap["$GPRMC"])
     return root
 
 

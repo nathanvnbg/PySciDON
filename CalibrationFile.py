@@ -6,7 +6,7 @@ from HDFDataset import HDFDataset
 
 class CalibrationFile:
     def __init__(self):
-        self._id = b""
+        self._id = ""
         self._data = []
 
     def prnt(self):
@@ -17,21 +17,21 @@ class CalibrationFile:
 
     def read(self, f):
         while 1:
-            line = f.readline()
+            line = f.readline().decode("utf-8")
             #print(line)
             if not line:
                 break
             line = line.strip()
-            if line.startswith(b"#") or len(line) == 0:
+            if line.startswith("#") or len(line) == 0:
                 continue
 
             cd = CalibrationData()
             cd.read(line)
 
-            cdtype = cd._type.lower()
+            cdtype = cd._type.upper()
             
-            if cdtype == b"instrument" or cdtype == b"vlf_instrument" or \
-               cdtype == b"sn" or cdtype == b"vlf_sn":
+            if cdtype == "INSTRUMENT" or cdtype == "VLF_INSTRUMENT" or \
+               cdtype == "SN" or cdtype == "VLF_SN":
                 self._id += cd._id
 
             for i in range(0, cd._calLines):
@@ -57,7 +57,8 @@ class CalibrationFile:
                 delimiter = self._data[i+1]._units
                 #delimiter = delimiter.decode('string_escape')
                 #delimiter = bytes(delimiter, "utf-8").decode("unicode_escape")
-                delimiter = bytes(delimiter.decode("unicode_escape"), "utf-8")
+                #delimiter = bytes(delimiter.decode("unicode_escape"), "utf-8")
+                delimiter = delimiter.encode("utf-8").decode("unicode_escape").encode("utf-8")
                 #print("delimiter:", delimiter)
 
                 end = f[nRead:].find(delimiter)
@@ -68,17 +69,17 @@ class CalibrationFile:
                 nRead += end
 
             else:
-                if cd._fitType.lower() != b"delimiter":
+                if cd._fitType.upper() != "DELIMITER":
                     if cd._fieldLength != 0:
                         b = f[nRead:nRead+cd._fieldLength]
                         #print(nRead, cd._fieldLength, b)
                         v = cd.convertRaw(b)
                 nRead  += cd._fieldLength
 
-            if cd._fitType.lower() != b"none" and cd._fitType.lower() != b"delimiter":
-                cdtype = cd._type.lower()
-                if cdtype != b"instrument" and cdtype != b"vlf_instrument" and \
-                   cdtype != b"sn" and cdtype != b"vlf_sn":
+            if cd._fitType.upper() != "NONE" and cd._fitType.upper() != "DELIMITER":
+                cdtype = cd._type.upper()
+                if cdtype != "INSTRUMENT" and cdtype != "VLF_INSTRUMENT" and \
+                   cdtype != "SN" and cdtype != "VLF_SN":
                     ds = gp.getDataset(cd._type)
                     ds._data.append(v)
 

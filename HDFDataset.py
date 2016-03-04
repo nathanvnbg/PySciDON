@@ -4,7 +4,7 @@ import numpy as np
 
 class HDFDataset:
     def __init__(self):
-        self._id = b""
+        self._id = ""
         self._attributes = []
         self._data = []
 
@@ -18,7 +18,7 @@ class HDFDataset:
 
     def read(self, f):
         name = f.name[f.name.rfind("/")+1:]
-        self._id = bytes(name, "utf-8")
+        self._id = name
         #print(name)
         self._data = np.array(f).tolist()
 

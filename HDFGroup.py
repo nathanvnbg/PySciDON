@@ -6,7 +6,7 @@ from HDFDataset import HDFDataset
 
 class HDFGroup:
     def __init__(self):
-        self._id = b""
+        self._id = ""
         self._attributes = []
         self._groups = []
         self._datasets = []
@@ -14,7 +14,7 @@ class HDFGroup:
     def prnt(self):
         print("Group:", self._id)
         for attr in self._attributes:
-            print(attr[0], attr[1])
+            print("Attribute:", attr[0], attr[1])
         #    attr.prnt()
         for gp in self._groups:
             gp.prnt()
@@ -35,7 +35,8 @@ class HDFGroup:
         name = f.name[f.name.rfind("/")+1:]
         if len(name) == 0:
             name = "/"
-        self._id = bytes(name, "utf-8")
+        #self._id = bytes(name, "utf-8")
+        self._id = name
 
         #print("Attributes:", [k for k in f.attrs.keys()])
         for k in f.attrs.keys():
@@ -58,7 +59,7 @@ class HDFGroup:
 
     def write(self, f):
         #print("Group:", self._id)
-        if self._id != b"/":
+        if self._id != "/":
             f = f.create_group(self._id)
         for attr in self._attributes:
             f.attrs[attr[0]] = attr[1]
