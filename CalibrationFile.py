@@ -1,21 +1,25 @@
 
+import numpy as np
+
 from CalibrationData import CalibrationData
-from HDFGroup import HDFGroup
-from HDFDataset import HDFDataset
+#from HDFGroup import HDFGroup
+#from HDFDataset import HDFDataset
 
 
 class CalibrationFile:
     def __init__(self):
         self._id = ""
+        self._name = ""
         self._data = []
 
     def prnt(self):
         if len(self._id) != 0:
-            print("id:", _id)
+            print("id:", self._id)
         for cd in self._data:
             cd.prnt()
 
     def read(self, f):
+        self._name = f.name
         while 1:
             line = f.readline().decode("utf-8")
             #print(line)
@@ -81,7 +85,17 @@ class CalibrationFile:
                 if cdtype != "INSTRUMENT" and cdtype != "VLF_INSTRUMENT" and \
                    cdtype != "SN" and cdtype != "VLF_SN":
                     ds = gp.getDataset(cd._type)
-                    ds._data.append(v)
+                    ds._temp.append(v)
+
+        
+        for ds in gp._datasets:
+            # optimize later y storing as list then batch convert with np.asarray()
+            if ds._data != None:
+                ds._data = np.vstack((ds._data, ds._temp))
+            else:
+                ds._data = np.asarray(ds._temp)
+            ds._temp = []
+
 
         return nRead
 

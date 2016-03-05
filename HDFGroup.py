@@ -70,3 +70,8 @@ class HDFGroup:
             ds.write(f)
 
 
+    def processL1a(self, cf):
+        for cd in cf._data:
+            ds = self.getDataset(cd._type)
+            ds.processL1a(cd)
+

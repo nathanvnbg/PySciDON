@@ -53,13 +53,16 @@ class CalibrationData:
             v = struct.unpack("d", b)[0]
             #print("bd", v)
         elif dataType == "HS":
-            v = int(b.encode('hex'), 16)
+            v = int(b, 16)
             #print("hs", v)
         elif dataType == "HU":
-            v = int(b.encode('hex'), 16)
+            v = int(b, 16)
             #print("hu", v)
         elif dataType == "AI":
-            v = int(b)
+            if self._type.upper() == "NMEA_CHECKSUM":
+                v = int(b, 16)
+            else:
+                v = int(b)
             #print("ai", v)
         elif dataType == "AU":
             v = int(b)
@@ -68,6 +71,7 @@ class CalibrationData:
             v = float(b)
             #print("af", v)
         elif dataType == "AS":
+            #v = b.decode("utf-8")
             v = b
             #print("as", v)
         else:

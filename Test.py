@@ -17,8 +17,8 @@ def readCalibrationFile(fp):
     with zipfile.ZipFile(fp, 'r') as zf:
         for finfo in zf.infolist():
             print(finfo.filename)
-            if os.path.splitext(finfo.filename)[1] == ".cal" or \
-               os.path.splitext(finfo.filename)[1] == ".tdf":
+            if os.path.splitext(finfo.filename)[1].lower() == ".cal" or \
+               os.path.splitext(finfo.filename)[1].lower() == ".tdf":
                 with zf.open(finfo) as f:
                     cf = CalibrationFile()
                     cf.read(f)
@@ -43,20 +43,41 @@ def readSATHDR(b):
 
 def readRawFile(filepath, calibrationMap):
 
-    context = []
-    context.append((b"HSL386A.cal", b"SAS", b"Air", b"Surface", b"ShutterLight", b"SATHSL0386"))
-    context.append((b"HSL385A.cal", b"SAS", b"Air", b"Surface", b"ShutterLight", b"SATHSL0385"))
-    context.append((b"HED488A.cal", b"Reference", b"Air", b"Surface", b"ShutterDark", b"SATHED0488"))
-    context.append((b"GPRMC_NoMode.tdf", b"GPS", b"None", b"None", b"None", b"$GPRMC"))
     contextMap = {}
+
+    '''
+    context = []
+    context.append(("HSL386A.cal", "SAS", "Air", "Surface", "ShutterLight", "SATHSL0386"))
+    context.append(("HSL385A.cal", "SAS", "Air", "Surface", "ShutterLight", "SATHSL0385"))
+    context.append(("HED488A.cal", "Reference", "Air", "Surface", "ShutterDark", "SATHED0488"))
+    context.append(("GPRMC_NoMode.tdf", "GPS", "None", "None", "None", "$GPRMC"))
     contextMap["SATHSL0386"] = HDFGroup()
     contextMap["SATHSL0385"] = HDFGroup()
     contextMap["SATHED0488"] = HDFGroup()
     contextMap["$GPRMC"] = HDFGroup()
     contextMap["SATHSL0386"]._id = "SAS"
-    contextMap["SATHSL0385"]._id = "SAS2"
+    contextMap["SATHSL0385"]._id = "SAS"
     contextMap["SATHED0488"]._id = "Reference"
     contextMap["$GPRMC"]._id = "GPS"
+    '''
+
+    contextMap["SATHED0150"] = HDFGroup()
+    contextMap["SATHLD0151"] = HDFGroup()
+    contextMap["SATHLD0152"] = HDFGroup()
+    contextMap["SATHSE0150"] = HDFGroup()
+    contextMap["SATHSL0151"] = HDFGroup()
+    contextMap["SATHSL0152"] = HDFGroup()
+    contextMap["SATSAS0052"] = HDFGroup()
+    contextMap["$GPRMC"] = HDFGroup()
+    contextMap["SATHED0150"]._id = "Reference"
+    contextMap["SATHLD0151"]._id = "SAS"
+    contextMap["SATHLD0152"]._id = "SAS"
+    contextMap["SATHSE0150"]._id = "Reference"
+    contextMap["SATHSL0151"]._id = "SAS"
+    contextMap["SATHSL0152"]._id = "SAS"
+    contextMap["SATSAS0052"]._id = "SAS"
+    contextMap["$GPRMC"]._id = "GPS"
+
 
     root = HDFGroup()
     root._id = "/"
@@ -68,7 +89,7 @@ def readRawFile(filepath, calibrationMap):
     #root._attributes.append((b"LU_UNITS", "count"));
     #root._attributes.append((b"ED_UNITS", "count"));
     #root._attributes.append((b"ES_UNITS", "count"));
-    root._attributes.append((b"RAW_FILE_NAME", "data.RAW"));
+    root._attributes.append((b"RAW_FILE_NAME", "data.raw"));
     
     with open(filepath, 'rb') as fp:
         while 1:
@@ -109,6 +130,10 @@ def readRawFile(filepath, calibrationMap):
 
                             #gp = contextMap[key.lower()]
                             gp = contextMap[key]
+                            if len(gp._attributes) == 0:
+                                gp._id += "_" + key
+                                gp._attributes.append(("CalFileName", calibrationMap[key]._name))
+                                gp._attributes.append(("FrameTag", key))
 
                             #cf = calibrationMap[key.lower()]
                             cf = calibrationMap[key]
@@ -125,9 +150,19 @@ def readRawFile(filepath, calibrationMap):
     dtstr = dt.strftime("%d-%b-%Y %H:%M:%S")
     root._attributes.append(("FILE_CREATION_TIME", dtstr));
 
+    '''
     root._groups.append(contextMap["SATHSL0386"])
     root._groups.append(contextMap["SATHSL0385"])
     root._groups.append(contextMap["SATHED0488"])
+    root._groups.append(contextMap["$GPRMC"])
+    '''
+    root._groups.append(contextMap["SATHED0150"])
+    root._groups.append(contextMap["SATHLD0151"])
+    root._groups.append(contextMap["SATHLD0152"])
+    root._groups.append(contextMap["SATHSE0150"])
+    root._groups.append(contextMap["SATHSL0151"])
+    root._groups.append(contextMap["SATHSL0152"])
+    root._groups.append(contextMap["SATSAS0052"])
     root._groups.append(contextMap["$GPRMC"])
     return root
 
@@ -141,19 +176,30 @@ def readHDFFile(filepath):
 def writeHDFFile(filepath, root):
     with h5py.File(filepath, "w") as hf:
         root.write(hf)
-    
-    
+        
+        
+def processL1a(root, calibrationMap):
+    for gp in root._groups:
+        print(gp._id, gp._attributes)
+        #gp.processL1a(calibrationMap[])
+
+
 
 def main():
-    calibrationMap = readCalibrationFile("SolarTracker_2.sip")
+    calibrationMap = readCalibrationFile("cal2013.sip")
     print("calibrationMap:", list(calibrationMap.keys()))
-    root = readRawFile("data.RAW", calibrationMap)
+    root = readRawFile("data.raw", calibrationMap)
     #print("HDFFile:")
     #root.prnt()
-    writeHDFFile("data.hdf", root)
-    root = readHDFFile("data.hdf")
-    print("HDFFile:")
-    root.prnt()
+    writeHDFFile("data_1a.hdf", root)
+    root = readHDFFile("data_1a.hdf")
+    #print("HDFFile:")
+    #root.prnt()
+    print("ProcessL1a:")
+    #processL1a(root, calibrationMap)
+    for key in calibrationMap:
+        print(key)
+    
 
 if __name__ == "__main__":
     main()
