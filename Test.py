@@ -81,15 +81,15 @@ def readRawFile(filepath, calibrationMap):
 
     root = HDFGroup()
     root._id = "/"
-    #root._attributes.append((b"PROSOFT", "Prosoft"));
-    #root._attributes.append((b"PROSOFT_INSTRUMENT_CONFIG", "Prosoft"));
-    #root._attributes.append((b"PROSOFT_PARAMETERS_FILE_NAME", "Prosoft"));
-    #root._attributes.append((b"CAL_FILE_NAMES", "Prosoft"));
-    #root._attributes.append((b"WAVELENGTH_UNITS", "nm"));
-    #root._attributes.append((b"LU_UNITS", "count"));
-    #root._attributes.append((b"ED_UNITS", "count"));
-    #root._attributes.append((b"ES_UNITS", "count"));
-    root._attributes.append((b"RAW_FILE_NAME", "data.raw"));
+    #root._attributes.append((b"PROSOFT", "Prosoft"))
+    #root._attributes.append((b"PROSOFT_INSTRUMENT_CONFIG", "Prosoft"))
+    #root._attributes.append((b"PROSOFT_PARAMETERS_FILE_NAME", "Prosoft"))
+    #root._attributes.append((b"CAL_FILE_NAMES", "Prosoft"))
+    #root._attributes.append((b"WAVELENGTH_UNITS", "nm"))
+    #root._attributes.append((b"LU_UNITS", "count"))
+    #root._attributes.append((b"ED_UNITS", "count"))
+    #root._attributes.append((b"ES_UNITS", "count"))
+    root._attributes["RAW_FILE_NAME"] = "data.raw"
     
     with open(filepath, 'rb') as fp:
         while 1:
@@ -110,12 +110,12 @@ def readRawFile(filepath, calibrationMap):
                     break
 
                 if testString.startswith(b"SATHDR"):
-                    print("SATHDR")
+                    #print("SATHDR")
                     if i > 0:
                         fp.read(i)
                     b = fp.read(128)
                     (k,v) = readSATHDR(b)
-                    root._attributes.append((k,v));
+                    root._attributes[k] = v
                     
                     break
                 else:
@@ -132,8 +132,8 @@ def readRawFile(filepath, calibrationMap):
                             gp = contextMap[key]
                             if len(gp._attributes) == 0:
                                 gp._id += "_" + key
-                                gp._attributes.append(("CalFileName", calibrationMap[key]._name))
-                                gp._attributes.append(("FrameTag", key))
+                                gp._attributes["CalFileName"] = calibrationMap[key]._name
+                                gp._attributes["FrameTag"] = key
 
                             #cf = calibrationMap[key.lower()]
                             cf = calibrationMap[key]
@@ -145,10 +145,10 @@ def readRawFile(filepath, calibrationMap):
                     if i == 32:
                         break
 
-    root._attributes.append(("PROCESSING_LEVEL", "1a"));
+    root._attributes["PROCESSING_LEVEL"] = "1a"
     dt = datetime.now()
     dtstr = dt.strftime("%d-%b-%Y %H:%M:%S")
-    root._attributes.append(("FILE_CREATION_TIME", dtstr));
+    root._attributes["FILE_CREATION_TIME"] = dtstr
 
     '''
     root._groups.append(contextMap["SATHSL0386"])
@@ -180,8 +180,10 @@ def writeHDFFile(filepath, root):
         
 def processL1a(root, calibrationMap):
     for gp in root._groups:
-        print(gp._id, gp._attributes)
-        #gp.processL1a(calibrationMap[])
+        cf = calibrationMap[gp._attributes["FrameTag"]]
+        #print(gp._id, gp._attributes)
+        print("File:", cf._id)
+        gp.processL1a(cf)
 
 
 
@@ -196,9 +198,10 @@ def main():
     #print("HDFFile:")
     #root.prnt()
     print("ProcessL1a:")
-    #processL1a(root, calibrationMap)
-    for key in calibrationMap:
-        print(key)
+    processL1a(root, calibrationMap)
+    writeHDFFile("data_1b.hdf", root)
+    #for key in calibrationMap:
+    #    print(key)
     
 
 if __name__ == "__main__":

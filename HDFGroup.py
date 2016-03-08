@@ -1,4 +1,6 @@
 
+import collections
+
 import h5py
 import numpy as np
 
@@ -7,19 +9,25 @@ from HDFDataset import HDFDataset
 class HDFGroup:
     def __init__(self):
         self._id = ""
-        self._attributes = []
+        self._attributes = collections.OrderedDict()
         self._groups = []
         self._datasets = []
 
     def prnt(self):
         print("Group:", self._id)
-        for attr in self._attributes:
-            print("Attribute:", attr[0], attr[1])
+        for k in self._attributes:
+            print("Attribute:", k, self._attributes[k])
         #    attr.prnt()
         for gp in self._groups:
             gp.prnt()
         for ds in self._datasets:
             ds.prnt()
+
+    def hasDataset(self, name):
+        for ds in self._datasets:
+            if ds._id == name:
+                return True
+        return False
 
     def getDataset(self, name):
         for ds in self._datasets:
@@ -40,7 +48,7 @@ class HDFGroup:
 
         #print("Attributes:", [k for k in f.attrs.keys()])
         for k in f.attrs.keys():
-            self._attributes.append((k,f.attrs[k]))
+            self._attributes[k] = f.attrs[k]
         for k in f.keys():
             item = f.get(k)
             if isinstance(item, h5py.Group):
@@ -61,8 +69,8 @@ class HDFGroup:
         #print("Group:", self._id)
         if self._id != "/":
             f = f.create_group(self._id)
-        for attr in self._attributes:
-            f.attrs[attr[0]] = attr[1]
+        for k in self._attributes:
+            f.attrs[k] = self._attributes[k]
         for gp in self._groups:
             gp.write(f)
         for ds in self._datasets:
@@ -71,7 +79,20 @@ class HDFGroup:
 
 
     def processL1a(self, cf):
+        inttime = None
         for cd in cf._data:
-            ds = self.getDataset(cd._type)
-            ds.processL1a(cd)
+            if cd._type == "INTTIME":
+                print("Process INTTIME")
+                ds = self.getDataset("INTTIME")
+                ds.processL1a(cd)
+                inttime = ds
+            
+        for cd in cf._data:
+            if self.hasDataset(cd._type) and cd._type != "INTTIME":
+                #print("Dataset:", cd._type)
+                ds = self.getDataset(cd._type)
+                ds.processL1a(cd, inttime)
+
+
+        
 
