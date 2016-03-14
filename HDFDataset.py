@@ -10,6 +10,8 @@ class HDFDataset:
     def __init__(self):
         self._id = ""
         self._attributes = collections.OrderedDict()
+        self._columns = collections.OrderedDict()
+        self._numColumns = 0
         self._data = None
         self._temp = []
 
@@ -29,10 +31,29 @@ class HDFDataset:
         self._id = name
         #print(name)
         self._data = np.array(f)
+        cols = f.attrs["COL_NAMES"].split(",")
+        for i in range(0, len(cols)):
+            self._columns[cols[i]] = i
+        self._numColumns = len(self._columns)
+        #print(self._columns)
+        
 
     def write(self, f):
+        #print(self._id)
+        #print(self._columns)
         #print(self._data)
-        f.create_dataset(self._id, data=self._data)
+        dset = f.create_dataset(self._id, data=self._data)
+        dset.attrs["COL_NAMES"] = ",".join(self._columns.keys())
+
+
+    def getColumn(self, name):
+        return self._columns[name]
+
+    def addColumn(self, name):
+        if name not in self._columns:
+            self._columns[name] = self._numColumns
+            self._numColumns += 1
+            
 
     def processL1a(self, cd, inttime = None):
         #print("FitType:", cd._fitType)
@@ -75,9 +96,9 @@ class HDFDataset:
         a0 = float(cd._coefficients[0])
         a1 = float(cd._coefficients[1])
         im = float(cd._coefficients[2]) if immersed else 1.0
+        y = self.getColumn(cd._id)
         for x in range(self._data.shape[0]):
-            for y in range(self._data.shape[1]):
-                self._data[x,y] = im * a1 * (self._data[x,y] - a0)
+            self._data[x,y] = im * a1 * (self._data[x,y] - a0)
 
     def processOPTIC3(self, cd, immersed, inttime):
         self._data = self._data.astype(float)
@@ -86,14 +107,16 @@ class HDFDataset:
         im = float(cd._coefficients[2]) if immersed else 1.0
         cint = float(cd._coefficients[3])
         #print(inttime._data.shape[0], self._data.shape[0])
+        y = self.getColumn(cd._id)
+        #print(cint, aint)
+        #print(cd._id)
         for x in range(self._data.shape[0]):
             aint = inttime._data[x, 0]
-            #print(cint, aint)
-            for y in range(self._data.shape[1]):
-                if x == 0 and y == 0 and self._data[x,y] > 1:
-                    print("" + str(a1) + " * (" + str(self._data[x,y]) + " - " + \
-                            str(a0) + ") * (" + str(cint) + "/" + str(aint) + ")")
-                self._data[x,y] = im * a1 * (self._data[x,y] - a0) * (cint/aint)
+            v = self._data[x,y]
+            self._data[x,y] = im * a1 * (self._data[x,y] - a0) * (cint/aint)
+            #if x == 0 and y == 0:
+            #    print("" + str(a1) + " * (" + str(v) + " - " + \
+            #            str(a0) + ") * (" + str(cint) + "/" + str(aint) + ") = " + str(self._data[x,y]))
 
     def processOPTIC4(self, cd, immersed):
         self._data = self._data.astype(float)
@@ -101,10 +124,10 @@ class HDFDataset:
         a1 = float(cd._coefficients[1])
         im = float(cd._coefficients[2]) if immersed else 1.0
         cint = float(cd._coefficients[3])
+        y = self.getColumn(cd._id)
+        aint = 1
         for x in range(self._data.shape[0]):
-            aint = 1
-            for y in range(self._data.shape[1]):
-                self._data[x,y] = im * a1 * (self._data[x,y] - a0) * (cint/aint)
+            self._data[x,y] = im * a1 * (self._data[x,y] - a0) * (cint/aint)
 
     def processTHERM1(self, cd):
         return
@@ -114,29 +137,29 @@ class HDFDataset:
         a0 = float(cd._coefficients[0])
         a1 = float(cd._coefficients[1])
         im = float(cd._coefficients[2]) if immersed else 1.0
+        y = self.getColumn(cd._id)
         for x in range(self._data.shape[0]):
-            for y in range(self._data.shape[1]):
-                self._data[x,y] = im * pow(10, ((self._data[x,y]-a0)/a1))
+            self._data[x,y] = im * pow(10, ((self._data[x,y]-a0)/a1))
 
     def processPOLYU(self, cd):
         self._data = self._data.astype(float)
+        y = self.getColumn(cd._id)
         for x in range(self._data.shape[0]):
-            for y in range(self._data.shape[1]):
-                num = 0
-                for i in range(0, len(cd._coefficients)):
-                    a = float(cd._coefficients[i])
-                    num += a * pow(self._data[x,y],i)
-                self._data[x,y] = num
+            num = 0
+            for i in range(0, len(cd._coefficients)):
+                a = float(cd._coefficients[i])
+                num += a * pow(self._data[x,y],i)
+            self._data[x,y] = num
 
     def processPOLYF(self, cd):
         self._data = self._data.astype(float)
         a0 = float(cd._coefficients[0])
+        y = self.getColumn(cd._id)
         for x in range(self._data.shape[0]):
-            for y in range(self._data.shape[1]):
-                num = a0
-                for a in cd._coefficients[1:]:
-                    num *= (self._data[x,y] - float(a))
-                self._data[x,y] = num
+            num = a0
+            for a in cd._coefficients[1:]:
+                num *= (self._data[x,y] - float(a))
+            self._data[x,y] = num
 
     def processDDMM(self, cd):
         return
@@ -166,5 +189,8 @@ class HDFDataset:
         #for x in np.nditer(self._data, flags=['external_loop'], op_flags=['readwrite']):
             #x[...] = datetime.fromtimestamp(x).strftime("%y-%m-%d %H:%M:%S")
 
+    def processDarkCorrection(self, cd, immersed):
+        # L_lightdat = (L_countslightdat - L_caldarkdat) * a * ic * it1/it2
+        pass
         
         

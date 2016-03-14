@@ -86,6 +86,7 @@ class CalibrationFile:
                    cdtype != "SN" and cdtype != "VLF_SN":
                     ds = gp.getDataset(cd._type)
                     ds._temp.append(v)
+                    ds.addColumn(cd._id)
 
         
         for ds in gp._datasets:
