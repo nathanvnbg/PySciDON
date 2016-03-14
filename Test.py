@@ -45,21 +45,6 @@ def readRawFile(filepath, calibrationMap):
 
     contextMap = {}
 
-    '''
-    context = []
-    context.append(("HSL386A.cal", "SAS", "Air", "Surface", "ShutterLight", "SATHSL0386"))
-    context.append(("HSL385A.cal", "SAS", "Air", "Surface", "ShutterLight", "SATHSL0385"))
-    context.append(("HED488A.cal", "Reference", "Air", "Surface", "ShutterDark", "SATHED0488"))
-    context.append(("GPRMC_NoMode.tdf", "GPS", "None", "None", "None", "$GPRMC"))
-    contextMap["SATHSL0386"] = HDFGroup()
-    contextMap["SATHSL0385"] = HDFGroup()
-    contextMap["SATHED0488"] = HDFGroup()
-    contextMap["$GPRMC"] = HDFGroup()
-    contextMap["SATHSL0386"]._id = "SAS"
-    contextMap["SATHSL0385"]._id = "SAS"
-    contextMap["SATHED0488"]._id = "Reference"
-    contextMap["$GPRMC"]._id = "GPS"
-    '''
 
     contextMap["SATHED0150"] = HDFGroup()
     contextMap["SATHLD0151"] = HDFGroup()
@@ -70,14 +55,30 @@ def readRawFile(filepath, calibrationMap):
     contextMap["SATSAS0052"] = HDFGroup()
     contextMap["$GPRMC"] = HDFGroup()
     contextMap["SATHED0150"]._id = "Reference"
+    contextMap["SATHED0150"]._sensorType = "ES"
+    contextMap["SATHED0150"]._frameType = "ShutterDark"
     contextMap["SATHLD0151"]._id = "SAS"
+    contextMap["SATHLD0151"]._sensorType = "LI"
+    contextMap["SATHLD0151"]._frameType = "ShutterDark"
     contextMap["SATHLD0152"]._id = "SAS"
+    contextMap["SATHLD0152"]._sensorType = "LT"
+    contextMap["SATHLD0152"]._frameType = "ShutterDark"
     contextMap["SATHSE0150"]._id = "Reference"
+    contextMap["SATHSE0150"]._sensorType = "ES"
+    contextMap["SATHSE0150"]._frameType = "ShutterLight"
     contextMap["SATHSL0151"]._id = "SAS"
+    contextMap["SATHSL0151"]._sensorType = "LI"
+    contextMap["SATHSL0151"]._frameType = "ShutterLight"
     contextMap["SATHSL0152"]._id = "SAS"
+    contextMap["SATHSL0152"]._sensorType = "LT"
+    contextMap["SATHSL0152"]._frameType = "ShutterLight"
     contextMap["SATSAS0052"]._id = "SAS"
+    contextMap["SATSAS0052"]._sensorType = "None"
+    contextMap["SATSAS0052"]._frameType = "LightAncCombined"
     contextMap["$GPRMC"]._id = "GPS"
-
+    contextMap["$GPRMC"]._sensorType = "None"
+    contextMap["$GPRMC"]._frameType = "None"
+    
 
     root = HDFGroup()
     root._id = "/"
@@ -150,12 +151,6 @@ def readRawFile(filepath, calibrationMap):
     dtstr = dt.strftime("%d-%b-%Y %H:%M:%S")
     root._attributes["FILE_CREATION_TIME"] = dtstr
 
-    '''
-    root._groups.append(contextMap["SATHSL0386"])
-    root._groups.append(contextMap["SATHSL0385"])
-    root._groups.append(contextMap["SATHED0488"])
-    root._groups.append(contextMap["$GPRMC"])
-    '''
     root._groups.append(contextMap["SATHED0150"])
     root._groups.append(contextMap["SATHLD0151"])
     root._groups.append(contextMap["SATHLD0152"])
@@ -176,7 +171,7 @@ def readHDFFile(filepath):
 def writeHDFFile(filepath, root):
     with h5py.File(filepath, "w") as hf:
         root.write(hf)
-        
+
         
 def processL1a(root, calibrationMap):
     for gp in root._groups:
@@ -184,24 +179,100 @@ def processL1a(root, calibrationMap):
         #print(gp._id, gp._attributes)
         print("File:", cf._id)
         gp.processL1a(cf)
+        
+        
+def lerp(x, xa, xb, ya, yb):
+    return (ya + (yb - ya) * (x - xa) / (xb - xa))
+
+def processDarkColumn(y, darkData, darkTimer, lightTimer, newDarkData):
+    #print(darkTimer._data)
+    dt0 = darkTimer._data[0,0]
+    dtMax = darkTimer._data[darkTimer._data.shape[0]-1,0]
+    for x in range(lightTimer._data.shape[0]):
+        lt = lightTimer._data[x,0]
+        #print(lightTimer._data[x,0])
+        if lt < dt0:
+            newDarkData[x,y] = darkData._data[0,y]
+        elif lt > dtMax:
+            newDarkData[x,y] = darkData._data[darkData._data.shape[0]-1,y]
+        else:
+            for i in range(darkTimer._data.shape[0]-1):
+                t0 = darkTimer._data[i,0]
+                t1 = darkTimer._data[i+1,0]
+                if lt > t0 and lt < t1:
+                    d0 = darkData._data[i,y]
+                    d1 = darkData._data[i+1,y]
+                    newDarkData[x,y] = lerp(lt, t0, t1, d0, d1)
+                    break
+        
+    #for x in range(darkTimer._data.shape[0]):
+    #    print(darkTimer._data[x,y])
+    # less than light timer [0]
+    # between light timer [0] and [max]
+    # greater than light timer [max]
 
 
+def processDarkCorrection(root, sensorType):
+    darkData = None
+    darkTimer = None
+    lightData = None
+    lightTimer = None
+    
+    for gp in root._groups:
+        if gp._frameType == "ShutterDark" and gp.hasDataset(sensorType):
+            darkData = gp.getDataset(sensorType)
+            darkTimer = gp.getDataset("TIMER")
+            
+        if gp._frameType == "ShutterLight" and gp.hasDataset(sensorType):
+            lightData = gp.getDataset(sensorType)
+            lightTimer = gp.getDataset("TIMER")
+
+    if (darkData == None) or (lightData == None):
+        print("Dark Correction, dataset not found:", darkData, lightData)
+
+    # Interpolate Dark Dataset to match number of elements as Light Dataset
+    print(len(darkData._data), len(lightData._data))
+    print(lightData._data)    
+    
+    newDarkData = np.copy(lightData._data)
+
+    for y in range(darkData._data.shape[1]):
+        processDarkColumn(y, darkData, darkTimer, lightTimer, newDarkData)
+
+    print(lightData._data.shape)
+    print(newDarkData.shape)
+    darkData._data = newDarkData
+
+    # Get corrected data by subtract interpolated dark data from light data
+    for x in range(lightData._data.shape[0]):
+        for y in range(lightData._data.shape[1]):
+            lightData._data[x,y] -= newDarkData[x,y]
+
+    print(lightData._data)
+            
 
 def main():
+
     calibrationMap = readCalibrationFile("cal2013.sip")
     print("calibrationMap:", list(calibrationMap.keys()))
     root = readRawFile("data.raw", calibrationMap)
     #print("HDFFile:")
     #root.prnt()
     writeHDFFile("data_1a.hdf", root)
-    root = readHDFFile("data_1a.hdf")
+    #root = readHDFFile("data_1a.hdf")
     #print("HDFFile:")
     #root.prnt()
     print("ProcessL1a:")
     processL1a(root, calibrationMap)
     writeHDFFile("data_1b.hdf", root)
+
+    #root = readHDFFile("data_1b.hdf")
+    #print("Start Time:", root.getStartTime())
+    root.processTIMER()
     #for key in calibrationMap:
     #    print(key)
+
+    processDarkCorrection(root, "ES")
     
 
 if __name__ == "__main__":

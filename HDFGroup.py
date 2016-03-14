@@ -12,9 +12,13 @@ class HDFGroup:
         self._attributes = collections.OrderedDict()
         self._groups = []
         self._datasets = []
+        self._sensorType = ""
+        self._frameType = ""
 
     def prnt(self):
         print("Group:", self._id)
+        print("Sensor Type:", self._sensorType)
+        print("Frame Type:", self._frameType)
         for k in self._attributes:
             print("Attribute:", k, self._attributes[k])
         #    attr.prnt()
@@ -78,11 +82,46 @@ class HDFGroup:
             ds.write(f)
 
 
+    def getStartTime(self, time = 999999):
+        for gp in self._groups:
+            #print(gp._id)
+            t = gp.getStartTime(time)
+            if t < time:
+                time = t
+        for ds in self._datasets:
+            #print(ds._id)
+            if ds._id == "TIMER" and ds._data != None:
+                #print(ds._data)
+                t = float(ds._data[0])
+                if t < time:
+                    time = t
+        return time
+
+    def processTIMER(self):
+        time = self.getStartTime()
+        print("Time:", time)
+        self.processTIMER2(time)
+
+    def processTIMER2(self, time):
+        for gp in self._groups:
+            #print(gp._id)
+            gp.processTIMER2(time)
+        for ds in self._datasets:
+            #print(ds._id)
+            if ds._id == "TIMER" and ds._data != None:
+                #print("Time:", time)
+                #print(ds._data)
+                for i in range(0, len(ds._data)):
+                    ds._data[i] -= time
+                #print(ds._data)
+        return time
+
+
     def processL1a(self, cf):
         inttime = None
         for cd in cf._data:
             if cd._type == "INTTIME":
-                print("Process INTTIME")
+                #print("Process INTTIME")
                 ds = self.getDataset("INTTIME")
                 ds.processL1a(cd)
                 inttime = ds
@@ -92,6 +131,7 @@ class HDFGroup:
                 #print("Dataset:", cd._type)
                 ds = self.getDataset(cd._type)
                 ds.processL1a(cd, inttime)
+
 
 
         
