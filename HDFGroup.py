@@ -8,128 +8,102 @@ from HDFDataset import HDFDataset
 
 class HDFGroup:
     def __init__(self):
-        self._id = ""
-        self._attributes = collections.OrderedDict()
-        self._groups = []
-        self._datasets = []
-        self._sensorType = ""
-        self._frameType = ""
+        self.m_id = ""
+        self.m_datasets = {}
+        self.m_attributes = collections.OrderedDict()
+        self.m_sensorType = ""
+        self.m_frameType = ""
 
-    def prnt(self):
-        print("Group:", self._id)
-        print("Sensor Type:", self._sensorType)
-        print("Frame Type:", self._frameType)
-        for k in self._attributes:
-            print("Attribute:", k, self._attributes[k])
-        #    attr.prnt()
-        for gp in self._groups:
-            gp.prnt()
-        for ds in self._datasets:
-            ds.prnt()
 
     def hasDataset(self, name):
-        for ds in self._datasets:
-            if ds._id == name:
-                return True
-        return False
+        return (name in self.m_datasets)
 
     def getDataset(self, name):
-        for ds in self._datasets:
-            if ds._id == name:
-                return ds
+        if self.hasDataset(name):
+            return self.m_datasets[name]
         ds = HDFDataset()
-        ds._id = name
-        self._datasets.append(ds)
+        ds.m_id = name
+        self.m_datasets[name] = ds
         return ds
-            
+
+
+    def prnt(self):
+        print("Group:", self.m_id)
+        print("Sensor Type:", self.m_sensorType)
+        print("Frame Type:", self.m_frameType)
+        for k in self.m_attributes:
+            print("Attribute:", k, self.m_attributes[k])
+        #    attr.prnt()
+        for gp in self.m_groups:
+            gp.prnt()
+        for ds in self.m_datasets:
+            ds.prnt()
+
 
     def read(self, f):
         name = f.name[f.name.rfind("/")+1:]
-        if len(name) == 0:
-            name = "/"
-        #self._id = bytes(name, "utf-8")
-        self._id = name
+        #if len(name) == 0:
+        #    name = "/"
+        self.m_id = name
 
         #print("Attributes:", [k for k in f.attrs.keys()])
         for k in f.attrs.keys():
-            self._attributes[k] = f.attrs[k]
+            self.m_attributes[k] = f.attrs[k]
         for k in f.keys():
             item = f.get(k)
             if isinstance(item, h5py.Group):
-                gp = HDFGroup()
-                self._groups.append(gp)
-                gp.read(item)
+                print("HDFRoot should not contain groups")
             elif isinstance(item, h5py.Dataset):
                 ds = HDFDataset()
-                self._datasets.append(ds)
+                self.m_datasets[k] = ds
                 ds.read(item)
-            
-        #if isinstance(item, h5py.File):
-        #if isinstance(item, h5py.Group):
-        #if isinstance(item, h5py.Dataset):
         
 
     def write(self, f):
-        #print("Group:", self._id)
-        if self._id != "/":
-            f = f.create_group(self._id)
-        for k in self._attributes:
-            f.attrs[k] = self._attributes[k]
-        for gp in self._groups:
-            gp.write(f)
-        for ds in self._datasets:
-            #f.create_dataset(ds._id, data=np.asarray(ds._data))
+        #print("Group:", self.m_id)
+        f = f.create_group(self.m_id)
+        for k in self.m_attributes:
+            f.attrs[k] = self.m_attributes[k]
+        for key,ds in self.m_datasets.items():
+            #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
             ds.write(f)
 
 
     def getStartTime(self, time = 999999):
-        for gp in self._groups:
-            #print(gp._id)
-            t = gp.getStartTime(time)
-            if t < time:
-                time = t
-        for ds in self._datasets:
-            #print(ds._id)
-            if ds._id == "TIMER" and ds._data != None:
-                #print(ds._data)
-                t = float(ds._data[0])
+        if self.hasDataset("TIMER"):
+            ds = self.getDataset("TIMER")
+            if ds.m_data is not None:
+                #print(ds.m_data)
+                t = float(ds.m_data[0])
                 if t < time:
                     time = t
         return time
 
-    def processTIMER(self):
-        time = self.getStartTime()
-        print("Time:", time)
-        self.processTIMER2(time)
-
-    def processTIMER2(self, time):
-        for gp in self._groups:
-            #print(gp._id)
-            gp.processTIMER2(time)
-        for ds in self._datasets:
-            #print(ds._id)
-            if ds._id == "TIMER" and ds._data != None:
+    def processTIMER(self, time):
+        if self.hasDataset("TIMER"):
+            ds = self.getDataset("TIMER")
+            if ds.m_data is not None:
                 #print("Time:", time)
-                #print(ds._data)
-                for i in range(0, len(ds._data)):
-                    ds._data[i] -= time
-                #print(ds._data)
+                #print(ds.m_data)
+                for i in range(0, len(ds.m_data)):
+                    ds.m_data[i] -= time
+                #print(ds.m_data)
         return time
 
 
     def processL1a(self, cf):
         inttime = None
-        for cd in cf._data:
-            if cd._type == "INTTIME":
+        for cd in cf.m_data:
+            if cd.m_type == "INTTIME":
                 #print("Process INTTIME")
                 ds = self.getDataset("INTTIME")
                 ds.processL1a(cd)
                 inttime = ds
             
-        for cd in cf._data:
-            if self.hasDataset(cd._type) and cd._type != "INTTIME":
-                #print("Dataset:", cd._type)
-                ds = self.getDataset(cd._type)
+        for cd in cf.m_data:
+            if self.hasDataset(cd.m_type) and cd.m_type != "INTTIME":
+                #print("Dataset:", cd.m_type)
+                ds = self.getDataset(cd.m_type)
                 ds.processL1a(cd, inttime)
 
 

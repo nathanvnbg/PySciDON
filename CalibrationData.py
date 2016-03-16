@@ -3,37 +3,37 @@ import struct
 
 class CalibrationData:
     def __init__(self):
-        self._type = ""
-        self._id = ""
-        self._units = ""
-        self._fieldLength = 0
-        self._dataType = ""
-        self._calLines = 0
-        self._fitType = ""
-        self._coefficients = []
+        self.m_type = ""
+        self.m_id = ""
+        self.m_units = ""
+        self.m_fieldLength = 0
+        self.m_dataType = ""
+        self.m_calLines = 0
+        self.m_fitType = ""
+        self.m_coefficients = []
 
     def prnt(self):
-        print("%s %s \'%s\' %d %s %d %s" % (self._type, self._id, self._units,
-                                     self._fieldLength, self._dataType,
-                                     self._calLines, self._fitType))
-        print("coefficients = ", self._coefficients)
+        print("%s %s \'%s\' %d %s %d %s" % (self.m_type, self.m_id, self.m_units,
+                                     self.m_fieldLength, self.m_dataType,
+                                     self.m_calLines, self.m_fitType))
+        print("coefficients = ", self.m_coefficients)
 
     def read(self, line):
         parts = line.split()
-        self._type = parts[0]
-        self._id = parts[1]
-        self._units = parts[2][1:-1]
-        self._fieldLength = -1 if parts[3].upper() == 'V' else int(parts[3])
-        self._dataType = parts[4]
-        self._calLines = int(parts[5])
-        self._fitType = parts[6]
+        self.m_type = parts[0]
+        self.m_id = parts[1]
+        self.m_units = parts[2][1:-1]
+        self.m_fieldLength = -1 if parts[3].upper() == 'V' else int(parts[3])
+        self.m_dataType = parts[4]
+        self.m_calLines = int(parts[5])
+        self.m_fitType = parts[6]
 
     def readCoefficients(self, line):
-        self._coefficients = line.split()
+        self.m_coefficients = line.split()
         
     def convertRaw(self, b):
         v = 0
-        dataType = self._dataType.upper()
+        dataType = self.m_dataType.upper()
         if dataType == "BU":
             v = int.from_bytes(b, byteorder='big', signed=False)
             #print("bu", v)
@@ -59,7 +59,7 @@ class CalibrationData:
             v = int(b, 16)
             #print("hu", v)
         elif dataType == "AI":
-            if self._type.upper() == "NMEA_CHECKSUM":
+            if self.m_type.upper() == "NMEA_CHECKSUM":
                 v = int(b, 16)
             else:
                 v = int(b)

@@ -8,18 +8,18 @@ from CalibrationData import CalibrationData
 
 class CalibrationFile:
     def __init__(self):
-        self._id = ""
-        self._name = ""
-        self._data = []
+        self.m_id = ""
+        self.m_name = ""
+        self.m_data = []
 
     def prnt(self):
-        if len(self._id) != 0:
-            print("id:", self._id)
-        for cd in self._data:
+        if len(self.m_id) != 0:
+            print("id:", self.m_id)
+        for cd in self.m_data:
             cd.prnt()
 
     def read(self, f):
-        self._name = f.name
+        self.m_name = f.name
         while 1:
             line = f.readline().decode("utf-8")
             #print(line)
@@ -32,33 +32,33 @@ class CalibrationFile:
             cd = CalibrationData()
             cd.read(line)
 
-            cdtype = cd._type.upper()
+            cdtype = cd.m_type.upper()
             
             if cdtype == "INSTRUMENT" or cdtype == "VLF_INSTRUMENT" or \
                cdtype == "SN" or cdtype == "VLF_SN":
-                self._id += cd._id
+                self.m_id += cd.m_id
 
-            for i in range(0, cd._calLines):
+            for i in range(0, cd.m_calLines):
                 line = f.readline()
                 cd.readCoefficients(line)
 
             #cd.prnt()
-            self._data.append(cd)
+            self.m_data.append(cd)
 
 
     def convertRaw(self, f, gp):
         nRead = 0
 
-        #for i in range(0, len(self._data)):
-        #    self._data[i].prnt()
+        #for i in range(0, len(self.m_data)):
+        #    self.m_data[i].prnt()
         #print("file:", f)
 
-        for i in range(0, len(self._data)):
+        for i in range(0, len(self.m_data)):
             v = 0
-            cd = self._data[i]
+            cd = self.m_data[i]
 
-            if cd._fieldLength == -1:
-                delimiter = self._data[i+1]._units
+            if cd.m_fieldLength == -1:
+                delimiter = self.m_data[i+1].m_units
                 #delimiter = delimiter.decode('string_escape')
                 #delimiter = bytes(delimiter, "utf-8").decode("unicode_escape")
                 #delimiter = bytes(delimiter.decode("unicode_escape"), "utf-8")
@@ -73,29 +73,28 @@ class CalibrationFile:
                 nRead += end
 
             else:
-                if cd._fitType.upper() != "DELIMITER":
-                    if cd._fieldLength != 0:
-                        b = f[nRead:nRead+cd._fieldLength]
-                        #print(nRead, cd._fieldLength, b)
+                if cd.m_fitType.upper() != "DELIMITER":
+                    if cd.m_fieldLength != 0:
+                        b = f[nRead:nRead+cd.m_fieldLength]
+                        #print(nRead, cd.m_fieldLength, b)
                         v = cd.convertRaw(b)
-                nRead  += cd._fieldLength
+                nRead  += cd.m_fieldLength
 
-            if cd._fitType.upper() != "NONE" and cd._fitType.upper() != "DELIMITER":
-                cdtype = cd._type.upper()
+            if cd.m_fitType.upper() != "NONE" and cd.m_fitType.upper() != "DELIMITER":
+                cdtype = cd.m_type.upper()
                 if cdtype != "INSTRUMENT" and cdtype != "VLF_INSTRUMENT" and \
                    cdtype != "SN" and cdtype != "VLF_SN":
-                    ds = gp.getDataset(cd._type)
-                    ds._temp.append(v)
-                    ds.addColumn(cd._id)
+                    ds = gp.getDataset(cd.m_type)
+                    ds.m_temp.append(v)
+                    ds.addColumn(cd.m_id)
 
-        
-        for ds in gp._datasets:
+        for key,ds in gp.m_datasets.items():
             # optimize later y storing as list then batch convert with np.asarray()
-            if ds._data != None:
-                ds._data = np.vstack((ds._data, ds._temp))
+            if ds.m_data is not None:
+                ds.m_data = np.vstack((ds.m_data, np.asarray(ds.m_temp)))
             else:
-                ds._data = np.asarray(ds._temp)
-            ds._temp = []
+                ds.m_data = np.asarray(ds.m_temp)
+            ds.m_temp = []
 
 
         return nRead
