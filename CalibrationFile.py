@@ -33,7 +33,7 @@ class CalibrationFile:
             cd.read(line)
 
             cdtype = cd.m_type.upper()
-            
+
             if cdtype == "INSTRUMENT" or cdtype == "VLF_INSTRUMENT" or \
                cdtype == "SN" or cdtype == "VLF_SN":
                 self.m_id += cd.m_id
@@ -85,18 +85,39 @@ class CalibrationFile:
                 if cdtype != "INSTRUMENT" and cdtype != "VLF_INSTRUMENT" and \
                    cdtype != "SN" and cdtype != "VLF_SN":
                     ds = gp.getDataset(cd.m_type)
-                    ds.m_temp.append(v)
-                    ds.addColumn(cd.m_id)
+                    #print(cd.m_id)
+                    #ds.m_temp.append(v)
+                    #ds.addColumn(cd.m_id)
+                    ds.appendColumn(cd.m_id, v)
 
-        for key,ds in gp.m_datasets.items():
+
+            #print("Key:", key)
             # optimize later y storing as list then batch convert with np.asarray()
-            if ds.m_data is not None:
-                ds.m_data = np.vstack((ds.m_data, np.asarray(ds.m_temp)))
-            else:
-                ds.m_data = np.asarray(ds.m_temp)
-            ds.m_temp = []
+        #    if ds.m_data is not None:
+        #        ds.m_data = np.vstack((ds.m_data, np.asarray(ds.m_temp)))
+        #    else:
+        #        ds.m_data = np.asarray(ds.m_temp)
+        #    ds.m_temp = []
+
+        # Satview records additional bytes
+        # 3 bytes date tag, 4 bytes time tag
+        if not gp.m_id.startswith("GPS"):
+            #print("not gps")
+            # date tag
+            b = f[nRead:nRead+3]
+            v = int.from_bytes(b, byteorder='big', signed=False)
+            nRead += 3
+            #print("Date:",v)
+            ds1 = gp.getDataset("DATETAG")
+            ds1.appendColumn("NONE", v)
+
+            b = f[nRead:nRead+4]
+            v = int.from_bytes(b, byteorder='big', signed=False)
+            nRead += 4
+            #print("Time:",v)
+            ds1 = gp.getDataset("TIMETAG2")
+            ds1.appendColumn("NONE", v)
 
 
         return nRead
 
-        
