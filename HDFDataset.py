@@ -11,9 +11,8 @@ class HDFDataset:
         self.m_id = ""
         self.m_attributes = collections.OrderedDict()
         self.m_columns = collections.OrderedDict()
-        self.m_numColumns = 0
         self.m_data = None
-        self.m_temp = []
+
 
     def prnt(self):
         print("Dataset:", self.m_id)
@@ -29,31 +28,65 @@ class HDFDataset:
     def read(self, f):
         name = f.name[f.name.rfind("/")+1:]
         self.m_id = name
-        #print(name)
+        #print("Dataset:", name)
+
         self.m_data = np.array(f)
-        cols = f.attrs["COL_NAMES"].split(",")
-        for i in range(0, len(cols)):
-            self.m_columns[cols[i]] = i
-        self.m_numColumns = len(self.m_columns)
-        #print(self.m_columns)
-        
+        #print("Data:", self.m_data.dtype)
+
 
     def write(self, f):
-        #print(self.m_id)
-        #print(self.m_columns)
-        #print(self.m_data)
-        dset = f.create_dataset(self.m_id, data=self.m_data)
-        dset.attrs["COL_NAMES"] = ",".join(self.m_columns.keys())
+        #print("id:", self.m_id)        
+        #print("columns:", self.m_columns)
+        #print("data:", self.m_data)
+
+        # h4toh5 converter saves datatypes separately, but this doesn't seem required
+        #typeId = self.m_id + "_t"
+        #f[typeId] = self.m_data.dtype
+        #dset = f.create_dataset(self.m_id, data=self.m_data, dtype=f[typeId])
+        if self.m_data is not None:
+            dset = f.create_dataset(self.m_id, data=self.m_data, dtype=self.m_data.dtype)
+        else:
+            print("Dataset.write(): Data is None")
+
 
 
     def getColumn(self, name):
         return self.m_columns[name]
 
-    def addColumn(self, name):
+    def appendColumn(self, name, val):
         if name not in self.m_columns:
-            self.m_columns[name] = self.m_numColumns
-            self.m_numColumns += 1
-            
+            self.m_columns[name] = [val]
+        else:
+            self.m_columns[name].append(val)
+
+
+    def columnsToDataset(self):
+        #print(ds.m_columns)
+        #dtype0 = np.dtype([(name, type(ds.m_columns[name][0])) for name in ds.m_columns.keys()])
+        dtype = []
+        for name in self.m_columns.keys():
+            item = self.m_columns[name][0]
+            if isinstance(item, bytes):
+                #dtype.append((name, h5py.special_dtype(vlen=str)))
+                dtype.append((name, "|S" + str(len(item))))
+            elif isinstance(item, int): # hdf4 only supports 32 bit int
+                dtype.append((name, np.float64))
+            else:
+                dtype.append((name, type(item)))
+
+        #shape = (len(list(ds.m_columns.values())[0]), len(ds.m_columns))
+        shape = (len(list(self.m_columns.values())[0]), )
+        #print("Id:", ds.m_id)
+        #print("Dtype:", dtype)
+        #print("Shape:", shape)
+        self.m_data = np.empty(shape, dtype=dtype)
+        for k,v in self.m_columns.items():
+            self.m_data[k] = v
+            #for i in range(len(v)):
+            #    ds.m_data[k][i] = v[i]
+        #if ds.m_id == "LATHEMI":
+        #    print("Data", ds.m_data)
+
 
     def processL1a(self, cd, inttime = None):
         #print("FitType:", cd.m_fitType)
@@ -92,74 +125,74 @@ class HDFDataset:
         return
 
     def processOPTIC2(self, cd, immersed):
-        self.m_data = self.m_data.astype(float)
+        #self.m_data = self.m_data.astype(float)
         a0 = float(cd.m_coefficients[0])
         a1 = float(cd.m_coefficients[1])
         im = float(cd.m_coefficients[2]) if immersed else 1.0
-        y = self.getColumn(cd.m_id)
+        k = cd.m_id
         for x in range(self.m_data.shape[0]):
-            self.m_data[x,y] = im * a1 * (self.m_data[x,y] - a0)
+            self.m_data[k][x] = im * a1 * (self.m_data[k][x] - a0)
 
     def processOPTIC3(self, cd, immersed, inttime):
-        self.m_data = self.m_data.astype(float)
+        #self.m_data = self.m_data.astype(float)
         a0 = float(cd.m_coefficients[0])
         a1 = float(cd.m_coefficients[1])
         im = float(cd.m_coefficients[2]) if immersed else 1.0
         cint = float(cd.m_coefficients[3])
         #print(inttime.m_data.shape[0], self.m_data.shape[0])
-        y = self.getColumn(cd.m_id)
+        k = cd.m_id
         #print(cint, aint)
         #print(cd.m_id)
         for x in range(self.m_data.shape[0]):
-            aint = inttime.m_data[x, 0]
-            v = self.m_data[x,y]
-            self.m_data[x,y] = im * a1 * (self.m_data[x,y] - a0) * (cint/aint)
+            aint = inttime.m_data[cd.m_type][x]
+            #v = self.m_data[k][x]
+            self.m_data[k][x] = im * a1 * (self.m_data[k][x] - a0) * (cint/aint)
             #if x == 0 and y == 0:
             #    print("" + str(a1) + " * (" + str(v) + " - " + \
             #            str(a0) + ") * (" + str(cint) + "/" + str(aint) + ") = " + str(self.m_data[x,y]))
 
     def processOPTIC4(self, cd, immersed):
-        self.m_data = self.m_data.astype(float)
+        #self.m_data = self.m_data.astype(float)
         a0 = float(cd.m_coefficients[0])
         a1 = float(cd.m_coefficients[1])
         im = float(cd.m_coefficients[2]) if immersed else 1.0
         cint = float(cd.m_coefficients[3])
-        y = self.getColumn(cd.m_id)
+        k = cd.m_id
         aint = 1
         for x in range(self.m_data.shape[0]):
-            self.m_data[x,y] = im * a1 * (self.m_data[x,y] - a0) * (cint/aint)
+            self.m_data[k][x] = im * a1 * (self.m_data[k][x] - a0) * (cint/aint)
 
     def processTHERM1(self, cd):
         return
 
     def processPOW10(self, cd, immersed):
-        self.m_data = self.m_data.astype(float)
+        #self.m_data = self.m_data.astype(float)
         a0 = float(cd.m_coefficients[0])
         a1 = float(cd.m_coefficients[1])
         im = float(cd.m_coefficients[2]) if immersed else 1.0
-        y = self.getColumn(cd.m_id)
+        k = cd.m_id
         for x in range(self.m_data.shape[0]):
-            self.m_data[x,y] = im * pow(10, ((self.m_data[x,y]-a0)/a1))
+            self.m_data[k][x] = im * pow(10, ((self.m_data[k][x]-a0)/a1))
 
     def processPOLYU(self, cd):
-        self.m_data = self.m_data.astype(float)
-        y = self.getColumn(cd.m_id)
+        #self.m_data = self.m_data.astype(float)
+        k = cd.m_id
         for x in range(self.m_data.shape[0]):
             num = 0
             for i in range(0, len(cd.m_coefficients)):
                 a = float(cd.m_coefficients[i])
-                num += a * pow(self.m_data[x,y],i)
-            self.m_data[x,y] = num
+                num += a * pow(self.m_data[k][x],i)
+            self.m_data[k][x] = num
 
     def processPOLYF(self, cd):
-        self.m_data = self.m_data.astype(float)
+        #self.m_data = self.m_data.astype(float)
         a0 = float(cd.m_coefficients[0])
-        y = self.getColumn(cd.m_id)
+        k = cd.m_id
         for x in range(self.m_data.shape[0]):
             num = a0
             for a in cd.m_coefficients[1:]:
-                num *= (self.m_data[x,y] - float(a))
-            self.m_data[x,y] = num
+                num *= (self.m_data[k][x] - float(a))
+            self.m_data[k][x] = num
 
     def processDDMM(self, cd):
         return
@@ -189,8 +222,5 @@ class HDFDataset:
         #for x in np.nditer(self.m_data, flags=['external_loop'], op_flags=['readwrite']):
             #x[...] = datetime.fromtimestamp(x).strftime("%y-%m-%d %H:%M:%S")
 
-    def processDarkCorrection(self, cd, immersed):
-        # L_lightdat = (L_countslightdat - L_caldarkdat) * a * ic * it1/it2
-        pass
-        
-        
+
+
