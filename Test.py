@@ -1,4 +1,5 @@
 
+import collections
 import time
 from datetime import datetime
 
@@ -47,40 +48,100 @@ def readSATHDR(b):
 # ToDo: create more dynamic detection
 def generateContext(root):
     for gp in root.m_groups:
-        line = gp.m_id[gp.m_id.find("_")+1:]
+        frameTag = gp.m_attributes["FrameTag"]
         #print(line)
-        if line == "SATHED0150":
+        if frameTag == "SATHED0150":
             #gp.m_id = "Reference"
-            gp.m_sensorType = "ES"
-            gp.m_frameType = "ShutterDark"
-        elif line == "SATHLD0151":
+            #gp.m_sensorType = "ES"
+            gp.m_attributes["InstrumentType"] = "Reference"
+            gp.m_attributes["Media"] = "Air"
+            gp.m_attributes["MeasMode"] = "Surface"
+            gp.m_attributes["FrameType"] = "ShutterDark"
+            gp.m_attributes["INSTRUMENT_NO"] = "1"
+            gp.getTableHeader("ES")
+            gp.m_attributes["DISTANCE_1"] = "Pressure ES 1 1 0"
+            gp.m_attributes["DISTANCE_2"] = "Surface ES 1 1 0"
+        elif frameTag == "SATHLD0151":
             #gp.m_id = "SAS"
-            gp.m_sensorType = "LI"
-            gp.m_frameType = "ShutterDark"
-        elif line == "SATHLD0152":
+            #gp.m_sensorType = "LI"
+            gp.m_attributes["InstrumentType"] = "SAS"
+            gp.m_attributes["Media"] = "Air"
+            gp.m_attributes["MeasMode"] = "VesselBorne"
+            gp.m_attributes["FrameType"] = "ShutterDark"
+            gp.m_attributes["INSTRUMENT_NO"] = "1"
+            gp.getTableHeader("LI")
+            gp.m_attributes["DISTANCE_1"] = "Pressure LI 1 1 0"
+            gp.m_attributes["DISTANCE_2"] = "Surface LI 1 1 0"
+        elif frameTag == "SATHLD0152":
             #gp.m_id = "SAS"
-            gp.m_sensorType = "LT"
-            gp.m_frameType = "ShutterDark"
-        elif line == "SATHSE0150":
+            #gp.m_sensorType = "LT"
+            gp.m_attributes["InstrumentType"] = "SAS"
+            gp.m_attributes["Media"] = "Air"
+            gp.m_attributes["MeasMode"] = "VesselBorne"
+            gp.m_attributes["FrameType"] = "ShutterDark"
+            gp.m_attributes["INSTRUMENT_NO"] = "1"
+            gp.getTableHeader("LT")
+            gp.m_attributes["DISTANCE_1"] = "Pressure LT 1 1 0"
+            gp.m_attributes["DISTANCE_2"] = "Surface LT 1 1 0"
+        elif frameTag == "SATHSE0150":
             #gp.m_id = "Reference"
-            gp.m_sensorType = "ES"
-            gp.m_frameType = "ShutterLight"
-        elif line == "SATHSL0151":
+            #gp.m_sensorType = "ES"
+            gp.m_attributes["InstrumentType"] = "Reference"
+            gp.m_attributes["Media"] = "Air"
+            gp.m_attributes["MeasMode"] = "Surface"
+            gp.m_attributes["FrameType"] = "ShutterLight"
+            gp.m_attributes["INSTRUMENT_NO"] = "1"
+            gp.getTableHeader("ES")
+            gp.m_attributes["DISTANCE_1"] = "Pressure ES 1 1 0"
+            gp.m_attributes["DISTANCE_2"] = "Surface ES 1 1 0"
+        elif frameTag == "SATHSL0151":
             #gp.m_id = "SAS"
-            gp.m_sensorType = "LI"
-            gp.m_frameType = "ShutterLight"
-        elif line == "SATHSL0152":
+            #gp.m_sensorType = "LI"
+            gp.m_attributes["InstrumentType"] = "SAS"
+            gp.m_attributes["Media"] = "Air"
+            gp.m_attributes["MeasMode"] = "VesselBorne"
+            gp.m_attributes["FrameType"] = "ShutterLight"
+            gp.m_attributes["INSTRUMENT_NO"] = "1"
+            gp.getTableHeader("LI")
+            gp.m_attributes["DISTANCE_1"] = "Pressure LI 1 1 0"
+            gp.m_attributes["DISTANCE_2"] = "Surface LI 1 1 0"
+        elif frameTag == "SATHSL0152":
             #gp.m_id = "SAS"
-            gp.m_sensorType = "LT"
-            gp.m_frameType = "ShutterLight"
-        elif line == "SATSAS0052":
+            #gp.m_sensorType = "LT"
+            gp.m_attributes["InstrumentType"] = "SAS"
+            gp.m_attributes["Media"] = "Air"
+            gp.m_attributes["MeasMode"] = "VesselBorne"
+            gp.m_attributes["FrameType"] = "ShutterLight"
+            gp.m_attributes["INSTRUMENT_NO"] = "1"
+            gp.getTableHeader("LT")
+            gp.m_attributes["DISTANCE_1"] = "Pressure LT 1 1 0"
+            gp.m_attributes["DISTANCE_2"] = "Surface LT 1 1 0"
+        elif frameTag == "SATSAS0052":
             #gp.m_id = "SAS"
-            gp.m_sensorType = "None"
-            gp.m_frameType = "LightAncCombined"
-        elif line == "GPS":
+            #gp.m_sensorType = "None"
+            gp.m_attributes["InstrumentType"] = "SAS"
+            gp.m_attributes["Media"] = "Air"
+            gp.m_attributes["MeasMode"] = "VesselBorne"
+            gp.m_attributes["FrameType"] = "LightAncCombined"
+            gp.m_attributes["INSTRUMENT_NO"] = "1"
+            gp.m_attributes["Head_1"] = "ANC 1 1 None"
+            gp.m_attributes["DISTANCE_1"] = "Pressure ANC 1 1 0"
+            gp.m_attributes["DISTANCE_2"] = "Surface ANC 1 1 0"
+            gp.m_attributes["SN"] = "0052"
+        elif frameTag == "$GPRMC":
             #gp.m_id = "GPS"
-            gp.m_sensorType = "None"
-            gp.m_frameType = "None"
+            #gp.m_sensorType = "None"
+            gp.m_attributes["InstrumentType"] = "GPS"
+            gp.m_attributes["Media"] = "Not Required"
+            gp.m_attributes["MeasMode"] = "Not Required"
+            gp.m_attributes["FrameType"] = "Not Required"
+            gp.m_attributes["INSTRUMENT_NO"] = "1"
+            gp.m_attributes["Head_1"] = "GPS 1 1 None"
+            gp.m_attributes["DISTANCE_1"] = "Pressure GPS 1 1 0"
+            gp.m_attributes["DISTANCE_2"] = "Surface GPS 1 1 0"
+            gp.m_attributes["VLF_INSTRUMENT"] = "$GPRMC"
+
+
 
 
 def readRawFile(filepath, calibrationMap):
@@ -109,7 +170,7 @@ def readRawFile(filepath, calibrationMap):
 
     root = HDFRoot()
     root.m_id = "/"
-    root.m_attributes["PROSOFT"] = "7.16_6"
+    root.m_attributes["PROSOFT"] = "Prosoft 7.7.16_6"
     root.m_attributes["PROSOFT_INSTRUMENT_CONFIG"] = "testcfg"
     root.m_attributes["PROSOFT_PARAMETERS_FILE_NAME"] = "test.mat"
     root.m_attributes["CAL_FILE_NAMES"] = "HED150E2013.cal,HLD151C2013.cal," \
@@ -179,12 +240,6 @@ def readRawFile(filepath, calibrationMap):
     dt = datetime.now()
     dtstr = dt.strftime("%d-%b-%Y %H:%M:%S")
     root.m_attributes["FILE_CREATION_TIME"] = dtstr
-
-    root.m_attributes["Head_1"] = "ES 1 1 355.36"
-    root.m_attributes["Head_2"] = "ES 1 1 358.66"
-    root.m_attributes["Head_3"] = "ES 1 1 361.95"
-    root.m_attributes["Head_4"] = "ES 1 1 365.25"
-    root.m_attributes["Head_5"] = "ES 1 1 368.54"
 
     root.m_groups.append(contextMap["SATHED0150"])
     root.m_groups.append(contextMap["SATHLD0151"])
@@ -262,207 +317,145 @@ def processGPSTime(root):
                 dsTimeTag2.m_data["NONE"][x] = secToTimeTag2(v)
 
 
-def interpolateSpline(xData, xTimer, yTimer, newXData):
-    x = xTimer
-    new_x = yTimer
+def interpolateWavelength(ds, newDS):
 
-    for k in xData.m_data.dtype.fields.keys():
-        y = xData.m_data[k]
-        newXData.m_columns[k] = interpolate.interp1d(x, y, kind='cubic', bounds_error=False)(new_x)
-
-        test = False
-        for i in range(len(newXData.m_columns[k])):
-            if np.isnan(newXData.m_columns[k][i]):
-                #print("NaN")
-                if test:
-                    newXData.m_columns[k][i] = xData.m_data[k][xData.m_data.shape[0]-1]
-                else:
-                    newXData.m_columns[k][i] = xData.m_data[k][0]
-            else:
-                test = True
-
-
-def interpolateLinear(xData, xTimer, yTimer, newXData):
-    x = xTimer
-    new_x = yTimer
-
-    for k in xData.m_data.dtype.fields.keys():
-        y = xData.m_data[k]
-        newXData.m_columns[k] = interpolate.interp1d(x, y, kind='linear', bounds_error=False)(new_x)
-
-        test = False
-        for i in range(len(newXData.m_columns[k])):
-            if np.isnan(newXData.m_columns[k][i]):
-                #print("NaN")
-                if test:
-                    newXData.m_columns[k][i] = xData.m_data[k][xData.m_data.shape[0]-1]
-                else:
-                    newXData.m_columns[k][i] = xData.m_data[k][0]
-            else:
-                test = True
-
-
-# interpolate GPS to match ES using linear interpolation
-def interpolateGPSData(node, esGroup, gpsGroup):
-    print("Interpolate GPS Data2")
-
-    # ES
-    esData = esGroup.getDataset("ES")
-    esDateData = esGroup.getDataset("DATETAG")
-    esTimeData = esGroup.getDataset("TIMETAG2")
-
-    refGroup = node.getGroup("Reference")
-    newESData = refGroup.addDataset("ES_hyperspectral")
-
-    newESData.m_columns["Datetag"] = esDateData.m_data["NONE"].tolist()
-    newESData.m_columns["Timetag2"] = esTimeData.m_data["NONE"].tolist()
-    for k in esData.m_data.dtype.fields.keys():
+    # Copy dataset to dictionary
+    columns = collections.OrderedDict()
+    for k in [x for x,y in sorted(ds.m_data.dtype.fields.items(),key=lambda k: k[1])]:
         #print("type",type(esData.m_data[k]))
-        newESData.m_columns[k] = esData.m_data[k].tolist()
-    newESData.columnsToDataset()
+        columns[k] = ds.m_data[k].tolist()
+    saveDatetag = columns.pop("Datetag")
+    saveTimetag2 = columns.pop("Timetag2")
 
 
-    # GPS
-    gpsTimeData = gpsGroup.getDataset("UTCPOS")
-    gpsCourseData = gpsGroup.getDataset("COURSE")
-    gpsLatPosData = gpsGroup.getDataset("LATPOS")
-    gpsLonPosData = gpsGroup.getDataset("LONPOS")
-    gpsMagVarData = gpsGroup.getDataset("MAGVAR")
-    gpsSpeedData = gpsGroup.getDataset("SPEED")
-
-    gpsGroup = node.getGroup("GPS")
-    newGPSCourseData = gpsGroup.addDataset("COURSE")
-    newGPSLatPosData = gpsGroup.addDataset("LATPOS")
-    newGPSLonPosData = gpsGroup.addDataset("LONPOS")
-    newGPSMagVarData = gpsGroup.addDataset("MAGVAR")
-    newGPSSpeedData = gpsGroup.addDataset("SPEED")
-
-    newGPSCourseData.m_columns["Datetag"] = esDateData.m_data["NONE"].tolist()
-    newGPSCourseData.m_columns["Timetag2"] = esTimeData.m_data["NONE"].tolist()
-    newGPSLatPosData.m_columns["Datetag"] = esDateData.m_data["NONE"].tolist()
-    newGPSLatPosData.m_columns["Timetag2"] = esTimeData.m_data["NONE"].tolist()
-    newGPSLonPosData.m_columns["Datetag"] = esDateData.m_data["NONE"].tolist()
-    newGPSLonPosData.m_columns["Timetag2"] = esTimeData.m_data["NONE"].tolist()
-    newGPSMagVarData.m_columns["Datetag"] = esDateData.m_data["NONE"].tolist()
-    newGPSMagVarData.m_columns["Timetag2"] = esTimeData.m_data["NONE"].tolist()
-    newGPSSpeedData.m_columns["Datetag"] = esDateData.m_data["NONE"].tolist()
-    newGPSSpeedData.m_columns["Timetag2"] = esTimeData.m_data["NONE"].tolist()
+    # Get wavelength values
+    wavelength = []
+    for k in columns:
+        #print(k)
+        wavelength.append(float(k))
+    x = np.asarray(wavelength)
 
 
-    xTimer = []
-    for i in range(gpsTimeData.m_data.shape[0]):
-        xTimer.append(utcToSec(gpsTimeData.m_data["NONE"][i]))
+    # Determine interpolated wavelength values
+    start = np.ceil(wavelength[0])
+    end = np.floor(wavelength[len(wavelength)-1])
+    new_x = np.arange(start, end, 1)
+    #print(new_x)
 
-    yTimer = []
-    for i in range(esTimeData.m_data.shape[0]):
-        yTimer.append(timeTag2ToSec(esTimeData.m_data["NONE"][i]))
+    newColumns = collections.OrderedDict()
+    newColumns["Datetag"] = saveDatetag
+    newColumns["Timetag2"] = saveTimetag2
+    for i in range(new_x.shape[0]):
+        #print(i, new_x[i])
+        newColumns[str(new_x[i])] = []
 
-    
+    # Perform interpolation for each row
+    for i in range(len(saveDatetag)):
+        #print(i)
 
-    # Interpolate
-    interpolateLinear(gpsCourseData, xTimer, yTimer, newGPSCourseData)
-    interpolateLinear(gpsLatPosData, xTimer, yTimer, newGPSLatPosData)
-    interpolateLinear(gpsLonPosData, xTimer, yTimer, newGPSLonPosData)
-    interpolateLinear(gpsMagVarData, xTimer, yTimer, newGPSMagVarData)
-    interpolateLinear(gpsSpeedData, xTimer, yTimer, newGPSSpeedData)
+        values = []
+        for k in columns:
+            values.append(columns[k][i])
+        y = np.asarray(values)
+        new_y = interpolate.interp1d(x, y)(new_x)
+        
+        # Natural log transformation
+        #new_y = np.log(new_y)
+        
+        # Exp transformation
+        #new_y = np.exp(new_y)
 
-
-    newGPSCourseData.columnsToDataset()
-    newGPSLatPosData.columnsToDataset()
-    newGPSLonPosData.columnsToDataset()
-    newGPSMagVarData.columnsToDataset()
-    newGPSSpeedData.columnsToDataset()
-
-
-    #x = darkTimer.m_data["NONE"]
-    #y = darkData.m_data[k]
-    #new_x = lightTimer.m_data["NONE"]
-    #new_y = sp.interpolate.interp1d(x, y, kind='linear', bounds_error=False)(new_x)
-
-
-# interpolate LT to match LI using spline interpolation
-def interpolateSASData(node, liGroup, ltGroup):
-    print("Interpolate SAS Data2")
-
-    # LI
-    liData = liGroup.getDataset("LI")
-    liDateData = liGroup.getDataset("DATETAG")
-    liTimeData = liGroup.getDataset("TIMETAG2")
-
-    sasGroup = node.getGroup("SAS")
-    newLIData = sasGroup.addDataset("LI_hyperspectral")
-    newLTData = sasGroup.addDataset("LT_hyperspectral")
+        for i in range(new_x.shape[0]):
+            newColumns[str(new_x[i])].append(new_y[i])
 
 
-    newLIData.m_columns["Datetag"] = liDateData.m_data["NONE"].tolist()
-    newLIData.m_columns["Timetag2"] = liTimeData.m_data["NONE"].tolist()
-    for k in liData.m_data.dtype.fields.keys():
+    #newDS = HDFDataset()
+    newDS.m_columns = newColumns
+    newDS.columnsToDataset()
+    #print(ds.m_columns)
+    #return newDS
+
+def dataAveraging(ds):
+    # Copy dataset to dictionary
+    columns = collections.OrderedDict()
+    for k in [x for x,y in sorted(ds.m_data.dtype.fields.items(),key=lambda k: k[1])]:
         #print("type",type(esData.m_data[k]))
-        newLIData.m_columns[k] = liData.m_data[k].tolist()
-    newLIData.columnsToDataset()
+        columns[k] = ds.m_data[k].tolist()
+    saveDatetag = columns.pop("Datetag")
+    saveTimetag2 = columns.pop("Timetag2")
+
+    newColumns = collections.OrderedDict()
+
+    # Average data in each column
+    for k in [x for x,y in sorted(ds.m_data.dtype.fields.items(),key=lambda k: k[1])]:
+        #print(k)
+        d = ds.m_data[k]
+
+        # Natural log transformation
+        d = np.log(d)        
+        
+        l = []
+        i = 2
+        while i < (len(ds.m_data[k]) - 2):
+            if k == "Datatag" or k == "Timetag2":
+                l.append(d[i])
+            else:
+                x0 = float(d[i-1])
+                x1 = float(d[i])
+                x2 = float(d[i+1])
+                avg = (x0+x1+x2)/3
+                l.append(avg)
+            i += 2
+
+        # Exp transformation
+        d = np.exp(l)
+
+        newColumns[k] = d
 
 
-    # LT
-    ltTimeData = ltGroup.getDataset("TIMETAG2")
-    ltData = ltGroup.getDataset("LT")
-
-    newLTData.m_columns["Datetag"] = liDateData.m_data["NONE"].tolist()
-    newLTData.m_columns["Timetag2"] = liTimeData.m_data["NONE"].tolist()
-
-
-    xTimer = []
-    for i in range(ltTimeData.m_data.shape[0]):
-        xTimer.append(timeTag2ToSec(ltTimeData.m_data["NONE"][i]))
-
-    yTimer = []
-    for i in range(liTimeData.m_data.shape[0]):
-        yTimer.append(timeTag2ToSec(liTimeData.m_data["NONE"][i]))
+    #newDS = HDFDataset()
+    ds.m_columns = newColumns
+    ds.columnsToDataset()
+    #print(ds.m_columns)
+    #print(len(newColumns["Datetag"]))
+    #return newDS
 
 
-    # interpolate
-    interpolateSpline(ltData, xTimer, yTimer, newLTData)
+def processL3a(root):
 
-    newLTData.columnsToDataset()
+    root3a = HDFRoot()
+    root3a.copyAttributes(root)
+    root3a.m_attributes["PROCESSING_LEVEL"] = "3a"
+    root3a.m_attributes["BIN_INTERVAL"] = "1 m"
+    root3a.m_attributes["BIN_WIDTH"] = "0.5 m"
+    root3a.m_attributes["TIME_INTERVAL"] = "2 sec"
+    root3a.m_attributes["TIME_WIDTH"] = "1 sec"
+    root3a.m_attributes["WAVEL_INTERP"] = "1 nm"
 
+    referenceGroup3a = root3a.addGroup("Reference")
+    sasGroup3a = root3a.addGroup("SAS")
+    root3a.m_groups.append(root.getGroup("GPS"))
 
+    referenceGroup = root.getGroup("Reference")
+    sasGroup = root.getGroup("SAS")
 
-def processL2s2(root, node):
-    esGroup = None
-    gpsGroup = None
-    liGroup = None
-    ltGroup = None
-    for gp in root.m_groups:
-        if gp.m_id.startswith("GPS"):
-            print("GPS")
-            gpsGroup = gp
-        elif gp.hasDataset("ES") and gp.m_frameType == "ShutterLight":
-            print("ES")
-            esGroup = gp
-        elif gp.hasDataset("LI") and gp.m_frameType == "ShutterLight":
-            print("LI")
-            liGroup = gp
-        elif gp.hasDataset("LT") and gp.m_frameType == "ShutterLight":
-            print("LT")
-            ltGroup = gp
+    esData = referenceGroup.getDataset("ES_hyperspectral")
+    liData = sasGroup.getDataset("LI_hyperspectral")
+    ltData = sasGroup.getDataset("LT_hyperspectral")
 
-    interpolateGPSData(node, esGroup, gpsGroup)
-    interpolateSASData(node, liGroup, ltGroup)
+    newESData = referenceGroup3a.addDataset("ES_hyperspectral")
+    newLIData = sasGroup3a.addDataset("LI_hyperspectral")
+    newLTData = sasGroup3a.addDataset("LT_hyperspectral")
 
-def processL2s(root):
-
-    processGPSTime(root)
-
-    root2s = HDFRoot()
-    root2s.copyAttributes(root)
-
-    root2s.addGroup("GPS")
-    root2s.addGroup("Reference")
-    root2s.addGroup("SAS")
-    #root.processL2s(root2s)
-    processL2s2(root, root2s)
+    interpolateWavelength(esData, newESData)
+    interpolateWavelength(liData, newLIData)
+    interpolateWavelength(ltData, newLTData)
     
-    return root2s
+    dataAveraging(newESData)
+    dataAveraging(newLIData)
+    dataAveraging(newLTData)
 
+    return root3a
 
 
 def main():
@@ -475,18 +468,23 @@ def main():
     #root.prnt()
     writeHDFFile("data_L1a.hdf", root)
     root = readHDFFile("data_L1a.hdf")
-    generateContext(root)
     #print("HDFFile:")
     #root.prnt()
+    
+    #gp.m_attributes["Head_1"] = "ES 1 1 355.36"
+    #gp.m_attributes["Head_2"] = "ES 1 1 358.66"
+    #gp.m_attributes["Head_3"] = "ES 1 1 361.95"
+    #gp.m_attributes["Head_4"] = "ES 1 1 365.25"
+    #gp.m_attributes["Head_5"] = "ES 1 1 368.54"
 
 
     print("ProcessL1a:")
-    root.processL1a(calibrationMap)
+    root.processL1b(calibrationMap)
     writeHDFFile("data_L1b.hdf", root)
+
 
     print("ProcessL2:")
     root = readHDFFile("data_L1b.hdf")
-    generateContext(root)
     #print("Start Time:", root.getStartTime())
 
     root.processTIMER()
@@ -497,13 +495,19 @@ def main():
     root.processL2()
     writeHDFFile("data_L2.hdf", root)
     root = readHDFFile("data_L2.hdf")
-    generateContext(root)
 
-    root = processL2s(root)
+
+    print("ProcessL2s:")
+    processGPSTime(root)
+    root = root.processL2s()
     #root.prnt()
     writeHDFFile("data_L2s.hdf", root)
     root = readHDFFile("data_L2s.hdf")
-    generateContext(root)
+    
+    print("ProcessL3a:")
+    root = processL3a(root)
+    writeHDFFile("data_L3a.hdf", root)
+    root = readHDFFile("data_L3a.hdf")
 
 
 if __name__ == "__main__":
