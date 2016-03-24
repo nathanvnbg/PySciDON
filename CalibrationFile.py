@@ -44,6 +44,12 @@ class CalibrationFile:
 
             #cd.prnt()
             self.m_data.append(cd)
+            
+    def getUnits(self, t):
+        for cd in self.m_data:
+            if cd.m_type == t:
+                return cd.m_units
+        return ""
 
 
     def convertRaw(self, f, gp):
@@ -89,6 +95,9 @@ class CalibrationFile:
                     #ds.m_temp.append(v)
                     #ds.addColumn(cd.m_id)
                     ds.appendColumn(cd.m_id, v)
+                else:
+                    # ToDo: move to better position
+                    gp.m_attributes[cdtype] = cd.m_id
 
 
             #print("Key:", key)

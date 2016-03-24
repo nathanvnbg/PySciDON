@@ -88,7 +88,7 @@ class HDFDataset:
         #    print("Data", ds.m_data)
 
 
-    def processL1a(self, cd, inttime = None):
+    def processL1b(self, cd, inttime = None):
         #print("FitType:", cd.m_fitType)
         if cd.m_fitType == "OPTIC1":
             self.processOPTIC1(cd, False)

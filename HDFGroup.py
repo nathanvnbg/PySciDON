@@ -13,8 +13,6 @@ class HDFGroup:
         self.m_id = ""
         self.m_datasets = {}
         self.m_attributes = collections.OrderedDict()
-        self.m_sensorType = ""
-        self.m_frameType = ""
 
 
     def addDataset(self, name):
@@ -36,11 +34,19 @@ class HDFGroup:
         self.m_datasets[name] = ds
         return ds
 
+    def getTableHeader(self, name):
+        cnt = 1
+        ds = self.getDataset(name)
+        for item in ds.m_columns:
+            self.m_attributes["Head_"+str(cnt)] = name + " 1 1 " + item
+            cnt += 1
+
+
 
     def prnt(self):
         print("Group:", self.m_id)
-        print("Sensor Type:", self.m_sensorType)
-        print("Frame Type:", self.m_frameType)
+        #print("Sensor Type:", self.m_sensorType)
+        print("Frame Type:", self.m_attributes["FrameType"])
         for k in self.m_attributes:
             print("Attribute:", k, self.m_attributes[k])
         #    attr.prnt()
@@ -62,7 +68,7 @@ class HDFGroup:
         for k in f.keys():
             item = f.get(k)
             if isinstance(item, h5py.Group):
-                print("HDFRoot should not contain groups")
+                print("HDFGroup should not contain groups")
             elif isinstance(item, h5py.Dataset):
                 #print("Item:", k)
                 ds = HDFDataset()
@@ -102,18 +108,18 @@ class HDFGroup:
         return time
 
 
-    def processL1a(self, cf):
+    def processL1b(self, cf):
         inttime = None
         for cd in cf.m_data:
             if cd.m_type == "INTTIME":
                 #print("Process INTTIME")
                 ds = self.getDataset("INTTIME")
-                ds.processL1a(cd)
+                ds.processL1b(cd)
                 inttime = ds
 
         for cd in cf.m_data:
             if self.hasDataset(cd.m_type) and cd.m_type != "INTTIME":
                 #print("Dataset:", cd.m_type)
                 ds = self.getDataset(cd.m_type)
-                ds.processL1a(cd, inttime)
+                ds.processL1b(cd, inttime)
 
