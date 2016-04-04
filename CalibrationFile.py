@@ -1,5 +1,7 @@
 
+import binascii
 import numpy as np
+import sys
 
 from CalibrationData import CalibrationData
 #from HDFGroup import HDFGroup
@@ -97,7 +99,10 @@ class CalibrationFile:
                     ds.appendColumn(cd.m_id, v)
                 else:
                     # ToDo: move to better position
-                    gp.m_attributes[cdtype] = cd.m_id
+                    if sys.version_info[0] < 3:
+                        gp.m_attributes[cdtype.encode('utf-8')] = cd.m_id
+                    else:
+                        gp.m_attributes[cdtype] = cd.m_id
 
 
             #print("Key:", key)
@@ -114,18 +119,24 @@ class CalibrationFile:
             #print("not gps")
             # date tag
             b = f[nRead:nRead+3]
-            v = int.from_bytes(b, byteorder='big', signed=False)
+            if sys.version_info[0] < 3:
+                v = int(binascii.hexlify(b), 16)
+            else:
+                v = int.from_bytes(b, byteorder='big', signed=False)
             nRead += 3
             #print("Date:",v)
             ds1 = gp.getDataset("DATETAG")
-            ds1.appendColumn("NONE", v)
+            ds1.appendColumn(u"NONE", v)
 
             b = f[nRead:nRead+4]
-            v = int.from_bytes(b, byteorder='big', signed=False)
+            if sys.version_info[0] < 3:
+                v = int(binascii.hexlify(b), 16)
+            else:
+                v = int.from_bytes(b, byteorder='big', signed=False)
             nRead += 4
             #print("Time:",v)
             ds1 = gp.getDataset("TIMETAG2")
-            ds1.appendColumn("NONE", v)
+            ds1.appendColumn(u"NONE", v)
 
 
         return nRead

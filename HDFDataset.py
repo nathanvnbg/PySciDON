@@ -2,6 +2,11 @@
 import collections
 
 from datetime import datetime
+import sys
+
+from pyhdf.HDF import *
+from pyhdf.V import *
+from pyhdf.VS import *
 
 import h5py
 import numpy as np
@@ -12,6 +17,15 @@ class HDFDataset:
         self.m_attributes = collections.OrderedDict()
         self.m_columns = collections.OrderedDict()
         self.m_data = None
+
+
+    def copy(self, ds):
+        self.copyAttributes(ds)
+        self.m_data = np.copy(ds.m_data)
+
+    def copyAttributes(self, ds):
+        for k,v in ds.m_attributes.items():
+            self.m_attributes[k] = v
 
 
     def prnt(self):
@@ -49,6 +63,52 @@ class HDFDataset:
             print("Dataset.write(): Data is None")
 
 
+    def getFloatList(self):
+        l = []
+        for k in [x for x,y in sorted(self.m_data.dtype.fields.items(), key=lambda k: k[1])]:
+            #print("type",type(esData.m_data[k]))
+            l.append(self.m_data[k].tolist())
+        return l
+
+    def writeHDF4(self, vg, vs):
+        if self.m_data is not None:
+            try:
+                name = self.m_id.encode('utf-8')
+                dt = []
+                #print(self.m_data.dtype)
+                for (k,v) in [(x,y[0]) for x,y in sorted(self.m_data.dtype.fields.items(),key=lambda k: k[1])]:
+                    #print("type",k,v)
+                    if v == np.float64:
+                        dt.append((k, HC.FLOAT32, 1))
+                        #print("float")
+                    if v == np.dtype('S1'):
+                        # ToDo: set to correct length
+                        # Note: strings of length 1 are not supported
+                        dt.append((k, HC.CHAR8, 2))
+                        #print("char8")
+                #print(dt)
+
+                vd = vs.create(name, dt)
+
+                records = []
+                for x in range(self.m_data.shape[0]):
+                    rec = []
+                    for t in dt:
+                        item = self.m_data[t[0]][x]
+                        rec.append(item)
+                    records.append(rec)
+                #print(records)
+                vd.write(records)
+                vg.insert(vd)
+
+            except:
+                print("HDFDataset Error:", sys.exc_info()[0])
+            finally:
+                vd.detach()
+
+        else:
+            print("Dataset.write(): Data is None")
+
 
     def getColumn(self, name):
         return self.m_columns[name]
@@ -65,6 +125,11 @@ class HDFDataset:
         #dtype0 = np.dtype([(name, type(ds.m_columns[name][0])) for name in ds.m_columns.keys()])
         dtype = []
         for name in self.m_columns.keys():
+
+            # Numpy dtype column name cannot be unicode in Python 2
+            if sys.version_info[0] < 3:
+                name = name.encode('utf-8')
+        
             item = self.m_columns[name][0]
             if isinstance(item, bytes):
                 #dtype.append((name, h5py.special_dtype(vlen=str)))
@@ -76,7 +141,7 @@ class HDFDataset:
 
         #shape = (len(list(ds.m_columns.values())[0]), len(ds.m_columns))
         shape = (len(list(self.m_columns.values())[0]), )
-        #print("Id:", ds.m_id)
+        #print("Id:", self.m_id)
         #print("Dtype:", dtype)
         #print("Shape:", shape)
         self.m_data = np.empty(shape, dtype=dtype)

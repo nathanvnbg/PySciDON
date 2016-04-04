@@ -1,8 +1,13 @@
 
 import collections
 
+from pyhdf.HDF import *
+from pyhdf.V import *
+from pyhdf.VS import *
+
 import h5py
 import numpy as np
+import sys
 #import scipy as sp
 from scipy import interpolate
 
@@ -13,6 +18,17 @@ class HDFGroup:
         self.m_id = ""
         self.m_datasets = {}
         self.m_attributes = collections.OrderedDict()
+
+
+    def copy(self, gp):
+        self.copyAttributes(gp)
+        for k, ds in gp.m_datasets.items():
+            newDS = self.addDataset(ds.m_id)
+            newDS.copy(ds)
+
+    def copyAttributes(self, gp):
+        for k,v in gp.m_attributes.items():
+            self.m_attributes[k] = v
 
 
     def addDataset(self, name):
@@ -84,6 +100,24 @@ class HDFGroup:
         for key,ds in self.m_datasets.items():
             #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
             ds.write(f)
+
+    def writeHDF4(self, v, vs):
+        print("Group:", self.m_id)
+        name = self.m_id[:self.m_id.find("_")]
+        if sys.version_info[0] < 3:
+            #vg = v.create(self.m_id.encode('utf-8'))
+            vg = v.create(name.encode('utf-8'))
+        else:
+            #vg = v.create(self.m_id)
+            vg = v.create(name)
+
+        for k in self.m_attributes:
+            attr = vg.attr(k)
+            attr.set(HC.CHAR8, self.m_attributes[k])
+
+        for key,ds in self.m_datasets.items():
+            #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
+            ds.writeHDF4(vg, vs)
 
 
     def getStartTime(self, time = 999999):

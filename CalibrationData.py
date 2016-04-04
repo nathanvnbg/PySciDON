@@ -1,5 +1,8 @@
 
+import binascii
+import math
 import struct
+import sys
 
 class CalibrationData:
     def __init__(self):
@@ -30,21 +33,46 @@ class CalibrationData:
 
     def readCoefficients(self, line):
         self.m_coefficients = line.split()
-        
+
+
+    def intFromBytes(self, data, byteorder='big', signed=False):
+        #print("Data",data)
+        if byteorder == 'little':
+            data = reversed(data)
+        val = int(binascii.hexlify(data), 16)
+        if signed:
+            bits = 4 * (len(val) - 1)
+            if val >= math.pow(2, bits-1):
+                val = int(0 - (math.pow(2, bits) - val))
+        return val
+
+
     def convertRaw(self, b):
         v = 0
         dataType = self.m_dataType.upper()
         if dataType == "BU":
-            v = int.from_bytes(b, byteorder='big', signed=False)
+            if sys.version_info[0] < 3:
+                v = self.intFromBytes(b, 'big', False)
+            else:
+                v = int.from_bytes(b, byteorder='big', signed=False)
             #print("bu", v)
         elif dataType == "BULE":
-            v = int.from_bytes(b, byteorder='little', signed=False)
+            if sys.version_info[0] < 3:
+                v = self.intFromBytes(b, 'little', False)
+            else:
+                v = int.from_bytes(b, byteorder='little', signed=False)
             #print("bule", v)
         elif dataType == "BS":
-            v = int.from_bytes(b, byteorder='big', signed=True)
+            if sys.version_info[0] < 3:
+                v = self.intFromBytes(b, 'big', True)
+            else:
+                v = int.from_bytes(b, byteorder='big', signed=True)
             #print("bs", v)
         elif dataType == "BSLE":
-            v = int.from_bytes(b, byteorder='little', signed=True)
+            if sys.version_info[0] < 3:
+                v = self.intFromBytes(b, 'little', True)
+            else:
+                v = int.from_bytes(b, byteorder='little', signed=True)
             #print("bsle", v)
         elif dataType == "BF":
             v = struct.unpack("f", b)[0]
