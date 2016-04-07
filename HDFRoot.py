@@ -16,6 +16,9 @@ from scipy import interpolate
 from HDFGroup import HDFGroup
 from HDFDataset import HDFDataset
 
+from Utilities import Utilities
+
+
 #from CalibrationFileReader import CalibrationFileReader
 from RawFileReader import RawFileReader
 
@@ -135,25 +138,37 @@ class HDFRoot:
             hdfFile.close()
 
 
-    def processL1a(self, calibrationMap):
+    def processL1a(self, calibrationMap, fp):
 
         root = HDFRoot()
         root.m_id = "/"
         root.m_attributes["PROSOFT"] = "Prosoft 7.7.16_6"
         root.m_attributes["PROSOFT_INSTRUMENT_CONFIG"] = "testcfg"
         root.m_attributes["PROSOFT_PARAMETERS_FILE_NAME"] = "test.mat"
+        
+        # ToDo: implement method to retrieve file names
         root.m_attributes["CAL_FILE_NAMES"] = "HED150E2013.cal,HLD151C2013.cal," \
             "HLD152C2013.cal,HSE150E2013.cal,HSL151C2013.cal,HSL152C2013.cal," \
             "MPR052a.cal,GPRMC_NoMode.TDF"
+
         root.m_attributes["WAVELENGTH_UNITS"] = "nm"
         root.m_attributes["LU_UNITS"] = "count"
         root.m_attributes["ED_UNITS"] = "count"
         root.m_attributes["ES_UNITS"] = "count"
         root.m_attributes["RAW_FILE_NAME"] = "data.raw"
 
+        contextMap = collections.OrderedDict()
 
-        contextMap = {}
+        for key in calibrationMap:
+            cf = calibrationMap[key]
+            gp = HDFGroup()
+            gp.m_id = cf.m_instrumentType
+            contextMap[key] = gp # ToDo: contextMap use frameTag as key
 
+        #print("contextMap:", list(contextMap.keys()))
+
+
+        '''
         contextMap["SATHED0150"] = HDFGroup()
         contextMap["SATHLD0151"] = HDFGroup()
         contextMap["SATHLD0152"] = HDFGroup()
@@ -170,11 +185,26 @@ class HDFRoot:
         contextMap["SATHSL0152"].m_id = "SAS"
         contextMap["SATSAS0052"].m_id = "SAS"
         contextMap["$GPRMC"].m_id = "GPS"
+        '''
 
         #calibrationMap = CalibrationFileReader.read("cal2013.sip")
         #print("calibrationMap:", list(calibrationMap.keys()))
-        root = RawFileReader.readRawFile("data.raw", calibrationMap, contextMap, root)
+        root = RawFileReader.readRawFile(fp, calibrationMap, contextMap, root)
 
+        for key in calibrationMap:
+            cf = calibrationMap[key]
+            gp = contextMap[key]
+            gp.m_attributes["InstrumentType"] = cf.m_instrumentType
+            gp.m_attributes["Media"] = cf.m_media
+            gp.m_attributes["MeasMode"] = cf.m_measMode
+            gp.m_attributes["FrameType"] = cf.m_frameType
+            gp.m_attributes["INSTRUMENT_NO"] = "1"
+            gp.getTableHeader(cf.m_sensorType)
+            gp.m_attributes["DISTANCE_1"] = "Pressure " + cf.m_sensorType + " 1 1 0"
+            gp.m_attributes["DISTANCE_2"] = "Surface " + cf.m_sensorType + " 1 1 0"
+            root.m_groups.append(gp)
+
+        '''
         root.m_groups.append(contextMap["SATHED0150"])
         root.m_groups.append(contextMap["SATHLD0151"])
         root.m_groups.append(contextMap["SATHLD0152"])
@@ -183,18 +213,16 @@ class HDFRoot:
         root.m_groups.append(contextMap["SATHSL0152"])
         root.m_groups.append(contextMap["SATSAS0052"])
         root.m_groups.append(contextMap["$GPRMC"])
-
+        '''
 
         root.m_attributes["PROCESSING_LEVEL"] = "1a"
         dt = datetime.now()
         dtstr = dt.strftime("%d-%b-%Y %H:%M:%S")
         root.m_attributes["FILE_CREATION_TIME"] = dtstr
-
         for gp in root.m_groups:
             for ds in gp.m_datasets.values():
                 ds.columnsToDataset()
-
-        RawFileReader.generateContext(root)
+        #RawFileReader.generateContext(root)
 
         return root
 
@@ -216,7 +244,7 @@ class HDFRoot:
         return time
 
 
-    def processL1b(self, calibrationMap):
+    def processL1b(self, calibrationMap): # ToDo: Switch to contextMap
         root = HDFRoot()
         root.copy(self)
 
@@ -296,60 +324,6 @@ class HDFRoot:
         ltDarkDataset = ltDarkGroup.getDataset("LT")
         self.dataDeglitching(ltDarkDataset)
 
-    '''
-    def processDarkColumn(self, k, darkData, darkTimer, lightTimer, newDarkData):
-        #print(darkTimer.m_data)
-        x = darkTimer.m_data["NONE"]
-        y = darkData.m_data[k]
-        new_x = lightTimer.m_data["NONE"]
-        new_y = interpolate.interp1d(x, y, kind='linear', bounds_error=False)(new_x)
-
-        test = False
-        for i in range(len(new_y)):
-            if np.isnan(new_y[i]):
-                #print("NaN")
-                if test:
-                    new_y[i] = darkData.m_data[k][darkData.m_data.shape[0]-1]
-                else:
-                    new_y[i] = darkData.m_data[k][0]
-            else:
-                test = True
-
-        newDarkData[k] = new_y
-        '''
-
-    def processDarkColumn(self, k, darkData, darkTimer, lightTimer, newDarkData):
-        #print(darkTimer.m_data)
-        x = np.copy(darkTimer.m_data["NONE"]).tolist()
-        y = np.copy(darkData.m_data[k]).tolist()
-        new_x = lightTimer.m_data["NONE"]
-
-        n = len(x)-1
-        if new_x[n] > x[n]:
-            #print(new_x[n], x[n])
-            x.append(new_x[n])
-            y.append(y[n])
-        if new_x[0] < x[0]:
-            #print(new_x[0], x[0])
-            x.insert(0, new_x[0])
-            y.insert(0, y[0])
-
-        new_y = interpolate.interp1d(x, y, kind='linear', bounds_error=False)(new_x)
-
-        test = False
-        for i in range(len(new_y)):
-            if np.isnan(new_y[i]):
-                #print("NaN")
-                if test:
-                    new_y[i] = darkData.m_data[k][darkData.m_data.shape[0]-1]
-                else:
-                    new_y[i] = darkData.m_data[k][0]
-            else:
-                test = True
-
-        newDarkData[k] = new_y
-
-
 
     def processDarkCorrection(self, sensorType):
         darkData = None
@@ -379,10 +353,13 @@ class HDFRoot:
         #print(darkData.m_data.dtype.fields.keys())
         #for y in range(darkData.m_data.shape[1]):
         for k in darkData.m_data.dtype.fields.keys():
-            self.processDarkColumn(k, darkData, darkTimer, lightTimer, newDarkData)
+            x = np.copy(darkTimer.m_data["NONE"]).tolist()
+            y = np.copy(darkData.m_data[k]).tolist()
+            new_x = lightTimer.m_data["NONE"]
+            newDarkData[k] = Utilities.interp(x,y,new_x,'linear')
 
-        print(lightData.m_data.shape)
-        print(newDarkData.shape)
+        #print(lightData.m_data.shape)
+        #print(newDarkData.shape)
         darkData.m_data = newDarkData
 
         # Get corrected data by subtract interpolated dark data from light data
@@ -418,32 +395,6 @@ class HDFRoot:
         return root
 
 
-    def utcToSec(self, utc):
-        t = str(int(utc))
-        #print(s)
-        #print(s[:2], s[2:4], s[4:])
-        h = int(t[:2])
-        m = int(t[2:4])
-        s = int(t[4:])
-        return ((h*60)+m)*60+s
-
-    def secToTimeTag2(self, sec):
-        #return float(time.strftime("%H%M%S", time.gmtime(sec)))
-        t = sec * 1000
-        s, ms = divmod(t, 1000)
-        m, s = divmod(s, 60)
-        h, m = divmod(m, 60)
-        return float("%d%02d%02d%03d" % (h, m, s, ms))
-    
-    def timeTag2ToSec(self, tt2):
-        t = str(int(tt2))
-        h = int(t[:2])
-        m = int(t[2:4])
-        s = int(t[4:6])
-        ms = int(t[6:])
-        return ((h*60)+m)*60+s+(float(ms)/1000.0)
-
-
     # recalculate TimeTag2 to follow GPS UTC time
     def processGPSTime(self):
         sec = 0
@@ -451,7 +402,7 @@ class HDFRoot:
         for gp in self.m_groups:
             if gp.m_id.startswith("GPS"):
                 ds = gp.getDataset("UTCPOS")
-                sec = self.utcToSec(ds.m_data["NONE"][0])
+                sec = Utilities.utcToSec(ds.m_data["NONE"][0])
                 #print("GPS UTCPOS:", ds.m_data["NONE"][0], "-> sec:", sec)
                 #print(secToUtc(sec))
 
@@ -461,49 +412,15 @@ class HDFRoot:
                 dsTimeTag2 = gp.getDataset("TIMETAG2")
                 for x in range(dsTimeTag2.m_data.shape[0]):
                     v = dsTimer.m_data["NONE"][x] + sec
-                    dsTimeTag2.m_data["NONE"][x] = self.secToTimeTag2(v)
+                    dsTimeTag2.m_data["NONE"][x] = Utilities.secToTimeTag2(v)
 
 
-    def interpolateSpline(self, xData, xTimer, yTimer, newXData):
-        x = xTimer
-        new_x = yTimer
-
+    def interpolateL2s(self, xData, xTimer, yTimer, newXData, kind='linear'):
         for k in [k for k,v in sorted(xData.m_data.dtype.fields.items(),key=lambda k: k[1])]:
-            y = xData.m_data[k]
-            newXData.m_columns[k] = interpolate.interp1d(x, y, kind='cubic', bounds_error=False)(new_x)
-
-            test = False
-            for i in range(len(newXData.m_columns[k])):
-                if np.isnan(newXData.m_columns[k][i]):
-                    #print("NaN")
-                    if test:
-                        newXData.m_columns[k][i] = xData.m_data[k][xData.m_data.shape[0]-1]
-                    else:
-                        newXData.m_columns[k][i] = xData.m_data[k][0]
-                else:
-                    test = True
-
-
-    def interpolateLinear(self, xData, xTimer, yTimer, newXData):
-        x = xTimer
-        new_x = yTimer
-
-        for k in [k for k,v in sorted(xData.m_data.dtype.fields.items(),key=lambda k: k[1])]:
-            y = xData.m_data[k]
-
-            newXData.m_columns[k] = interpolate.interp1d(x, y, kind='linear', bounds_error=False)(new_x)
-
-            test = False
-            for i in range(len(newXData.m_columns[k])):
-                if np.isnan(newXData.m_columns[k][i]):
-                    #print("NaN")
-                    if test:
-                        newXData.m_columns[k][i] = xData.m_data[k][xData.m_data.shape[0]-1]
-                    else:
-                        newXData.m_columns[k][i] = xData.m_data[k][0]
-                else:
-                    test = True
-
+            x = list(xTimer)
+            new_x = list(yTimer)
+            y = np.copy(xData.m_data[k]).tolist()
+            newXData.m_columns[k] = Utilities.interp(x, y, new_x, kind)
 
     # interpolate GPS to match ES using linear interpolation
     def interpolateGPSData(self, node, esGroup, gpsGroup):
@@ -554,19 +471,19 @@ class HDFRoot:
 
         xTimer = []
         for i in range(gpsTimeData.m_data.shape[0]):
-            xTimer.append(self.utcToSec(gpsTimeData.m_data["NONE"][i]))
+            xTimer.append(Utilities.utcToSec(gpsTimeData.m_data["NONE"][i]))
     
         yTimer = []
         for i in range(esTimeData.m_data.shape[0]):
-            yTimer.append(self.timeTag2ToSec(esTimeData.m_data["NONE"][i]))
+            yTimer.append(Utilities.timeTag2ToSec(esTimeData.m_data["NONE"][i]))
 
 
         # Interpolate
-        self.interpolateLinear(gpsCourseData, xTimer, yTimer, newGPSCourseData)
-        self.interpolateLinear(gpsLatPosData, xTimer, yTimer, newGPSLatPosData)
-        self.interpolateLinear(gpsLonPosData, xTimer, yTimer, newGPSLonPosData)
-        self.interpolateLinear(gpsMagVarData, xTimer, yTimer, newGPSMagVarData)
-        self.interpolateLinear(gpsSpeedData, xTimer, yTimer, newGPSSpeedData)
+        self.interpolateL2s(gpsCourseData, xTimer, yTimer, newGPSCourseData, 'linear')
+        self.interpolateL2s(gpsLatPosData, xTimer, yTimer, newGPSLatPosData, 'linear')
+        self.interpolateL2s(gpsLonPosData, xTimer, yTimer, newGPSLonPosData, 'linear')
+        self.interpolateL2s(gpsMagVarData, xTimer, yTimer, newGPSMagVarData, 'linear')
+        self.interpolateL2s(gpsSpeedData, xTimer, yTimer, newGPSSpeedData, 'linear')
 
 
         newGPSCourseData.columnsToDataset()
@@ -614,15 +531,16 @@ class HDFRoot:
     
         xTimer = []
         for i in range(ltTimeData.m_data.shape[0]):
-            xTimer.append(self.timeTag2ToSec(ltTimeData.m_data["NONE"][i]))
+            xTimer.append(Utilities.timeTag2ToSec(ltTimeData.m_data["NONE"][i]))
     
         yTimer = []
         for i in range(liTimeData.m_data.shape[0]):
-            yTimer.append(self.timeTag2ToSec(liTimeData.m_data["NONE"][i]))
+            yTimer.append(Utilities.timeTag2ToSec(liTimeData.m_data["NONE"][i]))
     
     
         # interpolate
-        self.interpolateSpline(ltData, xTimer, yTimer, newLTData)
+        print('a')
+        self.interpolateL2s(ltData, xTimer, yTimer, newLTData, 'cubic')
     
         newLTData.columnsToDataset()
 
@@ -756,7 +674,7 @@ class HDFRoot:
         # convert timetag2 to seconds
         timer = []
         for i in range(len(saveTimetag2)):
-            timer.append(self.timeTag2ToSec(saveTimetag2[i]))
+            timer.append(Utilities.timeTag2ToSec(saveTimetag2[i]))
 
         # new data to return
         newColumns = collections.OrderedDict()

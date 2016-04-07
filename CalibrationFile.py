@@ -1,5 +1,6 @@
 
 import binascii
+import os
 import numpy as np
 import sys
 
@@ -13,6 +14,13 @@ class CalibrationFile:
         self.m_id = ""
         self.m_name = ""
         self.m_data = []
+        
+        self.m_instrumentType = ""
+        self.m_media = ""
+        self.m_measMode = ""
+        self.m_frameType = ""
+        self.m_sensorType = ""
+
 
     def prnt(self):
         if len(self.m_id) != 0:
@@ -21,9 +29,12 @@ class CalibrationFile:
             cd.prnt()
 
     def read(self, f):
-        self.m_name = f.name
+        (dirpath, filename) = os.path.split(f.name)
+        self.m_name = filename
         while 1:
-            line = f.readline().decode("utf-8")
+            line = f.readline()
+            if sys.version_info[0] < 3:
+                line = line.decode("utf-8")
             #print(line)
             if not line:
                 break

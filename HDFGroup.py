@@ -51,11 +51,12 @@ class HDFGroup:
         return ds
 
     def getTableHeader(self, name):
-        cnt = 1
-        ds = self.getDataset(name)
-        for item in ds.m_columns:
-            self.m_attributes["Head_"+str(cnt)] = name + " 1 1 " + item
-            cnt += 1
+        if name != "None":
+            cnt = 1
+            ds = self.getDataset(name)
+            for item in ds.m_columns:
+                self.m_attributes["Head_"+str(cnt)] = name + " 1 1 " + item
+                cnt += 1
 
 
 

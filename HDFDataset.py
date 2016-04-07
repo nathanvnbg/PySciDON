@@ -27,6 +27,12 @@ class HDFDataset:
         for k,v in ds.m_attributes.items():
             self.m_attributes[k] = v
 
+#    def getData(self, name='NONE'):
+#        return self.m_data[name]
+
+#    def setData(self, name, data):
+#        self.m_data[name] = data
+
 
     def prnt(self):
         print("Dataset:", self.m_id)
