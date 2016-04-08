@@ -33,8 +33,7 @@ class CalibrationFile:
         self.m_name = filename
         while 1:
             line = f.readline()
-            if sys.version_info[0] < 3:
-                line = line.decode("utf-8")
+            line = line.decode("utf-8")
             #print(line)
             if not line:
                 break

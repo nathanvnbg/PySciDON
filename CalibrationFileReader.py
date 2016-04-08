@@ -19,11 +19,11 @@ class CalibrationFileReader:
                 #print("infile:", name)
                 if os.path.splitext(name)[1].lower() == ".cal" or \
                    os.path.splitext(name)[1].lower() == ".tdf":
-                    with open(os.path.join(dirpath, name)) as f:
+                    with open(os.path.join(dirpath, name), 'rb') as f:
                         cf = CalibrationFile()
                         cf.read(f)
                         #print("id:", cf.m_id)
-                        calibrationMap[cf.m_id] = cf # ToDo: calibrationMap to use filename as key
+                        calibrationMap[name] = cf
             break
 
         return calibrationMap
@@ -35,13 +35,13 @@ class CalibrationFileReader:
 
         with zipfile.ZipFile(fp, 'r') as zf:
             for finfo in zf.infolist():
-                #print("infile:", finfo.filename)
+                print("infile:", finfo.filename)
                 if os.path.splitext(finfo.filename)[1].lower() == ".cal" or \
                    os.path.splitext(finfo.filename)[1].lower() == ".tdf":
                     with zf.open(finfo) as f:
                         cf = CalibrationFile()
                         cf.read(f)
                         #print("id:", cf.m_id)
-                        calibrationMap[cf.m_id] = cf
+                        calibrationMap[finfo.filename] = cf
 
         return calibrationMap

@@ -163,7 +163,7 @@ class HDFRoot:
             cf = calibrationMap[key]
             gp = HDFGroup()
             gp.m_id = cf.m_instrumentType
-            contextMap[key] = gp # ToDo: contextMap use frameTag as key
+            contextMap[cf.m_id] = gp # ToDo: contextMap use frameTag as key
 
         #print("contextMap:", list(contextMap.keys()))
 
@@ -193,7 +193,7 @@ class HDFRoot:
 
         for key in calibrationMap:
             cf = calibrationMap[key]
-            gp = contextMap[key]
+            gp = contextMap[cf.m_id]
             gp.m_attributes["InstrumentType"] = cf.m_instrumentType
             gp.m_attributes["Media"] = cf.m_media
             gp.m_attributes["MeasMode"] = cf.m_measMode
@@ -249,10 +249,13 @@ class HDFRoot:
         root.copy(self)
 
         root.m_attributes["PROCESSING_LEVEL"] = "1b"
-        
-        cf = calibrationMap["SATHSE0150"]
+
+        # ToDo: Add better detection
+        #cf = calibrationMap["SATHSE0150"]
+        cf = calibrationMap["HSE150E2013.cal"]
         esUnits = cf.getUnits("ES")
-        cf = calibrationMap["SATHSL0151"]
+        #cf = calibrationMap["SATHSL0151"]
+        cf = calibrationMap["HSL151C2013.cal"]
         luUnits = cf.getUnits("LI")
 
         root.m_attributes["LU_UNITS"] = luUnits
@@ -260,7 +263,8 @@ class HDFRoot:
         root.m_attributes["ES_UNITS"] = esUnits
         
         for gp in root.m_groups:
-            cf = calibrationMap[gp.m_attributes["FrameTag"]]
+            #cf = calibrationMap[gp.m_attributes["FrameTag"]]
+            cf = calibrationMap[gp.m_attributes["CalFileName"]]
             #print(gp.m_id, gp.m_attributes)
             print("File:", cf.m_id)
             gp.processL1b(cf)

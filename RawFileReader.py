@@ -57,7 +57,8 @@ class RawFileReader:
                         break
                     else:
                         for key in calibrationMap:
-                            if testString.startswith(key.upper().encode("utf-8")):
+                            cf = calibrationMap[key]
+                            if testString.startswith(cf.m_id.upper().encode("utf-8")):
                                 if i > 0:
                                     fp.read(i)
 
@@ -66,14 +67,14 @@ class RawFileReader:
                                 fp.seek(pos)
 
                                 #gp = contextMap[key.lower()]
-                                gp = contextMap[key]
+                                gp = contextMap[cf.m_id]
                                 if len(gp.m_attributes) == 0:
-                                    gp.m_id += "_" + key
-                                    gp.m_attributes["CalFileName"] = calibrationMap[key].m_name
-                                    gp.m_attributes["FrameTag"] = key
+                                    gp.m_id += "_" + cf.m_id
+                                    gp.m_attributes["CalFileName"] = key
+                                    gp.m_attributes["FrameTag"] = cf.m_id
 
                                 #cf = calibrationMap[key.lower()]
-                                cf = calibrationMap[key]
+                                #cf = calibrationMap[key]
                                 num = cf.convertRaw(b, gp)
                                 fp.read(num)
 

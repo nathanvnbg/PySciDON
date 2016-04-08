@@ -83,6 +83,7 @@ class Controller:
     def processCalibration(calPath):
         print("ReadCalibrationFile")
         calibrationMap = CalibrationFileReader.read(calPath)
+        #calibrationMap = CalibrationFileReader.readSip("cal2013.sip")
         print("calibrationMap:", list(calibrationMap.keys()))
         Controller.generateContext(calibrationMap)
         return calibrationMap
@@ -159,11 +160,126 @@ class CalibrationConfigWidget(QtGui.QWidget):
         super(CalibrationConfigWidget, self).__init__()
         self.initUI()
 
+    def setCalibrationMap(self, c):
+        self.calibrationMap = c
+
+
     def closeButtonClicked(self):
         self.close()
 
-    def listWidgetClicked(self,item):
-        QMessageBox.information(self, "ListWidget", "You clicked: "+item.text())
+    def setInstrumentTypeComboBox(self, value="Default"):
+        self.instrumentTypeComboBox.clear()
+        items = ["Profiler", "Reference", "TACCS", "SAS", "GPS", "ECO Series IOP"]
+        self.instrumentTypeComboBox.addItems(items)
+
+        if value != "Default":
+            index = items.index(value)
+            print(value, items, index)
+            if index >= 0:
+                self.instrumentTypeComboBox.setCurrentIndex(index)
+
+    def setImmersionCoefficientComboBox(self, instrumentType, value="Default"):
+        self.immersionCoefficientComboBox.clear()
+        items = []
+        if instrumentType == "Profiler":
+            items = ["Water"]
+        elif instrumentType == "Reference":
+            items = ["Air", "Water"]
+        elif instrumentType == "TACCS":
+            items = ["Water"]
+        elif instrumentType == "SAS":
+            items = ["Air"]
+        elif instrumentType == "GPS":
+            items = ["Not Required"]
+        elif instrumentType == "ECO Series IOP":
+            items = ["Not Required"]
+        self.immersionCoefficientComboBox.addItems(items)
+
+        if value != "Default":
+            index = items.index(value)
+            print(value, items, index)
+            if index >= 0:
+                self.immersionCoefficientComboBox.setCurrentIndex(index)
+
+
+    def setMeasurementModeComboBox(self, instrumentType, value="Default"):
+        self.measurementModeComboBox.clear()
+        items = []
+        if instrumentType == "Profiler":
+            items = ["Freefall"]
+        elif instrumentType == "Reference":
+            items = ["Surface", "Logger"]
+        elif instrumentType == "TACCS":
+            items = ["Chain"]
+        elif instrumentType == "SAS":
+            items = ["VesselBorne", "AirBorne"]
+        elif instrumentType == "GPS":
+            items = ["Not Required"]
+        elif instrumentType == "ECO Series IOP":
+            items = ["Freefall", "Surface"]
+        self.measurementModeComboBox.addItems(items)
+
+        if value != "Default":
+            index = items.index(value)
+            print(value, items, index)
+            if index >= 0:
+                self.measurementModeComboBox.setCurrentIndex(index)
+
+
+    def setFrameTypeComboBox(self, instrumentType, value="Default"):
+        self.frameTypeComboBox.clear()
+        items = []
+        if instrumentType == "Profiler":
+            items = ["ShutterLight", "ShutterDark", "Anc", "LightAncCombined"]
+            if value == "Default":
+                value = "LightAncCombined"
+        elif instrumentType == "Reference":
+            items = ["ShutterLight", "ShutterDark", "Anc", "LightAncCombined"]
+            if value == "Default":
+                value = "LightAncCombined"
+        elif instrumentType == "TACCS":
+            items = ["LightAncCombined"]
+        elif instrumentType == "SAS":
+            items = ["ShutterLight", "ShutterDark", "Anc", "LightAncCombined"]
+            if value == "Default":
+                value = "LightAncCombined"
+        elif instrumentType == "GPS":
+            items = ["Not Required"]
+        elif instrumentType == "ECO Series IOP":
+            items = ["Not Required"]
+        self.frameTypeComboBox.addItems(items)
+
+        if value != "Default":
+            index = items.index(value)
+            print(value, items, index)
+            if index >= 0:
+                print("test")
+                self.frameTypeComboBox.setCurrentIndex(index)
+
+
+
+    def listWidgetClicked(self, item):
+        print("List Clicked:", item.text())
+        #QtGui.QMessageBox.information(self, "ListWidget", "You clicked: "+item.text())
+
+        cf = self.calibrationMap[item.text()]
+
+        print("id", cf.m_id)
+        self.frameTagLabel.setText(cf.m_id)
+
+
+        print("instrumentType", cf.m_instrumentType)
+        self.setInstrumentTypeComboBox(cf.m_instrumentType)
+
+        print("immersionCoefficient", cf.m_media)
+        self.setImmersionCoefficientComboBox(cf.m_instrumentType, cf.m_media)
+
+        print("measurementMode", cf.m_measMode)
+        self.setMeasurementModeComboBox(cf.m_instrumentType, cf.m_measMode)
+    
+        print("frameType", cf.m_frameType)
+        self.setFrameTypeComboBox(cf.m_instrumentType, cf.m_frameType)
+
 
     def initUI(self):
         vbox = QtGui.QVBoxLayout()
@@ -171,37 +287,58 @@ class CalibrationConfigWidget(QtGui.QWidget):
         lSensors = QtGui.QLabel()
         lSensors.setText("Sensors")
         vbox.addWidget(lSensors)
-    
+
+
         lFrameTag = QtGui.QLabel()
         lFrameTag.setText("Frame Tag")
         vbox.addWidget(lFrameTag)
 
-        lFrameTag2 = QtGui.QLabel()
-        lFrameTag2.setText("Frame Tag")
-        lFrameTag2.setStyleSheet("QLabel { background-color : white; color : black; }")
-        vbox.addWidget(lFrameTag2)
-    
+        self.frameTagLabel = QtGui.QLabel()
+        self.frameTagLabel.setText("Frame Tag Label")
+        self.frameTagLabel.setStyleSheet("QLabel { background-color : white; color : black; }")
+        vbox.addWidget(self.frameTagLabel)
+
+
         lInstrumentType = QtGui.QLabel()
         lInstrumentType.setText("Instrument Type")
         vbox.addWidget(lInstrumentType)
 
-        cb = QtGui.QComboBox()
-        cb.addItems(["1", "2", "3"])
-        #cb.currentIndexChanged.connect(self.selectionchange)
-        vbox.addWidget(cb)
+        self.instrumentTypeComboBox = QtGui.QComboBox()
+        #self.instrumentTypeComboBox.addItems(["1", "2", "3"])
+        #self.instrumentTypeComboBox.currentIndexChanged.connect(self.selectionchange)
+        vbox.addWidget(self.instrumentTypeComboBox)
+
 
         lImmersionCoefficient = QtGui.QLabel()
         lImmersionCoefficient.setText("Immersion Coefficient")
         vbox.addWidget(lImmersionCoefficient)
 
+        self.immersionCoefficientComboBox = QtGui.QComboBox()
+        #self.immersionCoefficientComboBox.addItems(["1", "2", "3"])
+        #self.immersionCoefficientComboBox.currentIndexChanged.connect(self.selectionchange)
+        vbox.addWidget(self.immersionCoefficientComboBox)
+
+
         lMeasurementMode = QtGui.QLabel()
         lMeasurementMode.setText("Measurement Mode")
         vbox.addWidget(lMeasurementMode)
 
+        self.measurementModeComboBox = QtGui.QComboBox()
+        #self.measurementModeComboBox.addItems(["1", "2", "3"])
+        #self.measurementModeComboBox.currentIndexChanged.connect(self.selectionchange)
+        vbox.addWidget(self.measurementModeComboBox)
+
+
         lFrameType = QtGui.QLabel()
         lFrameType.setText("Frame Type")
         vbox.addWidget(lFrameType)
-        
+
+        self.frameTypeComboBox = QtGui.QComboBox()
+        #self.frameTypeComboBox.addItems(["1", "2", "3"])
+        #self.frameTypeComboBox.currentIndexChanged.connect(self.selectionchange)
+        vbox.addWidget(self.frameTypeComboBox)
+
+
         closeButton = QtGui.QPushButton("Close")
         closeButton.clicked.connect(self.closeButtonClicked)
         vbox.addWidget(closeButton)
@@ -219,7 +356,7 @@ class CalibrationConfigWidget(QtGui.QWidget):
     
         self.setLayout(hbox)
     
-        self.setWindowTitle("PyQt")
+        self.setWindowTitle("Instrument Context")
 
 
 
@@ -255,10 +392,12 @@ class Window(QtGui.QMainWindow):
         print("Calibration Directory:", self.calPath)
         self.calibrationMap = Controller.processCalibration(self.calPath)
 
-        items = [self.calibrationMap[k].m_name for k in self.calibrationMap]
-        
+        self.calConfig.setCalibrationMap(self.calibrationMap)
+
+        items = [k for k in self.calibrationMap.keys()]
         self.calConfig.listWidget.clear()
         self.calConfig.listWidget.addItems(items)
+
         self.calConfig.show()
 
 
@@ -280,7 +419,7 @@ def main():
 
 
 #def main():
-#    calibrationMap = processCalibration("Calibration")
+#    calibrationMap = Controller.processCalibration("Calibration")
 #    Controller.processDirectory("Data", calibrationMap)
 
 if __name__ == "__main__":
