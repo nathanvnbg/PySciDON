@@ -1,7 +1,6 @@
 
 import binascii
 import os
-import numpy as np
 import sys
 
 from CalibrationData import CalibrationData
@@ -28,6 +27,7 @@ class CalibrationFile:
         for cd in self.m_data:
             cd.prnt()
 
+    # Reads a calibration file and generates calibration data
     def read(self, f):
         (dirpath, filename) = os.path.split(f.name)
         self.m_name = filename
@@ -38,6 +38,8 @@ class CalibrationFile:
             if not line:
                 break
             line = line.strip()
+            
+            # Ignore comments and empty lines
             if line.startswith("#") or len(line) == 0:
                 continue
 
@@ -46,58 +48,64 @@ class CalibrationFile:
 
             cdtype = cd.m_type.upper()
 
+            # Determines the frame syncronization string by appending
+            # ids from INSTRUMENT and SN lines
+            # ToDo: Add a check to ensure INSTRUMENT and SN are the first two lines
             if cdtype == "INSTRUMENT" or cdtype == "VLF_INSTRUMENT" or \
                cdtype == "SN" or cdtype == "VLF_SN":
                 self.m_id += cd.m_id
 
+            # Read in coefficients
             for i in range(0, cd.m_calLines):
                 line = f.readline()
                 cd.readCoefficients(line)
 
             #cd.prnt()
             self.m_data.append(cd)
-            
+
+    # Returns units for the calibration data with type t
     def getUnits(self, t):
         for cd in self.m_data:
             if cd.m_type == t:
                 return cd.m_units
-        return ""
+        return None
 
 
-    def convertRaw(self, f, gp):
+    # Reads a message frame from the raw file and generates hdf groups/datasets
+    def convertRaw(self, msg, gp):
         nRead = 0
 
         #for i in range(0, len(self.m_data)):
         #    self.m_data[i].prnt()
-        #print("file:", f)
+        #print("file:", msg)
 
         for i in range(0, len(self.m_data)):
             v = 0
             cd = self.m_data[i]
 
+            # Read variable length message frames, field length == -1
             if cd.m_fieldLength == -1:
                 delimiter = self.m_data[i+1].m_units
-                #delimiter = delimiter.decode('string_escape')
-                #delimiter = bytes(delimiter, "utf-8").decode("unicode_escape")
-                #delimiter = bytes(delimiter.decode("unicode_escape"), "utf-8")
                 delimiter = delimiter.encode("utf-8").decode("unicode_escape").encode("utf-8")
                 #print("delimiter:", delimiter)
 
-                end = f[nRead:].find(delimiter)
+                end = msg[nRead:].find(delimiter)
                 #print("read:", nRead, end)
-                b = f[nRead:nRead+end]
+                b = msg[nRead:nRead+end]
                 v = cd.convertRaw(b)
 
                 nRead += end
 
+            # Read fixed length message frames
             else:
                 if cd.m_fitType.upper() != "DELIMITER":
                     if cd.m_fieldLength != 0:
-                        b = f[nRead:nRead+cd.m_fieldLength]
+                        b = msg[nRead:nRead+cd.m_fieldLength]
                         #print(nRead, cd.m_fieldLength, b)
                         v = cd.convertRaw(b)
                 nRead  += cd.m_fieldLength
 
+            # Stores raw data into hdf datasets according to type
             if cd.m_fitType.upper() != "NONE" and cd.m_fitType.upper() != "DELIMITER":
                 cdtype = cd.m_type.upper()
                 if cdtype != "INSTRUMENT" and cdtype != "VLF_INSTRUMENT" and \
@@ -115,20 +123,12 @@ class CalibrationFile:
                         gp.m_attributes[cdtype] = cd.m_id
 
 
-            #print("Key:", key)
-            # optimize later y storing as list then batch convert with np.asarray()
-        #    if ds.m_data is not None:
-        #        ds.m_data = np.vstack((ds.m_data, np.asarray(ds.m_temp)))
-        #    else:
-        #        ds.m_data = np.asarray(ds.m_temp)
-        #    ds.m_temp = []
-
-        # Satview records additional bytes
+        # Satview appends additional bytes for DATETAG, TIMETAG2
         # 3 bytes date tag, 4 bytes time tag
         if not gp.m_id.startswith("GPS"):
             #print("not gps")
             # date tag
-            b = f[nRead:nRead+3]
+            b = msg[nRead:nRead+3]
             if sys.version_info[0] < 3:
                 v = int(binascii.hexlify(b), 16)
             else:
@@ -138,7 +138,7 @@ class CalibrationFile:
             ds1 = gp.getDataset("DATETAG")
             ds1.appendColumn(u"NONE", v)
 
-            b = f[nRead:nRead+4]
+            b = msg[nRead:nRead+4]
             if sys.version_info[0] < 3:
                 v = int(binascii.hexlify(b), 16)
             else:
@@ -147,7 +147,6 @@ class CalibrationFile:
             #print("Time:",v)
             ds1 = gp.getDataset("TIMETAG2")
             ds1.appendColumn(u"NONE", v)
-
 
         return nRead
 

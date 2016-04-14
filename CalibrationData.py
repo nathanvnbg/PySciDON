@@ -21,6 +21,8 @@ class CalibrationData:
                                      self.m_calLines, self.m_fitType))
         print("coefficients = ", self.m_coefficients)
 
+    # Reads a sensor definition line from a cal file
+    # Reference: (SAT-DN-00134_Instrument File Format.pdf)
     def read(self, line):
         parts = line.split()
         self.m_type = parts[0]
@@ -31,10 +33,13 @@ class CalibrationData:
         self.m_calLines = int(parts[5])
         self.m_fitType = parts[6]
 
+    # Reads a coefficients line in the cal file
+    # Notes: Does not support for OPTIC1, which uses 1-4 calibration lines
     def readCoefficients(self, line):
         self.m_coefficients = line.split()
 
 
+    # Duplicates functionality of Python 3, int.from_bytes() for use in Python 2
     def intFromBytes(self, data, byteorder='big', signed=False):
         #print("Data",data)
         if byteorder == 'little':
@@ -46,7 +51,7 @@ class CalibrationData:
                 val = int(0 - (math.pow(2, bits) - val))
         return val
 
-
+    # Function used when reading a raw file to convert binary data to correct type
     def convertRaw(self, b):
         v = 0
         dataType = self.m_dataType.upper()
