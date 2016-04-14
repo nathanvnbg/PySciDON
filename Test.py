@@ -90,13 +90,9 @@ class Controller:
 
 
     @staticmethod
-    def process(fp, calibrationMap):
+    def processL1a(root, fp, calibrationMap):
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
-
-        root = HDFRoot()
-
-
         print("ProcessL1a")
         #root = RawFileReader.readRawFile("data.raw", calibrationMap)
         #generateContext(root)
@@ -104,44 +100,67 @@ class Controller:
         #root.prnt()
         fp = os.path.join(dirpath, filename + ".raw")
         root = root.processL1a(calibrationMap, fp)
-        fp = os.path.join(dirpath, filename + "_L1a.hdf")
-        root.writeHDF5(fp)
+        root.writeHDF5(os.path.join(dirpath, filename + "_L1a.hdf"))
         #fp = os.path.join(dirpath, filename + "_L1a.hdf4")
         #if os.path.exists(fp):
         #    os.remove(fp)
         #root.writeHDF4(fp)
+        return root
 
-
+    @staticmethod
+    def processL1b(root, fp, calibrationMap):
+        (dirpath, filename) = os.path.split(fp)
+        filename = os.path.splitext(filename)[0]
         print("ProcessL1b")
         root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L1a.hdf"))
         #print("HDFFile:")
         #root.prnt()
         root = root.processL1b(calibrationMap)
         root.writeHDF5(os.path.join(dirpath, filename + "_L1b.hdf"))
+        return root
 
-
+    @staticmethod
+    def processL2(root, fp):
+        (dirpath, filename) = os.path.split(fp)
+        filename = os.path.splitext(filename)[0]
         print("ProcessL2")
         root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L1b.hdf"))
         #root.processTIMER()
         root = root.processL2()
         root.writeHDF5(os.path.join(dirpath, filename + "_L2.hdf"))
+        return root
 
-
+    @staticmethod
+    def processL2s(root, fp):
+        (dirpath, filename) = os.path.split(fp)
+        filename = os.path.splitext(filename)[0]
         print("ProcessL2s")
         root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L2.hdf"))
         #processGPSTime(root)
         root = root.processL2s()
         #root.prnt()
         root.writeHDF5(os.path.join(dirpath, filename + "_L2s.hdf"))
+        return root
 
-
+    @staticmethod
+    def processL3a(root, fp):
+        (dirpath, filename) = os.path.split(fp)
+        filename = os.path.splitext(filename)[0]
         print("ProcessL3a")
         root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L2s.hdf"))
         root = root.processL3a()
         root.writeHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
+        return root
 
-
-        root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
+    @staticmethod
+    def processAll(fp, calibrationMap):
+        root = HDFRoot()
+        root = Controller.processL1a(root, fp, calibrationMap)
+        root = Controller.processL1b(root, fp, calibrationMap)
+        root = Controller.processL2(root, fp)
+        root = Controller.processL2s(root, fp)
+        root = Controller.processL3a(root, fp)
+        #root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
 
     @staticmethod
     def processDirectory(path, calibrationMap):
@@ -149,7 +168,7 @@ class Controller:
             for name in filenames:
                 #print("infile:", name)
                 if os.path.splitext(name)[1].lower() == ".raw":
-                    Controller.process(os.path.join(dirpath, name), calibrationMap)
+                    Controller.processAll(os.path.join(dirpath, name), calibrationMap)
             break
 
 
@@ -281,6 +300,17 @@ class CalibrationConfigWidget(QtGui.QWidget):
         self.setFrameTypeComboBox(cf.m_instrumentType, cf.m_frameType)
 
 
+    def selectionchange(self,i):
+        #print("Items in the list are :")
+        #for count in range(self.frameTypeComboBox.count()):
+        #    print(self.frameTypeComboBox.itemText(count))
+        #print("Current index",i,"selection changed ",self.frameTypeComboBox.currentText())
+        name = self.listWidget.currentItem().text()
+        cf = self.calibrationMap[name]
+        cf.m_frameType = self.frameTypeComboBox.currentText()
+        #print(name, cf.m_frameType)
+
+
     def initUI(self):
         vbox = QtGui.QVBoxLayout()
 
@@ -304,6 +334,7 @@ class CalibrationConfigWidget(QtGui.QWidget):
         vbox.addWidget(lInstrumentType)
 
         self.instrumentTypeComboBox = QtGui.QComboBox()
+        #self.instrumentTypeComboBox.currentIndexChanged.connect(self.selectionchange)
         #self.instrumentTypeComboBox.addItems(["1", "2", "3"])
         #self.instrumentTypeComboBox.currentIndexChanged.connect(self.selectionchange)
         vbox.addWidget(self.instrumentTypeComboBox)
@@ -334,6 +365,7 @@ class CalibrationConfigWidget(QtGui.QWidget):
         vbox.addWidget(lFrameType)
 
         self.frameTypeComboBox = QtGui.QComboBox()
+        self.frameTypeComboBox.currentIndexChanged.connect(self.selectionchange)
         #self.frameTypeComboBox.addItems(["1", "2", "3"])
         #self.frameTypeComboBox.currentIndexChanged.connect(self.selectionchange)
         vbox.addWidget(self.frameTypeComboBox)
@@ -412,15 +444,15 @@ class Window(QtGui.QMainWindow):
 #            self.textEdit.setText(data) 
 
 
-def main():
-    app = QtGui.QApplication(sys.argv)
-    win = Window()
-    sys.exit(app.exec_())
-
-
 #def main():
-#    calibrationMap = Controller.processCalibration("Calibration")
-#    Controller.processDirectory("Data", calibrationMap)
+#    app = QtGui.QApplication(sys.argv)
+#    win = Window()
+#    sys.exit(app.exec_())
+
+
+def main():
+    calibrationMap = Controller.processCalibration("Calibration")
+    Controller.processDirectory("Data", calibrationMap)
 
 if __name__ == "__main__":
     main()
