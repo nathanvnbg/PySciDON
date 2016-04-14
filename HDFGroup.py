@@ -12,6 +12,7 @@ import sys
 from scipy import interpolate
 
 from HDFDataset import HDFDataset
+from Utilities import Utilities
 
 class HDFGroup:
     def __init__(self):
@@ -120,8 +121,8 @@ class HDFGroup:
             #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
             ds.writeHDF4(vg, vs)
 
-
-    def getStartTime(self, time = 999999):
+    '''
+    def getStartTime(self, time = sys.maxsize):
         if self.hasDataset("TIMER"):
             ds = self.getDataset("TIMER")
             if ds.m_data is not None:
@@ -140,7 +141,54 @@ class HDFGroup:
                 for i in range(0, len(ds.m_data)):
                     ds.m_data["NONE"][i] -= time
                 #print(ds.m_data)
+    '''
+
+    # Process timer using TimeTag2 values
+    def getStartTime(self, time = sys.maxsize):
+        if self.hasDataset("TIMETAG2"):
+            ds = self.getDataset("TIMETAG2")
+            if ds.m_data is not None:
+                #print(ds.m_data.dtype)
+                tt2 = float(ds.m_data["NONE"][0])
+                t = Utilities.timeTag2ToSec(tt2)
+                if t < time:
+                    time = t
         return time
+
+    def processTIMER(self, time):
+        if self.hasDataset("TIMER"):
+            ds = self.getDataset("TIMER")
+            tt2DS = self.getDataset("TIMETAG2")
+            if ds.m_data is not None:
+                #print("Time:", time)
+                #print(ds.m_data)
+                for i in range(0, len(ds.m_data)):
+                    tt2 = float(tt2DS.m_data["NONE"][i])
+                    t = Utilities.timeTag2ToSec(tt2)
+                    ds.m_data["NONE"][i] = t - time
+                #print(ds.m_data)
+
+    # Looks like Prosoft recalculates TIMER by subtracting all values by t0 then adds an offset
+    # Note: if could be better to use TimeTag2 values?
+    def processTIMERProsoft(self):
+        if self.hasDataset("TIMER"):
+            ds = self.getDataset("TIMER")
+            t0 = ds.m_data["NONE"][0]
+            t1 = ds.m_data["NONE"][1]
+            offset = t1 - t0
+            print("offset",offset)
+            if self.m_attributes["FrameType"] == "LightAncCombined":
+                offset += 0.1
+            elif self.m_attributes["FrameType"] == "ShutterLight" or \
+                self.m_attributes["FrameType"] == "ShutterDark":
+                offset += 0.3
+            if ds.m_data is not None:
+                #print("Time:", time)
+                #print(ds.m_data)
+                for i in range(0, len(ds.m_data)):
+                    ds.m_data["NONE"][i] += -t0 + offset
+                #print(ds.m_data)
+
 
 
     def processL1b(self, cf):

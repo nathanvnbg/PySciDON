@@ -1,6 +1,7 @@
 
 import collections
 from datetime import datetime
+import os
 import sys
 
 from pyhdf.HDF import *
@@ -90,8 +91,8 @@ class HDFRoot:
 
             #print("Attributes:", [k for k in f.attrs.keys()])
             for k in f.attrs.keys():
-                #self.m_attributes[k] = f.attrs[k].decode("utf-8")
-                root.m_attributes[k.replace("__GLOSDS", "")] = f.attrs[k].decode("utf-8")
+                root.m_attributes[k] = f.attrs[k].decode("utf-8")
+                #root.m_attributes[k.replace("__GLOSDS", "")] = f.attrs[k].decode("utf-8")
             for k in f.keys():
                 item = f.get(k)
                 #print(item)
@@ -110,8 +111,8 @@ class HDFRoot:
         with h5py.File(fp, "w") as f:
             #print("Root:", self.m_id)
             for k in self.m_attributes:
-                #f.attrs[k] = np.string_(self.m_attributes[k])
-                f.attrs[k+"__GLOSDS"] = np.string_(self.m_attributes[k])
+                f.attrs[k] = np.string_(self.m_attributes[k])
+                #f.attrs[k+"__GLOSDS"] = np.string_(self.m_attributes[k])
             for gp in self.m_groups:
                 gp.write(f)
 
@@ -139,23 +140,19 @@ class HDFRoot:
 
 
     def processL1a(self, calibrationMap, fp):
+        (dirpath, filename) = os.path.split(fp)
 
         root = HDFRoot()
         root.m_id = "/"
         root.m_attributes["PROSOFT"] = "Prosoft 7.7.16_6"
         root.m_attributes["PROSOFT_INSTRUMENT_CONFIG"] = "testcfg"
         root.m_attributes["PROSOFT_PARAMETERS_FILE_NAME"] = "test.mat"
-        
-        # ToDo: implement method to retrieve file names
-        root.m_attributes["CAL_FILE_NAMES"] = "HED150E2013.cal,HLD151C2013.cal," \
-            "HLD152C2013.cal,HSE150E2013.cal,HSL151C2013.cal,HSL152C2013.cal," \
-            "MPR052a.cal,GPRMC_NoMode.TDF"
-
+        root.m_attributes["CAL_FILE_NAMES"] = ','.join(calibrationMap.keys())
         root.m_attributes["WAVELENGTH_UNITS"] = "nm"
         root.m_attributes["LU_UNITS"] = "count"
         root.m_attributes["ED_UNITS"] = "count"
         root.m_attributes["ES_UNITS"] = "count"
-        root.m_attributes["RAW_FILE_NAME"] = "data.raw"
+        root.m_attributes["RAW_FILE_NAME"] = filename
 
         contextMap = collections.OrderedDict()
 
@@ -163,33 +160,11 @@ class HDFRoot:
             cf = calibrationMap[key]
             gp = HDFGroup()
             gp.m_id = cf.m_instrumentType
-            contextMap[cf.m_id] = gp # ToDo: contextMap use frameTag as key
+            contextMap[cf.m_id] = gp
 
         #print("contextMap:", list(contextMap.keys()))
 
-
-        '''
-        contextMap["SATHED0150"] = HDFGroup()
-        contextMap["SATHLD0151"] = HDFGroup()
-        contextMap["SATHLD0152"] = HDFGroup()
-        contextMap["SATHSE0150"] = HDFGroup()
-        contextMap["SATHSL0151"] = HDFGroup()
-        contextMap["SATHSL0152"] = HDFGroup()
-        contextMap["SATSAS0052"] = HDFGroup()
-        contextMap["$GPRMC"] = HDFGroup()
-        contextMap["SATHED0150"].m_id = "Reference"
-        contextMap["SATHLD0151"].m_id = "SAS"
-        contextMap["SATHLD0152"].m_id = "SAS"
-        contextMap["SATHSE0150"].m_id = "Reference"
-        contextMap["SATHSL0151"].m_id = "SAS"
-        contextMap["SATHSL0152"].m_id = "SAS"
-        contextMap["SATSAS0052"].m_id = "SAS"
-        contextMap["$GPRMC"].m_id = "GPS"
-        '''
-
-        #calibrationMap = CalibrationFileReader.read("cal2013.sip")
-        #print("calibrationMap:", list(calibrationMap.keys()))
-        root = RawFileReader.readRawFile(fp, calibrationMap, contextMap, root)
+        RawFileReader.readRawFile(fp, calibrationMap, contextMap, root)
 
         for key in calibrationMap:
             cf = calibrationMap[key]
@@ -204,16 +179,6 @@ class HDFRoot:
             gp.m_attributes["DISTANCE_2"] = "Surface " + cf.m_sensorType + " 1 1 0"
             root.m_groups.append(gp)
 
-        '''
-        root.m_groups.append(contextMap["SATHED0150"])
-        root.m_groups.append(contextMap["SATHLD0151"])
-        root.m_groups.append(contextMap["SATHLD0152"])
-        root.m_groups.append(contextMap["SATHSE0150"])
-        root.m_groups.append(contextMap["SATHSL0151"])
-        root.m_groups.append(contextMap["SATHSL0152"])
-        root.m_groups.append(contextMap["SATSAS0052"])
-        root.m_groups.append(contextMap["$GPRMC"])
-        '''
 
         root.m_attributes["PROCESSING_LEVEL"] = "1a"
         dt = datetime.now()
@@ -227,7 +192,7 @@ class HDFRoot:
         return root
 
 
-    def getStartTime(self, time = 999999):
+    def getStartTime(self, time = sys.maxsize):
         for gp in self.m_groups:
             #print(gp.m_id)
             t = gp.getStartTime(time)
@@ -237,11 +202,17 @@ class HDFRoot:
 
     def processTIMER(self):
         time = self.getStartTime()
-        print("Time:", time)
+        #print("Time:", time)
         for gp in self.m_groups:
             #print(gp.m_id)
             gp.processTIMER(time)
-        return time
+        #return time
+
+
+    def processTIMERProsoft(self):
+        for gp in self.m_groups:
+            #print(gp.m_id)
+            gp.processTIMERProsoft()        
 
 
     def processL1b(self, calibrationMap): # ToDo: Switch to contextMap
@@ -250,24 +221,25 @@ class HDFRoot:
 
         root.m_attributes["PROCESSING_LEVEL"] = "1b"
 
-        # ToDo: Add better detection
-        #cf = calibrationMap["SATHSE0150"]
-        cf = calibrationMap["HSE150E2013.cal"]
-        esUnits = cf.getUnits("ES")
-        #cf = calibrationMap["SATHSL0151"]
-        cf = calibrationMap["HSL151C2013.cal"]
-        luUnits = cf.getUnits("LI")
+        esUnits = None
+        luUnits = None
 
-        root.m_attributes["LU_UNITS"] = luUnits
-        root.m_attributes["ED_UNITS"] = esUnits
-        root.m_attributes["ES_UNITS"] = esUnits
-        
         for gp in root.m_groups:
             #cf = calibrationMap[gp.m_attributes["FrameTag"]]
             cf = calibrationMap[gp.m_attributes["CalFileName"]]
             #print(gp.m_id, gp.m_attributes)
             print("File:", cf.m_id)
             gp.processL1b(cf)
+            
+            if esUnits == None:
+                esUnits = cf.getUnits("ES")
+            if luUnits == None:
+                luUnits = cf.getUnits("LI")
+                
+        #print(esUnits, luUnits)
+        root.m_attributes["LU_UNITS"] = luUnits
+        root.m_attributes["ED_UNITS"] = esUnits
+        root.m_attributes["ES_UNITS"] = esUnits
 
         return root
 
@@ -320,12 +292,10 @@ class HDFRoot:
                 ltDarkGroup = gp
 
         esDarkDataset = esDarkGroup.getDataset("ES")
-        self.dataDeglitching(esDarkDataset)
-
         liDarkDataset = liDarkGroup.getDataset("LI")
+        ltDarkDataset = ltDarkGroup.getDataset("LT")        
+        self.dataDeglitching(esDarkDataset)
         self.dataDeglitching(liDarkDataset)
-
-        ltDarkDataset = ltDarkGroup.getDataset("LT")
         self.dataDeglitching(ltDarkDataset)
 
 
@@ -360,7 +330,8 @@ class HDFRoot:
             x = np.copy(darkTimer.m_data["NONE"]).tolist()
             y = np.copy(darkData.m_data[k]).tolist()
             new_x = lightTimer.m_data["NONE"]
-            newDarkData[k] = Utilities.interp(x,y,new_x,'linear')
+            #newDarkData[k] = Utilities.interp(x,y,new_x,'linear')
+            newDarkData[k] = Utilities.interp(x,y,new_x,'cubic')
 
         #print(lightData.m_data.shape)
         #print(newDarkData.shape)
@@ -382,14 +353,15 @@ class HDFRoot:
     def processL2(self):
         root = HDFRoot()
         root.copy(self)
-        
+
         root.m_attributes["PROCESSING_LEVEL"] = "2"
         root.m_attributes["DEGLITCH_PRODAT"] = "OFF"
         root.m_attributes["DEGLITCH_REFDAT"] = "OFF"
-        
+
         #print("Start Time:", root.getStartTime())
-        root.processTIMER()
-        
+        #root.processTIMER()
+        #root.processTIMERProsoft()
+
         #root.processDataDeglitching()
 
         root.processDarkCorrection("ES")
@@ -476,7 +448,7 @@ class HDFRoot:
         xTimer = []
         for i in range(gpsTimeData.m_data.shape[0]):
             xTimer.append(Utilities.utcToSec(gpsTimeData.m_data["NONE"][i]))
-    
+
         yTimer = []
         for i in range(esTimeData.m_data.shape[0]):
             yTimer.append(Utilities.timeTag2ToSec(esTimeData.m_data["NONE"][i]))
@@ -506,46 +478,46 @@ class HDFRoot:
     # interpolate LT to match LI using spline interpolation
     def interpolateSASData(self, node, liGroup, ltGroup):
         print("Interpolate SAS Data2")
-    
+
         # LI
         liData = liGroup.getDataset("LI")
         liDateData = liGroup.getDataset("DATETAG")
         liTimeData = liGroup.getDataset("TIMETAG2")
-    
+
         sasGroup = node.getGroup("SAS")
         newLIData = sasGroup.addDataset("LI_hyperspectral")
         newLTData = sasGroup.addDataset("LT_hyperspectral")
-    
-    
+
+
         newLIData.m_columns["Datetag"] = liDateData.m_data["NONE"].tolist()
         newLIData.m_columns["Timetag2"] = liTimeData.m_data["NONE"].tolist()
         for k in [k for k,v in sorted(liData.m_data.dtype.fields.items(),key=lambda k: k[1])]:
             #print("type",type(esData.m_data[k]))
             newLIData.m_columns[k] = liData.m_data[k].tolist()
         newLIData.columnsToDataset()
-    
-    
+
+
         # LT
         ltTimeData = ltGroup.getDataset("TIMETAG2")
         ltData = ltGroup.getDataset("LT")
-    
+
         newLTData.m_columns["Datetag"] = liDateData.m_data["NONE"].tolist()
         newLTData.m_columns["Timetag2"] = liTimeData.m_data["NONE"].tolist()
-    
-    
+
+
         xTimer = []
         for i in range(ltTimeData.m_data.shape[0]):
             xTimer.append(Utilities.timeTag2ToSec(ltTimeData.m_data["NONE"][i]))
-    
+
         yTimer = []
         for i in range(liTimeData.m_data.shape[0]):
             yTimer.append(Utilities.timeTag2ToSec(liTimeData.m_data["NONE"][i]))
-    
-    
+
+
         # interpolate
         print('a')
         self.interpolateL2s(ltData, xTimer, yTimer, newLTData, 'cubic')
-    
+
         newLTData.columnsToDataset()
 
 
