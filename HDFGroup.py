@@ -1,5 +1,6 @@
 
 import collections
+import sys
 
 from pyhdf.HDF import *
 from pyhdf.V import *
@@ -7,17 +8,17 @@ from pyhdf.VS import *
 
 import h5py
 import numpy as np
-import sys
 #import scipy as sp
-from scipy import interpolate
+
 
 from HDFDataset import HDFDataset
 from Utilities import Utilities
 
+
 class HDFGroup:
     def __init__(self):
         self.m_id = ""
-        self.m_datasets = {}
+        self.m_datasets = collections.OrderedDict()
         self.m_attributes = collections.OrderedDict()
 
 
@@ -51,6 +52,9 @@ class HDFGroup:
         self.m_datasets[name] = ds
         return ds
 
+
+    # Generates Head attributes
+    # ToDo: This should get generated from contect file instead
     def getTableHeader(self, name):
         if name != "None":
             cnt = 1
@@ -61,17 +65,17 @@ class HDFGroup:
 
 
 
-    def prnt(self):
+    def printd(self):
         print("Group:", self.m_id)
         #print("Sensor Type:", self.m_sensorType)
         print("Frame Type:", self.m_attributes["FrameType"])
         for k in self.m_attributes:
             print("Attribute:", k, self.m_attributes[k])
-        #    attr.prnt()
+        #    attr.printd()
         #for gp in self.m_groups:
-        #    gp.prnt()
+        #    gp.printd()
         for ds in self.m_datasets:
-            ds.prnt()
+            ds.printd()
 
 
     def read(self, f):
@@ -103,6 +107,8 @@ class HDFGroup:
             #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
             ds.write(f)
 
+
+    # Writing to HDF4 file using PyHdf
     def writeHDF4(self, v, vs):
         print("Group:", self.m_id)
         name = self.m_id[:self.m_id.find("_")]
@@ -121,30 +127,9 @@ class HDFGroup:
             #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
             ds.writeHDF4(vg, vs)
 
-    '''
-    def getStartTime(self, time = sys.maxsize):
-        if self.hasDataset("TIMER"):
-            ds = self.getDataset("TIMER")
-            if ds.m_data is not None:
-                #print(ds.m_data.dtype)
-                t = float(ds.m_data["NONE"][0])
-                if t < time:
-                    time = t
-        return time
 
-    def processTIMER(self, time):
-        if self.hasDataset("TIMER"):
-            ds = self.getDataset("TIMER")
-            if ds.m_data is not None:
-                #print("Time:", time)
-                #print(ds.m_data)
-                for i in range(0, len(ds.m_data)):
-                    ds.m_data["NONE"][i] -= time
-                #print(ds.m_data)
-    '''
-
-    # Process timer using TimeTag2 values
-    def getStartTime(self, time = sys.maxsize):
+    # Returns the minimum TimeTag2 value
+    def getStartTime(self, time=sys.maxsize):
         if self.hasDataset("TIMETAG2"):
             ds = self.getDataset("TIMETAG2")
             if ds.m_data is not None:
@@ -155,6 +140,7 @@ class HDFGroup:
                     time = t
         return time
 
+    # Process timer using TimeTag2 values
     def processTIMER(self, time):
         if self.hasDataset("TIMER"):
             ds = self.getDataset("TIMER")
@@ -168,6 +154,7 @@ class HDFGroup:
                     ds.m_data["NONE"][i] = t - time
                 #print(ds.m_data)
 
+
     # Looks like Prosoft recalculates TIMER by subtracting all values by t0 then adds an offset
     # Note: if could be better to use TimeTag2 values?
     def processTIMERProsoft(self):
@@ -175,8 +162,33 @@ class HDFGroup:
             ds = self.getDataset("TIMER")
             t0 = ds.m_data["NONE"][0]
             t1 = ds.m_data["NONE"][1]
-            offset = t1 - t0
-            print("offset",offset)
+            #offset = t1 - t0
+
+            min0 = t1 - t0
+            total = len(ds.m_data["NONE"])
+            #print("test avg")
+            for i in range(1, total):
+                num = ds.m_data["NONE"][i] - ds.m_data["NONE"][i-1]
+                if num < min0:
+                    min0 = num
+            offset = min0
+            #print("min:",min0)
+
+
+            '''
+            avg = 0
+            total = len(ds.m_data["NONE"])
+            print("test avg")
+            for i in range(1, total):
+                num = ds.m_data["NONE"][i] - ds.m_data["NONE"][i-1]
+                if self.m_id == "ES":
+                    print(num)
+                avg += num
+            avg /= total
+            offset = avg
+            '''
+            
+            #print("offset",offset)
             if self.m_attributes["FrameType"] == "LightAncCombined":
                 offset += 0.1
             elif self.m_attributes["FrameType"] == "ShutterLight" or \
@@ -190,19 +202,19 @@ class HDFGroup:
                 #print(ds.m_data)
 
 
-
-    def processL1b(self, cf):
+    # Used to calibrate raw data (from L1a to L1b)
+    def processCalibration(self, cf):
         inttime = None
         for cd in cf.m_data:
             if cd.m_type == "INTTIME":
                 #print("Process INTTIME")
                 ds = self.getDataset("INTTIME")
-                ds.processL1b(cd)
+                ds.processCalibration(cd)
                 inttime = ds
 
         for cd in cf.m_data:
             if self.hasDataset(cd.m_type) and cd.m_type != "INTTIME":
                 #print("Dataset:", cd.m_type)
                 ds = self.getDataset(cd.m_type)
-                ds.processL1b(cd, inttime)
+                ds.processCalibration(cd, inttime)
 

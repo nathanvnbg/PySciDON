@@ -8,6 +8,8 @@ from CalibrationData import CalibrationData
 #from HDFDataset import HDFDataset
 
 
+# CalibrationFile class stores information about an instrument
+# obtained from reading a calibration file
 class CalibrationFile:
     def __init__(self):
         self.m_id = ""
@@ -21,11 +23,11 @@ class CalibrationFile:
         self.m_sensorType = ""
 
 
-    def prnt(self):
+    def printd(self):
         if len(self.m_id) != 0:
             print("id:", self.m_id)
         for cd in self.m_data:
-            cd.prnt()
+            cd.printd()
 
     # Reads a calibration file and generates calibration data
     def read(self, f):
@@ -60,7 +62,7 @@ class CalibrationFile:
                 line = f.readline()
                 cd.readCoefficients(line)
 
-            #cd.prnt()
+            #cd.printd()
             self.m_data.append(cd)
 
     # Returns units for the calibration data with type t
@@ -76,7 +78,7 @@ class CalibrationFile:
         nRead = 0
 
         #for i in range(0, len(self.m_data)):
-        #    self.m_data[i].prnt()
+        #    self.m_data[i].printd()
         #print("file:", msg)
 
         for i in range(0, len(self.m_data)):
@@ -122,10 +124,21 @@ class CalibrationFile:
                     else:
                         gp.m_attributes[cdtype] = cd.m_id
 
+            # None types to store as attributes
+            if cd.m_fitType.upper() == "NONE":
+                cdtype = cd.m_type.upper()
+                if cdtype == "SN" or cdtype == "DATARATE" or cdtype == "RATE":
+                    # ToDo: move to better position
+                    if sys.version_info[0] < 3:
+                        gp.m_attributes[cdtype.encode('utf-8')] = cd.m_id
+                    else:
+                        gp.m_attributes[cdtype] = cd.m_id 
+
 
         # Satview appends additional bytes for DATETAG, TIMETAG2
         # 3 bytes date tag, 4 bytes time tag
-        if not gp.m_id.startswith("GPS"):
+        #if not gp.m_id.startswith("GPS"):
+        if not gp.hasDataset("UTCPOS"):
             #print("not gps")
             # date tag
             b = msg[nRead:nRead+3]

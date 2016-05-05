@@ -4,6 +4,8 @@ import math
 import struct
 import sys
 
+# CalibrationData class stores information regarding the 
+# sensor definition lines and coewfficients from the calibration file
 class CalibrationData:
     def __init__(self):
         self.m_type = ""
@@ -15,7 +17,7 @@ class CalibrationData:
         self.m_fitType = ""
         self.m_coefficients = []
 
-    def prnt(self):
+    def printd(self):
         print("%s %s \'%s\' %d %s %d %s" % (self.m_type, self.m_id, self.m_units,
                                      self.m_fieldLength, self.m_dataType,
                                      self.m_calLines, self.m_fitType))
@@ -51,7 +53,7 @@ class CalibrationData:
                 val = int(0 - (math.pow(2, bits) - val))
         return val
 
-    # Function used when reading a raw file to convert binary data to correct type
+    # Used when reading a raw file to convert binary data to correct type
     def convertRaw(self, b):
         v = 0
         dataType = self.m_dataType.upper()

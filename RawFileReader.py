@@ -1,6 +1,9 @@
 
 import sys
 
+
+from HDFDataset import HDFDataset
+
 class RawFileReader:
     MAX_TAG_READ = 32
     MAX_BLOCK_READ = 1024
@@ -39,9 +42,9 @@ class RawFileReader:
 
         # Note: Prosoft adds posframe=1 to the GPS for some reason
         print(contextMap.keys())
-        gp = contextMap["$GPRMC"]
-        ds = gp.getDataset("POSFRAME")
-        ds.appendColumn(u"COUNT", posframe)
+        #gpsGroup = contextMap["$GPRMC"]
+        #ds = gpsGroup.getDataset("POSFRAME")
+        #ds.appendColumn(u"COUNT", posframe)
         posframe += 1
 
         with open(filepath, 'rb') as f:
@@ -87,7 +90,8 @@ class RawFileReader:
 
                                 gp = contextMap[cf.m_id]
                                 if len(gp.m_attributes) == 0:
-                                    gp.m_id += "_" + cf.m_id
+                                    #gp.m_id += "_" + cf.m_id
+                                    gp.m_id = key                                    
                                     gp.m_attributes["CalFileName"] = key
                                     gp.m_attributes["FrameTag"] = cf.m_id
 

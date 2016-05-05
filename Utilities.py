@@ -1,8 +1,9 @@
 
-from scipy import interpolate
+import scipy.interpolate
 
 class Utilities:
 
+    # Converts GPS UTC time to seconds
     @staticmethod
     def utcToSec(utc):
         t = str(int(utc))
@@ -13,6 +14,7 @@ class Utilities:
         s = int(t[4:])
         return ((h*60)+m)*60+s
 
+    # Converts seconds to TimeTag2
     @staticmethod
     def secToTimeTag2(sec):
         #return float(time.strftime("%H%M%S", time.gmtime(sec)))
@@ -22,6 +24,7 @@ class Utilities:
         h, m = divmod(m, 60)
         return float("%d%02d%02d%03d" % (h, m, s, ms))
 
+    # Converts TimeTag2 to seconds
     @staticmethod
     def timeTag2ToSec(tt2):
         t = str(int(tt2))
@@ -31,6 +34,7 @@ class Utilities:
         ms = int(t[6:])
         return ((h*60)+m)*60+s+(float(ms)/1000.0)
 
+    # Converts HDFRoot timestamp attribute to seconds
     @staticmethod
     def timestampToSec(timestamp):
         time = timestamp.split(" ")[3]
@@ -40,9 +44,12 @@ class Utilities:
         s = int(t[2])
         return ((h*60)+m)*60+s
 
+    # Wrapper for scipy interp1d that works even if
+    # values in new_x are outside the range of values in x
     @staticmethod
     def interp(x, y, new_x, kind='linear'):
 
+        #print("t0", len(x), len(y))
         n0 = len(x)-1
         n1 = len(new_x)-1
         if new_x[n1] > x[n0]:
@@ -54,7 +61,8 @@ class Utilities:
             x.insert(0, new_x[0])
             y.insert(0, y[0])
 
-        new_y = interpolate.interp1d(x, y, kind=kind, bounds_error=False)(new_x)
+        #print("t1", len(x), len(y))
+        new_y = scipy.interpolate.interp1d(x, y, kind=kind, bounds_error=False)(new_x)
 
         '''
         test = False

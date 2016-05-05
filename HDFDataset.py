@@ -1,7 +1,5 @@
 
 import collections
-
-from datetime import datetime
 import sys
 
 from pyhdf.HDF import *
@@ -10,6 +8,7 @@ from pyhdf.VS import *
 
 import h5py
 import numpy as np
+
 
 class HDFDataset:
     def __init__(self):
@@ -34,23 +33,20 @@ class HDFDataset:
 #        self.m_data[name] = data
 
 
-    def prnt(self):
+    def printd(self):
         print("Dataset:", self.m_id)
         for k in self.m_attributes:
             print(k, self.m_attributes[k])
-        #for x in np.nditer(self.m_data, flags=['external_loop'], op_flags=['readwrite']):
-        #    x[...] *= 2
-            #print(x)
         #print(self.m_data)
         #for d in self.m_data:
-        #    d.prnt()
+        #    d.printd()
+
 
     def read(self, f):
         name = f.name[f.name.rfind("/")+1:]
         self.m_id = name
-        #print("Dataset:", name)
-
         self.m_data = np.array(f)
+        #print("Dataset:", name)
         #print("Data:", self.m_data.dtype)
 
 
@@ -69,13 +65,7 @@ class HDFDataset:
             print("Dataset.write(): Data is None")
 
 
-    def getFloatList(self):
-        l = []
-        for k in [x for x,y in sorted(self.m_data.dtype.fields.items(), key=lambda k: k[1])]:
-            #print("type",type(esData.m_data[k]))
-            l.append(self.m_data[k].tolist())
-        return l
-
+    # Writing to HDF4 file using PyHdf
     def writeHDF4(self, vg, vs):
         if self.m_data is not None:
             try:
@@ -125,7 +115,7 @@ class HDFDataset:
         else:
             self.m_columns[name].append(val)
 
-
+    # Converts dataset stored in dictionary into numpy array
     def columnsToDataset(self):
         #print(ds.m_columns)
         #dtype0 = np.dtype([(name, type(ds.m_columns[name][0])) for name in ds.m_columns.keys()])
@@ -140,7 +130,8 @@ class HDFDataset:
             if isinstance(item, bytes):
                 #dtype.append((name, h5py.special_dtype(vlen=str)))
                 dtype.append((name, "|S" + str(len(item))))
-            elif isinstance(item, int): # hdf4 only supports 32 bit int
+            # Note: hdf4 only supports 32 bit int, convert to float64
+            elif isinstance(item, int):
                 dtype.append((name, np.float64))
             else:
                 dtype.append((name, type(item)))
@@ -153,26 +144,24 @@ class HDFDataset:
         self.m_data = np.empty(shape, dtype=dtype)
         for k,v in self.m_columns.items():
             self.m_data[k] = v
-            #for i in range(len(v)):
-            #    ds.m_data[k][i] = v[i]
-        #if ds.m_id == "LATHEMI":
-        #    print("Data", ds.m_data)
 
 
-    def processL1b(self, cd, inttime = None):
+    # Used to calibrate raw data (convert from L1a to L1b)
+    # Reference: "SAT-DN-00134_Instrument File Format.pdf"
+    def processCalibration(self, cd, inttime=None, immersed=False):
         #print("FitType:", cd.m_fitType)
         if cd.m_fitType == "OPTIC1":
-            self.processOPTIC1(cd, False)
+            self.processOPTIC1(cd, immersed)
         elif cd.m_fitType == "OPTIC2":
-            self.processOPTIC2(cd, False)
+            self.processOPTIC2(cd, immersed)
         elif cd.m_fitType == "OPTIC3":
-            self.processOPTIC3(cd, False, inttime)
+            self.processOPTIC3(cd, immersed, inttime)
         elif cd.m_fitType == "OPTIC4":
-            self.processOPTIC4(cd, False)
+            self.processOPTIC4(cd, immersed)
         elif cd.m_fitType == "THERM1":
             self.processTHERM1(cd)
         elif cd.m_fitType == "POW10":
-            self.processPOW10(cd)
+            self.processPOW10(cd, immersed)
         elif cd.m_fitType == "POLYU":
             self.processPOLYU(cd)
         elif cd.m_fitType == "POLYF":
@@ -192,7 +181,8 @@ class HDFDataset:
         else:
             print("Unknown Fit Type:", cd.m_fitType)
 
-    def processOPTIC1(self, cd):
+    # Process OPTIC1 - not implemented
+    def processOPTIC1(self, cd, immersed):
         return
 
     def processOPTIC2(self, cd, immersed):
@@ -218,9 +208,6 @@ class HDFDataset:
             aint = inttime.m_data[cd.m_type][x]
             #v = self.m_data[k][x]
             self.m_data[k][x] = im * a1 * (self.m_data[k][x] - a0) * (cint/aint)
-            #if x == 0 and y == 0:
-            #    print("" + str(a1) + " * (" + str(v) + " - " + \
-            #            str(a0) + ") * (" + str(cint) + "/" + str(aint) + ") = " + str(self.m_data[x,y]))
 
     def processOPTIC4(self, cd, immersed):
         #self.m_data = self.m_data.astype(float)
@@ -233,6 +220,7 @@ class HDFDataset:
         for x in range(self.m_data.shape[0]):
             self.m_data[k][x] = im * a1 * (self.m_data[k][x] - a0) * (cint/aint)
 
+    # Process THERM1 - not implemented
     def processTHERM1(self, cd):
         return
 
@@ -265,33 +253,28 @@ class HDFDataset:
                 num *= (self.m_data[k][x] - float(a))
             self.m_data[k][x] = num
 
+    # Process DDMM - not implemented
     def processDDMM(self, cd):
         return
-        #for x in np.nditer(self.m_data, flags=['external_loop'], op_flags=['readwrite']):
-            #s = "{:.2f}".format(x)
-            #x[...] = s[:1] + " " + s[1:3] + "\' " + s[3:5] + "\""
+        #s = "{:.2f}".format(x)
+        #x = s[:1] + " " + s[1:3] + "\' " + s[3:5] + "\""
 
+    # Process HHMMSS - not implemented
     def processHHMMSS(self, cd):
         return
-        #for x in range(self.m_data.shape[0]):
-            #for y in range(self.m_data.shape[1]):
-                #s = "{:.2f}".format(self.m_data[x,y])
-                #self.m_data[x,y] = s[:2] + "/" + s[2:4] + "/" + s[4:]
-        #for x in np.nditer(self.m_data, flags=['external_loop'], op_flags=['readwrite']):
-            #print(x)
-            #s = "{:.2f}".format(x)
-            #x[...] = s[:2] + ":" + s[2:4] + ":" + s[4:6] + "." + s[6:8]
+        #s = "{:.2f}".format(x)
+        #x = s[:2] + ":" + s[2:4] + ":" + s[4:6] + "." + s[6:8]
 
+    # Process DDMMYY - not implemented
     def processDDMMYY(self, cd):
         return
-        #for x in np.nditer(self.m_data, flags=['external_loop'], op_flags=['readwrite']):
-            #s = str(x)
-            #x[...] = s[:2] + "/" + s[2:4] + "/" + s[4:]
+        #s = str(x)
+        #x = s[:2] + "/" + s[2:4] + "/" + s[4:]
 
+    # Process TIME2 - not implemented
     def processTIME2(self, cd):
         return
-        #for x in np.nditer(self.m_data, flags=['external_loop'], op_flags=['readwrite']):
-            #x[...] = datetime.fromtimestamp(x).strftime("%y-%m-%d %H:%M:%S")
+        #x = datetime.fromtimestamp(x).strftime("%y-%m-%d %H:%M:%S")
 
 
 

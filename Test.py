@@ -1,28 +1,21 @@
 
-#import collections
-#import time
-#from datetime import datetime
-
+import collections
 import os
-#import os.path
-#import zipfile
-import sys
+#import sys
 
 from PyQt4.QtCore import pyqtSlot
 from PyQt4 import QtGui
 
 import h5py
-import numpy as np
+#import numpy as np
 #import scipy as sp
-from scipy import interpolate
 
-#from CalibrationData import CalibrationData
-#from CalibrationFile import CalibrationFile
 from CalibrationFileReader import CalibrationFileReader
-from RawFileReader import RawFileReader
+#from RawFileReader import RawFileReader
 from HDFRoot import HDFRoot
-from HDFGroup import HDFGroup
-from HDFDataset import HDFDataset
+#from HDFGroup import HDFGroup
+#from HDFDataset import HDFDataset
+
 
 
 class Controller:
@@ -97,7 +90,7 @@ class Controller:
         #root = RawFileReader.readRawFile("data.raw", calibrationMap)
         #generateContext(root)
         #print("HDFFile:")
-        #root.prnt()
+        #root.printd()
         fp = os.path.join(dirpath, filename + ".raw")
         root = root.processL1a(calibrationMap, fp)
         root.writeHDF5(os.path.join(dirpath, filename + "_L1a.hdf"))
@@ -114,7 +107,7 @@ class Controller:
         print("ProcessL1b")
         root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L1a.hdf"))
         #print("HDFFile:")
-        #root.prnt()
+        #root.printd()
         root = root.processL1b(calibrationMap)
         root.writeHDF5(os.path.join(dirpath, filename + "_L1b.hdf"))
         return root
@@ -138,7 +131,7 @@ class Controller:
         root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L2.hdf"))
         #processGPSTime(root)
         root = root.processL2s()
-        #root.prnt()
+        #root.printd()
         root.writeHDF5(os.path.join(dirpath, filename + "_L2s.hdf"))
         return root
 
@@ -153,6 +146,17 @@ class Controller:
         return root
 
     @staticmethod
+    def processL4(root, fp):
+        (dirpath, filename) = os.path.split(fp)
+        filename = os.path.splitext(filename)[0]
+        print("ProcessL4")
+        root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
+        root = root.processL4()
+        if root is not None:
+            root.writeHDF5(os.path.join(dirpath, filename + "_L4.hdf"))
+        return root
+
+    @staticmethod
     def processAll(fp, calibrationMap):
         root = HDFRoot()
         root = Controller.processL1a(root, fp, calibrationMap)
@@ -160,6 +164,7 @@ class Controller:
         root = Controller.processL2(root, fp)
         root = Controller.processL2s(root, fp)
         root = Controller.processL3a(root, fp)
+        root = Controller.processL4(root, fp)
         #root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
 
     @staticmethod
@@ -453,6 +458,27 @@ class Window(QtGui.QMainWindow):
 def main():
     calibrationMap = Controller.processCalibration("Calibration")
     Controller.processDirectory("Data", calibrationMap)
+
+'''
+def main():
+    a1 = collections.OrderedDict()
+    a2 = collections.OrderedDict()
+    a1["A"] = 1
+    a1["B"] = 2
+    a2["B"] = 4
+    a2["C"] = 3
+
+    k1 = a1.keys()
+    k2 = a2.keys()
+
+    intersect = [x for x in k1 if x in k2]
+    k1diff = [x for x in k1 if x not in intersect]
+    k2diff = [x for x in k2 if x not in intersect]
+
+    print(intersect)
+    print(k1diff)
+    print(k2diff)
+'''
 
 if __name__ == "__main__":
     main()
