@@ -35,17 +35,37 @@ class HDFDataset:
 
     def printd(self):
         print("Dataset:", self.m_id)
-        for k in self.m_attributes:
-            print(k, self.m_attributes[k])
+        #self.datasetToColumns()
+        #self.datasetToColumns2()
+        #self.columnsToDataset()
+        #for k in self.m_attributes:
+        #    print(k, self.m_attributes[k])
         #print(self.m_data)
         #for d in self.m_data:
-        #    d.printd()
+        #    print(d)
 
 
     def read(self, f):
         name = f.name[f.name.rfind("/")+1:]
         self.m_id = name
-        self.m_data = np.array(f)
+        for k in f.attrs.keys():
+            if type(f.attrs[k]) == np.ndarray:
+                #print(f.attrs[k])
+                #print(type(f.attrs[k].tolist()[0]))
+                if type(f.attrs[k].tolist()[0]) == bytes:
+                    self.m_attributes[k] = [k.decode("utf-8") for k in f.attrs[k]]
+                    #print("Attr:", self.m_attributes[k])
+                else:
+                    self.m_attributes[k] = [k for k in f.attrs[k]]
+
+            else:
+                if type(f.attrs[k]) == bytes:
+                    self.m_attributes[k] = f.attrs[k].decode("utf-8")
+                else:
+                    self.m_attributes[k] = f.attrs[k]
+        #print(f)
+        #print(type(f[:]))
+        self.m_data = f[:] # Convert to numpy.ndarray
         #print("Dataset:", name)
         #print("Data:", self.m_data.dtype)
 
@@ -115,7 +135,24 @@ class HDFDataset:
         else:
             self.m_columns[name].append(val)
 
-    # Converts dataset stored in dictionary into numpy array
+    # Converts numpy array into columns (stored as a dictionary)
+    def datasetToColumns(self):
+        self.m_columns = collections.OrderedDict()
+        for k in [k for k,v in sorted(self.m_data.dtype.fields.items(), key=lambda k: k[1])]:
+            #print("type",type(ltData.m_data[k]))
+            self.m_columns[k] = self.m_data[k].tolist()
+
+    # Convert Prosoft format numpy array to columns    
+    def datasetToColumns2(self):
+        self.m_columns = collections.OrderedDict()
+        ids = self.m_attributes["ID"]
+        for k in ids:
+            self.m_columns[k] = []
+        for k in ids:
+            self.m_columns[k].append(self.m_data[0][ids.index(k)])
+        
+
+    # Converts columns into numpy array
     def columnsToDataset(self):
         #print(ds.m_columns)
         #dtype0 = np.dtype([(name, type(ds.m_columns[name][0])) for name in ds.m_columns.keys()])
@@ -130,6 +167,7 @@ class HDFDataset:
             if isinstance(item, bytes):
                 #dtype.append((name, h5py.special_dtype(vlen=str)))
                 dtype.append((name, "|S" + str(len(item))))
+                #dtype.append((name, np.dtype(str)))
             # Note: hdf4 only supports 32 bit int, convert to float64
             elif isinstance(item, int):
                 dtype.append((name, np.float64))
@@ -144,137 +182,4 @@ class HDFDataset:
         self.m_data = np.empty(shape, dtype=dtype)
         for k,v in self.m_columns.items():
             self.m_data[k] = v
-
-
-    # Used to calibrate raw data (convert from L1a to L1b)
-    # Reference: "SAT-DN-00134_Instrument File Format.pdf"
-    def processCalibration(self, cd, inttime=None, immersed=False):
-        #print("FitType:", cd.m_fitType)
-        if cd.m_fitType == "OPTIC1":
-            self.processOPTIC1(cd, immersed)
-        elif cd.m_fitType == "OPTIC2":
-            self.processOPTIC2(cd, immersed)
-        elif cd.m_fitType == "OPTIC3":
-            self.processOPTIC3(cd, immersed, inttime)
-        elif cd.m_fitType == "OPTIC4":
-            self.processOPTIC4(cd, immersed)
-        elif cd.m_fitType == "THERM1":
-            self.processTHERM1(cd)
-        elif cd.m_fitType == "POW10":
-            self.processPOW10(cd, immersed)
-        elif cd.m_fitType == "POLYU":
-            self.processPOLYU(cd)
-        elif cd.m_fitType == "POLYF":
-            self.processPOLYF(cd)
-        elif cd.m_fitType == "DDMM":
-            self.processDDMM(cd)
-        elif cd.m_fitType == "HHMMSS":
-            self.processHHMMSS(cd)
-        elif cd.m_fitType == "DDMMYY":
-            self.processDDMMYY(cd)
-        elif cd.m_fitType == "TIME2":
-            self.processTIME2(cd)
-        elif cd.m_fitType == "COUNT":
-            pass
-        elif cd.m_fitType == "NONE":
-            pass
-        else:
-            print("Unknown Fit Type:", cd.m_fitType)
-
-    # Process OPTIC1 - not implemented
-    def processOPTIC1(self, cd, immersed):
-        return
-
-    def processOPTIC2(self, cd, immersed):
-        #self.m_data = self.m_data.astype(float)
-        a0 = float(cd.m_coefficients[0])
-        a1 = float(cd.m_coefficients[1])
-        im = float(cd.m_coefficients[2]) if immersed else 1.0
-        k = cd.m_id
-        for x in range(self.m_data.shape[0]):
-            self.m_data[k][x] = im * a1 * (self.m_data[k][x] - a0)
-
-    def processOPTIC3(self, cd, immersed, inttime):
-        #self.m_data = self.m_data.astype(float)
-        a0 = float(cd.m_coefficients[0])
-        a1 = float(cd.m_coefficients[1])
-        im = float(cd.m_coefficients[2]) if immersed else 1.0
-        cint = float(cd.m_coefficients[3])
-        #print(inttime.m_data.shape[0], self.m_data.shape[0])
-        k = cd.m_id
-        #print(cint, aint)
-        #print(cd.m_id)
-        for x in range(self.m_data.shape[0]):
-            aint = inttime.m_data[cd.m_type][x]
-            #v = self.m_data[k][x]
-            self.m_data[k][x] = im * a1 * (self.m_data[k][x] - a0) * (cint/aint)
-
-    def processOPTIC4(self, cd, immersed):
-        #self.m_data = self.m_data.astype(float)
-        a0 = float(cd.m_coefficients[0])
-        a1 = float(cd.m_coefficients[1])
-        im = float(cd.m_coefficients[2]) if immersed else 1.0
-        cint = float(cd.m_coefficients[3])
-        k = cd.m_id
-        aint = 1
-        for x in range(self.m_data.shape[0]):
-            self.m_data[k][x] = im * a1 * (self.m_data[k][x] - a0) * (cint/aint)
-
-    # Process THERM1 - not implemented
-    def processTHERM1(self, cd):
-        return
-
-    def processPOW10(self, cd, immersed):
-        #self.m_data = self.m_data.astype(float)
-        a0 = float(cd.m_coefficients[0])
-        a1 = float(cd.m_coefficients[1])
-        im = float(cd.m_coefficients[2]) if immersed else 1.0
-        k = cd.m_id
-        for x in range(self.m_data.shape[0]):
-            self.m_data[k][x] = im * pow(10, ((self.m_data[k][x]-a0)/a1))
-
-    def processPOLYU(self, cd):
-        #self.m_data = self.m_data.astype(float)
-        k = cd.m_id
-        for x in range(self.m_data.shape[0]):
-            num = 0
-            for i in range(0, len(cd.m_coefficients)):
-                a = float(cd.m_coefficients[i])
-                num += a * pow(self.m_data[k][x],i)
-            self.m_data[k][x] = num
-
-    def processPOLYF(self, cd):
-        #self.m_data = self.m_data.astype(float)
-        a0 = float(cd.m_coefficients[0])
-        k = cd.m_id
-        for x in range(self.m_data.shape[0]):
-            num = a0
-            for a in cd.m_coefficients[1:]:
-                num *= (self.m_data[k][x] - float(a))
-            self.m_data[k][x] = num
-
-    # Process DDMM - not implemented
-    def processDDMM(self, cd):
-        return
-        #s = "{:.2f}".format(x)
-        #x = s[:1] + " " + s[1:3] + "\' " + s[3:5] + "\""
-
-    # Process HHMMSS - not implemented
-    def processHHMMSS(self, cd):
-        return
-        #s = "{:.2f}".format(x)
-        #x = s[:2] + ":" + s[2:4] + ":" + s[4:6] + "." + s[6:8]
-
-    # Process DDMMYY - not implemented
-    def processDDMMYY(self, cd):
-        return
-        #s = str(x)
-        #x = s[:2] + "/" + s[2:4] + "/" + s[4:]
-
-    # Process TIME2 - not implemented
-    def processTIME2(self, cd):
-        return
-        #x = datetime.fromtimestamp(x).strftime("%y-%m-%d %H:%M:%S")
-
-
 
