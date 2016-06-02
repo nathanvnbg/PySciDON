@@ -18,10 +18,8 @@ class ProcessL3a:
     def interpolateWavelength(ds, newDS):
 
         # Copy dataset to dictionary
-        columns = collections.OrderedDict()
-        for k in [k for k,v in sorted(ds.m_data.dtype.fields.items(), key=lambda k: k[1])]:
-            #print("type",type(esData.m_data[k]))
-            columns[k] = ds.m_data[k].tolist()
+        ds.datasetToColumns()
+        columns = ds.m_columns
         saveDatetag = columns.pop("Datetag")
         saveTimetag2 = columns.pop("Timetag2")
 
@@ -102,10 +100,8 @@ class ProcessL3a:
         width = 1
 
         # Copy dataset to dictionary
-        columns = collections.OrderedDict()
-        for k in [k for k,v in sorted(ds.m_data.dtype.fields.items(), key=lambda k: k[1])]:
-            #print("type",type(esData.m_data[k]))
-            columns[k] = ds.m_data[k].tolist()
+        ds.datasetToColumns()
+        columns = ds.m_columns
         saveDatetag = columns.pop("Datetag")
         saveTimetag2 = columns.pop("Timetag2")
 

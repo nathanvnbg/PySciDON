@@ -51,16 +51,16 @@ class ProcessL2s:
         esData = esGroup.getDataset("ES")
         esDateData = esGroup.getDataset("DATETAG")
         esTimeData = esGroup.getDataset("TIMETAG2")
-        refGroup = node.getGroup("Reference")
 
+        refGroup = node.getGroup("Reference")
         newESData = refGroup.addDataset("ES_hyperspectral")
+
         newESData.m_columns["Datetag"] = esDateData.m_data["NONE"].tolist()
         newESData.m_columns["Timetag2"] = esTimeData.m_data["NONE"].tolist()
         for k in [k for k,v in sorted(esData.m_data.dtype.fields.items(),key=lambda k: k[1])]:
             #print("type",type(esData.m_data[k]))
             newESData.m_columns[k] = esData.m_data[k].tolist()
         newESData.columnsToDataset()
-
 
         # GPS
         # Creates new gps group with Datetag/Timetag2 columns appended to all datasets
@@ -171,6 +171,155 @@ class ProcessL2s:
         newLTData.columnsToDataset()
 
 
+    # interpolate LT to match LI using spline interpolation
+    @staticmethod
+    def interpolateData(node, liGroup, ltGroup, esGroup):
+        print("Interpolate Data")
+
+        # Generates LT_hyperspectral/LI_hyperspectral datasets
+        # with appended Datetag/Timetag2 columns
+
+        # LI
+        liData = liGroup.getDataset("LI")
+        liDateData = liGroup.getDataset("DATETAG")
+        liTimeData = liGroup.getDataset("TIMETAG2")
+
+        sasGroup = node.getGroup("SAS")
+        newLIData = sasGroup.addDataset("LI_hyperspectral")
+        newLTData = sasGroup.addDataset("LT_hyperspectral")
+
+        newLIData.m_columns["Datetag"] = liDateData.m_data["NONE"].tolist()
+        newLIData.m_columns["Timetag2"] = liTimeData.m_data["NONE"].tolist()
+        for k in [k for k,v in sorted(liData.m_data.dtype.fields.items(),key=lambda k: k[1])]:
+            #print("type",type(esData.m_data[k]))
+            newLIData.m_columns[k] = liData.m_data[k].tolist()
+        newLIData.columnsToDataset()
+
+
+        # LT
+        ltTimeData = ltGroup.getDataset("TIMETAG2")
+        ltData = ltGroup.getDataset("LT")
+
+        newLTData.m_columns["Datetag"] = liDateData.m_data["NONE"].tolist()
+        newLTData.m_columns["Timetag2"] = liTimeData.m_data["NONE"].tolist()
+
+        # Convert LT/LI TimeTag2 values to seconds to be used for interpolation
+        xTimer = []
+        for i in range(ltTimeData.m_data.shape[0]):
+            xTimer.append(Utilities.timeTag2ToSec(ltTimeData.m_data["NONE"][i]))
+        yTimer = []
+        for i in range(liTimeData.m_data.shape[0]):
+            yTimer.append(Utilities.timeTag2ToSec(liTimeData.m_data["NONE"][i]))
+
+
+        # interpolate LT
+        ProcessL2s.interpolateL2s(ltData, xTimer, yTimer, newLTData, 'cubic')
+        newLTData.columnsToDataset()
+
+
+        # ES
+        # Generates ES_hyperspectral dataset with appended Datetag/Timetag2 columns
+        esData = esGroup.getDataset("ES")
+        esDateData = esGroup.getDataset("DATETAG")
+        esTimeData = esGroup.getDataset("TIMETAG2")
+
+        refGroup = node.getGroup("Reference")
+        newESData = refGroup.addDataset("ES_hyperspectral")
+
+        newESData.m_columns["Datetag"] = liDateData.m_data["NONE"].tolist()
+        newESData.m_columns["Timetag2"] = liTimeData.m_data["NONE"].tolist()
+
+        # Convert ES/LI TimeTag2 values to seconds to be used for interpolation
+        xTimer = []
+        for i in range(esTimeData.m_data.shape[0]):
+            xTimer.append(Utilities.timeTag2ToSec(esTimeData.m_data["NONE"][i]))
+        yTimer = []
+        for i in range(liTimeData.m_data.shape[0]):
+            yTimer.append(Utilities.timeTag2ToSec(liTimeData.m_data["NONE"][i]))
+
+        # interpolate ES
+        ProcessL2s.interpolateL2s(esData, xTimer, yTimer, newESData, 'cubic')
+        newESData.columnsToDataset()
+
+
+    # interpolate GPS to match ES using linear interpolation
+    @staticmethod
+    def interpolateGPSData2(node, esGroup, gpsGroup):
+        print("Interpolate GPS Data2")
+
+        # ES
+        # Generates ES_hyperspectral dataset with appended Datetag/Timetag2 columns
+        #esData = esGroup.getDataset("ES")
+        #esDateData = esGroup.getDataset("DATETAG")
+        #esTimeData = esGroup.getDataset("TIMETAG2")
+
+        #refGroup = node.getGroup("Reference")
+        #newESData = refGroup.addDataset("ES_hyperspectral")
+
+        #newESData.m_columns["Datetag"] = esDateData.m_data["NONE"].tolist()
+        #newESData.m_columns["Timetag2"] = esTimeData.m_data["NONE"].tolist()
+        #for k in [k for k,v in sorted(esData.m_data.dtype.fields.items(),key=lambda k: k[1])]:
+        #    #print("type",type(esData.m_data[k]))
+        #    newESData.m_columns[k] = esData.m_data[k].tolist()
+        #newESData.columnsToDataset()
+
+        refGroup = node.getGroup("Reference")
+        esData = refGroup.getDataset("ES_hyperspectral")
+
+        # GPS
+        # Creates new gps group with Datetag/Timetag2 columns appended to all datasets
+        gpsTimeData = gpsGroup.getDataset("UTCPOS")
+        gpsCourseData = gpsGroup.getDataset("COURSE")
+        gpsLatPosData = gpsGroup.getDataset("LATPOS")
+        gpsLonPosData = gpsGroup.getDataset("LONPOS")
+        gpsMagVarData = gpsGroup.getDataset("MAGVAR")
+        gpsSpeedData = gpsGroup.getDataset("SPEED")
+
+        newGPSGroup = node.getGroup("GPS")
+        newGPSCourseData = newGPSGroup.addDataset("COURSE")
+        newGPSLatPosData = newGPSGroup.addDataset("LATPOS")
+        newGPSLonPosData = newGPSGroup.addDataset("LONPOS")
+        newGPSMagVarData = newGPSGroup.addDataset("MAGVAR")
+        newGPSSpeedData = newGPSGroup.addDataset("SPEED")
+
+        newGPSCourseData.m_columns["Datetag"] = esData.m_data["Datetag"].tolist()
+        newGPSCourseData.m_columns["Timetag2"] = esData.m_data["Timetag2"].tolist()
+        newGPSLatPosData.m_columns["Datetag"] = esData.m_data["Datetag"].tolist()
+        newGPSLatPosData.m_columns["Timetag2"] = esData.m_data["Timetag2"].tolist()
+        newGPSLonPosData.m_columns["Datetag"] = esData.m_data["Datetag"].tolist()
+        newGPSLonPosData.m_columns["Timetag2"] = esData.m_data["Timetag2"].tolist()
+        newGPSMagVarData.m_columns["Datetag"] = esData.m_data["Datetag"].tolist()
+        newGPSMagVarData.m_columns["Timetag2"] = esData.m_data["Timetag2"].tolist()
+        newGPSSpeedData.m_columns["Datetag"] = esData.m_data["Datetag"].tolist()
+        newGPSSpeedData.m_columns["Timetag2"] = esData.m_data["Timetag2"].tolist()
+
+
+        # Convert GPS UTC time values to seconds to be used for interpolation
+        xTimer = []
+        for i in range(gpsTimeData.m_data.shape[0]):
+            xTimer.append(Utilities.utcToSec(gpsTimeData.m_data["NONE"][i]))
+
+        # Convert ES TimeTag2 values to seconds to be used for interpolation
+        yTimer = []
+        for i in range(esData.m_data.shape[0]):
+            yTimer.append(Utilities.timeTag2ToSec(esData.m_data["Timetag2"][i]))
+
+
+        # Interpolate by time values
+        ProcessL2s.interpolateL2s(gpsCourseData, xTimer, yTimer, newGPSCourseData, 'linear')
+        ProcessL2s.interpolateL2s(gpsLatPosData, xTimer, yTimer, newGPSLatPosData, 'linear')
+        ProcessL2s.interpolateL2s(gpsLonPosData, xTimer, yTimer, newGPSLonPosData, 'linear')
+        ProcessL2s.interpolateL2s(gpsMagVarData, xTimer, yTimer, newGPSMagVarData, 'linear')
+        ProcessL2s.interpolateL2s(gpsSpeedData, xTimer, yTimer, newGPSSpeedData, 'linear')
+
+
+        newGPSCourseData.columnsToDataset()
+        newGPSLatPosData.columnsToDataset()
+        newGPSLonPosData.columnsToDataset()
+        newGPSMagVarData.columnsToDataset()
+        newGPSSpeedData.columnsToDataset()
+
+
     # Interpolates datasets so they have common time coordinates
     @staticmethod
     def processL2s(node):
@@ -205,7 +354,10 @@ class ProcessL2s:
                 print("LT")
                 ltGroup = gp
 
-        ProcessL2s.interpolateGPSData(root, esGroup, gpsGroup)
-        ProcessL2s.interpolateSASData(root, liGroup, ltGroup)
+        #ProcessL2s.interpolateGPSData(root, esGroup, gpsGroup)
+        #ProcessL2s.interpolateSASData(root, liGroup, ltGroup)
+
+        ProcessL2s.interpolateData(root, liGroup, ltGroup, esGroup)
+        ProcessL2s.interpolateGPSData2(root, esGroup, gpsGroup)
     
         return root

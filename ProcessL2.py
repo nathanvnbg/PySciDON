@@ -20,10 +20,8 @@ class ProcessL2:
         noiseThresh = 20        
 
         # Copy dataset to dictionary
-        columns = collections.OrderedDict()
-        for k in [k for k,v in sorted(ds.m_data.dtype.fields.items(), key=lambda k: k[1])]:
-            #print("type",type(esData.m_data[k]))
-            columns[k] = ds.m_data[k].tolist()
+        ds.datasetToColumns()
+        columns = ds.m_columns
 
         for k,v in columns.items():
             #print(k,v)
@@ -43,7 +41,7 @@ class ProcessL2:
                 if abs(v[i] - medN) > noiseThresh*stdS:
                     v[i] = np.nan
 
-        ds.m_columns = columns
+        #ds.m_columns = columns
         ds.columnsToDataset()
 
     @staticmethod
@@ -111,6 +109,8 @@ class ProcessL2:
 
         #print(lightData.m_data)
 
+    # Code to recalculate light/dark timer values to start near zero
+    # Might work better when preforming interpolations?
     @staticmethod
     def processTimer(darkTimer, lightTimer):
 
@@ -119,6 +119,7 @@ class ProcessL2:
             t1 = lightTimer.m_data["NONE"][1]
             #offset = t1 - t0
 
+            # Finds the minimum cycle time of the instrument to use as offset
             min0 = t1 - t0
             total = len(lightTimer.m_data["NONE"])
             #print("test avg")
@@ -129,16 +130,11 @@ class ProcessL2:
             offset = min0
             #print("min:",min0)
 
-            #print("offset",offset)
-            #if self.m_attributes["FrameType"] == "LightAncCombined":
-            #    offset += 0.1
-            #elif self.m_attributes["FrameType"] == "ShutterLight" or \
-            #    self.m_attributes["FrameType"] == "ShutterDark":
-            #    offset += 0.3
-
+            # Set start time to minimum of light/dark timer values
             if darkTimer.m_data["NONE"][0] < t0:
                 t0 = darkTimer.m_data["NONE"][0]
 
+            # Recalculate timers by subtracting start time and adding offset
             #print("Time:", time)
             #print(darkTimer.m_data)
             for i in range(0, len(darkTimer.m_data)):

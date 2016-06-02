@@ -41,24 +41,18 @@ class ProcessL4:
     def calculateReflectance(esData, liData, ltData, newRrsData):
 
         # Copy datasets to dictionary
-        esColumns = collections.OrderedDict()
-        for k in [k for k,v in sorted(esData.m_data.dtype.fields.items(), key=lambda k: k[1])]:
-            #print("type",type(esData.m_data[k]))
-            esColumns[k] = esData.m_data[k].tolist()
+        esData.datasetToColumns()
+        esColumns = esData.m_columns
         esColumns.pop("Datetag")
         esColumns.pop("Timetag2")
 
-        liColumns = collections.OrderedDict()
-        for k in [k for k,v in sorted(liData.m_data.dtype.fields.items(), key=lambda k: k[1])]:
-            #print("type",type(liData.m_data[k]))
-            liColumns[k] = liData.m_data[k].tolist()
+        liData.datasetToColumns()
+        liColumns = liData.m_columns
         liColumns.pop("Datetag")
         liColumns.pop("Timetag2")
 
-        ltColumns = collections.OrderedDict()
-        for k in [k for k,v in sorted(ltData.m_data.dtype.fields.items(), key=lambda k: k[1])]:
-            #print("type",type(ltData.m_data[k]))
-            ltColumns[k] = ltData.m_data[k].tolist()
+        ltData.datasetToColumns()
+        ltColumns = ltData.m_columns
         ltColumns.pop("Datetag")
         ltColumns.pop("Timetag2")
 
@@ -142,7 +136,6 @@ class ProcessL4:
         newRrsData.columnsToDataset()
 
         return True
-
 
 
     # Does wavelength interpolation and data averaging

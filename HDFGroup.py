@@ -74,7 +74,8 @@ class HDFGroup:
         #    attr.printd()
         #for gp in self.m_groups:
         #    gp.printd()
-        for ds in self.m_datasets:
+        for k in self.m_datasets:
+            ds = self.m_datasets[k]
             ds.printd()
 
 
@@ -86,7 +87,10 @@ class HDFGroup:
 
         #print("Attributes:", [k for k in f.attrs.keys()])
         for k in f.attrs.keys():
-            self.m_attributes[k] = f.attrs[k].decode("utf-8")
+            if type(f.attrs[k]) == np.ndarray:
+                self.m_attributes[k] = f.attrs[k]
+            else: # string
+                self.m_attributes[k] = f.attrs[k].decode("utf-8")
         for k in f.keys():
             item = f.get(k)
             if isinstance(item, h5py.Group):
@@ -200,21 +204,4 @@ class HDFGroup:
                 for i in range(0, len(ds.m_data)):
                     ds.m_data["NONE"][i] += -t0 + offset
                 #print(ds.m_data)
-
-
-    # Used to calibrate raw data (from L1a to L1b)
-    def processCalibration(self, cf):
-        inttime = None
-        for cd in cf.m_data:
-            if cd.m_type == "INTTIME":
-                #print("Process INTTIME")
-                ds = self.getDataset("INTTIME")
-                ds.processCalibration(cd)
-                inttime = ds
-
-        for cd in cf.m_data:
-            if self.hasDataset(cd.m_type) and cd.m_type != "INTTIME":
-                #print("Dataset:", cd.m_type)
-                ds = self.getDataset(cd.m_type)
-                ds.processCalibration(cd, inttime)
 

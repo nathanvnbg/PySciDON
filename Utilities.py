@@ -1,4 +1,5 @@
 
+import matplotlib.pyplot as plt
 import scipy.interpolate
 
 class Utilities:
@@ -78,4 +79,35 @@ class Utilities:
         '''
 
         return new_y
+
+
+    @staticmethod
+    def plotReflectance(root, filename):
+
+        referenceGroup = root.getGroup("Reflectance")
+        rrsData = referenceGroup.getDataset("Rrs")
+
+        font = {'family': 'serif',
+            'color':  'darkred',
+            'weight': 'normal',
+            'size': 16,
+            }
+
+        x = []
+        y = []
+        for k in [k for k,v in sorted(rrsData.m_data.dtype.fields.items(), key=lambda k: k[1])]:
+            x.append(k)
+            y.append(rrsData.m_data[k][0])
+
+        plt.plot(x, y, 'k')
+        #plt.title('Remote sensing reflectance', fontdict=font)
+        #plt.text(2, 0.65, r'$\cos(2 \pi t) \exp(-t)$', fontdict=font)
+        plt.xlabel('wavelength (nm)', fontdict=font)
+        plt.ylabel('Rrs (sr^{-1})', fontdict=font)
+
+        # Tweak spacing to prevent clipping of ylabel
+        plt.subplots_adjust(left=0.15)
+        #plt.show()
+        plt.savefig('Plots/' + filename + '.png')
+        plt.close() # This prevents displaying the polt on screen with certain IDEs
 
