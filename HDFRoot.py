@@ -14,12 +14,12 @@ import numpy as np
 from HDFGroup import HDFGroup
 from HDFDataset import HDFDataset
 
-from ProcessL1a import ProcessL1a
-from ProcessL1b import ProcessL1b
-from ProcessL2 import ProcessL2
-from ProcessL2s import ProcessL2s
-from ProcessL3a import ProcessL3a
-from ProcessL4 import ProcessL4
+#from ProcessL1a import ProcessL1a
+#from ProcessL1b import ProcessL1b
+#from ProcessL2 import ProcessL2
+#from ProcessL2s import ProcessL2s
+#from ProcessL3a import ProcessL3a
+#from ProcessL4 import ProcessL4
 
 
 class HDFRoot:
@@ -165,21 +165,21 @@ class HDFRoot:
 
 
 
-    def processL1a(self, calibrationMap, fp):
-        return ProcessL1a.processL1a(calibrationMap, fp)
+#    def processL1a(self, calibrationMap, fp):
+#        return ProcessL1a.processL1a(calibrationMap, fp)
 
-    def processL1b(self, calibrationMap):
-        return ProcessL1b.processL1b(self, calibrationMap)
+#    def processL1b(self, calibrationMap):
+#        return ProcessL1b.processL1b(self, calibrationMap)
 
-    def processL2(self):
-        return ProcessL2.processL2(self)
+#    def processL2(self):
+#        return ProcessL2.processL2(self)
 
-    def processL2s(self):
-        return ProcessL2s.processL2s(self)
+#    def processL2s(self):
+#        return ProcessL2s.processL2s(self)
 
-    def processL3a(self):
-        return ProcessL3a.processL3a(self)
+#    def processL3a(self):
+#        return ProcessL3a.processL3a(self)
 
-    def processL4(self):
-        return ProcessL4.processL4(self)
+#    def processL4(self):
+#        return ProcessL4.processL4(self)
 
