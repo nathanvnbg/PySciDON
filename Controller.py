@@ -1,10 +1,11 @@
 
 import collections
+import csv
 import os
 #import sys
 
 import h5py
-#import numpy as np
+import numpy as np
 #import scipy as sp
 
 from CalibrationFileReader import CalibrationFileReader
@@ -66,72 +67,6 @@ class Controller:
                 cf.m_frameType = "LightAncCombined"
                 cf.m_sensorType = cf.getSensorType()
 
-    '''
-    @staticmethod
-    def generateContext(calibrationMap):
-        for key in calibrationMap:
-            cf = calibrationMap[key]
-            if cf.m_id == "SATHED0526":
-                cf.m_instrumentType = "Reference"
-                cf.m_media = "Air"
-                cf.m_measMode = "Surface"
-                cf.m_frameType = "ShutterDark"
-                cf.m_sensorType = "ES"
-            elif cf.m_id == "SATHLD0417":
-                cf.m_instrumentType = "SAS"
-                cf.m_media = "Air"
-                cf.m_measMode = "VesselBorne"
-                cf.m_frameType = "ShutterDark"
-                cf.m_sensorType = "LI"
-            elif cf.m_id == "SATHLD0418":
-                cf.m_instrumentType = "SAS"
-                cf.m_media = "Air"
-                cf.m_measMode = "VesselBorne"
-                cf.m_frameType = "ShutterDark"
-                cf.m_sensorType = "LT"
-            elif cf.m_id == "SATHSE0526":
-                cf.m_instrumentType = "Reference"
-                cf.m_media = "Air"
-                cf.m_measMode = "Surface"
-                cf.m_frameType = "ShutterLight"
-                cf.m_sensorType = "ES"
-            elif cf.m_id == "SATHSL0417":
-                cf.m_instrumentType = "SAS"
-                cf.m_media = "Air"
-                cf.m_measMode = "VesselBorne"
-                cf.m_frameType = "ShutterLight"
-                cf.m_sensorType = "LI"
-            elif cf.m_id == "SATHSL0418":
-                cf.m_instrumentType = "SAS"
-                cf.m_media = "Air"
-                cf.m_measMode = "VesselBorne"
-                cf.m_frameType = "ShutterLight"
-                cf.m_sensorType = "LT"
-            elif cf.m_id == "SATPYR":
-                cf.m_instrumentType = "SAS"
-                cf.m_media = "Air"
-                cf.m_measMode = "VesselBorne"
-                cf.m_frameType = "LightAncCombined"
-                cf.m_sensorType = "None"
-            elif cf.m_id == "SATMSG":
-                cf.m_instrumentType = "SAS"
-                cf.m_media = "Air"
-                cf.m_measMode = "VesselBorne"
-                cf.m_frameType = "LightAncCombined"
-                cf.m_sensorType = "None"
-            elif cf.m_id == "SATNAV0003":
-                cf.m_instrumentType = "SAS"
-                cf.m_media = "Air"
-                cf.m_measMode = "VesselBorne"
-                cf.m_frameType = "LightAncCombined"
-                cf.m_sensorType = "None"
-            elif cf.m_id == "$GPRMC":
-                cf.m_instrumentType = "GPS"
-                cf.m_media = "Not Required"
-                cf.m_measMode = "Not Required"
-                cf.m_frameType = "Not Required"
-                cf.m_sensorType = "None"
-    '''
 
     @staticmethod
     def processCalibration(calPath):
@@ -212,6 +147,47 @@ class Controller:
         if root is not None:
             Utilities.plotReflectance(root, filename)
             root.writeHDF5(os.path.join(dirpath, filename + "_L4.hdf"))
+
+            # Test saving to txt
+            csvPath = os.path.join(dirpath, filename + ".csv")
+            with open(csvPath, 'w') as f:
+                gp = root.getGroup("Reflectance")
+                esDS = gp.getDataset("ES")
+                liDS = gp.getDataset("LI")
+                ltDS = gp.getDataset("LT")
+                rrsDS = gp.getDataset("Rrs")
+                #np.savetxt('Data/test.out', ds.m_data)
+                outList = []
+                ls = ["wl"] + [k for k,v in sorted(rrsDS.m_data.dtype.fields.items(), key=lambda k: k[1])]
+                outList.append(ls)
+                #line = 'wl,' + ','.join([k for k,v in sorted(rrsDS.m_data.dtype.fields.items(), key=lambda k: k[1])])
+                #f.write(line)
+                #f.write('\n')
+                #line = "es," + ','.join(['%f' % num for num in esDS.m_data[0]])
+                #f.write(line)
+                #f.write('\n')
+                #line = "li," + ','.join(['%f' % num for num in liDS.m_data[0]])
+                #f.write(line)
+                #f.write('\n')
+                #line = "lt," + ','.join(['%f' % num for num in ltDS.m_data[0]])
+                #f.write(line)
+                #f.write('\n')
+                #line = "rrs," + ','.join(['%f' % num for num in rrsDS.m_data[0]])
+                #f.write(line)
+                #f.write('\n')
+
+                ls = ["es"] + ['%f' % num for num in esDS.m_data[0]]
+                outList.append(ls)
+                ls = ["li"] + ['%f' % num for num in liDS.m_data[0]]
+                outList.append(ls)
+                ls = ["lt"] + ['%f' % num for num in ltDS.m_data[0]]
+                outList.append(ls)
+                ls = ["rrs"] + ['%f' % num for num in rrsDS.m_data[0]]
+                outList.append(ls)
+                outList = zip(*outList)
+                writer = csv.writer(f)
+                writer.writerows(outList)
+            
         return root
 
     @staticmethod
