@@ -80,11 +80,6 @@ class Utilities:
             x.insert(0, new_x[0])
             y.insert(0, y[0])
 
-        # Note: large jumps in time causes NANs to appear
-        #print("t1", len(x), len(y))
-        #new_y = scipy.interpolate.interp1d(x, y, kind=kind, bounds_error=False)(new_x)
-        #new_y = scipy.interpolate.interp1d(x, y, kind=kind, bounds_error=False, fill_value=0.0)(new_x)
-        #new_y = scipy.interpolate.interp1d(x, y, kind='linear', bounds_error=False, fill_value=0.0)(new_x)
         new_y = scipy.interpolate.interp1d(x, y, kind=kind, bounds_error=False, fill_value=0.0)(new_x)
 
         '''
@@ -120,9 +115,6 @@ class Utilities:
             x.insert(0, new_x[0])
             y.insert(0, y[0])
 
-        #new_y = scipy.interpolate.interp1d(x, y, kind='quadratic', bounds_error=False, fill_value=0.0)(new_x)
-        #new_y = scipy.interpolate.interp1d(x, y, kind='cubic', bounds_error=False, fill_value=0.0)(new_x)
-        #new_y = scipy.interpolate.UnivariateSpline(x, y, k=3, s=5e8)(new_x)
         new_y = scipy.interpolate.InterpolatedUnivariateSpline(x, y, k=3)(new_x)
 
         return new_y

@@ -38,7 +38,7 @@ class ProcessL4:
 
 
     @staticmethod
-    def calculateReflectance(esData, liData, ltData, newRrsData):
+    def calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
 
         # Copy datasets to dictionary
         esData.datasetToColumns()
@@ -140,13 +140,26 @@ class ProcessL4:
 
 
         # Calculate Rrs
+        esColumns = collections.OrderedDict()
+        liColumns = collections.OrderedDict()
+        ltColumns = collections.OrderedDict()
         rrsColumns = collections.OrderedDict()
         for k in es5Columns:
             if (k in li5Columns) and (k in lt5Columns):
                 es = es5Columns[k][0]
                 li = li5Columns[k][0]
                 lt = lt5Columns[k][0]
+                esColumns[k] = [es]
+                liColumns[k] = [li]
+                ltColumns[k] = [lt]
                 rrsColumns[k] = [(lt - (p_sky * li)) / es]
+
+        newESData.m_columns = esColumns
+        newLIData.m_columns = liColumns
+        newLTData.m_columns = ltColumns
+        newESData.columnsToDataset()
+        newLIData.columnsToDataset()
+        newLTData.columnsToDataset()
 
         newRrsData.m_columns = rrsColumns
         newRrsData.columnsToDataset()
@@ -172,8 +185,11 @@ class ProcessL4:
         ltData = sasGroup.getDataset("LT_hyperspectral")
 
         newRrsData = newReflectanceGroup.addDataset("Rrs")
+        newESData = newReflectanceGroup.addDataset("ES")
+        newLIData = newReflectanceGroup.addDataset("LI")
+        newLTData = newReflectanceGroup.addDataset("LT")
 
-        if not ProcessL4.calculateReflectance(esData, liData, ltData, newRrsData):
+        if not ProcessL4.calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
             return None
 
         return root

@@ -101,9 +101,6 @@ class ProcessL2:
             y = np.copy(darkData.m_data[k]).tolist()
             new_x = lightTimer.m_data["NONE"]
             #print(x[0], new_x[0])
-            #newDarkData[k] = Utilities.interp(x,y,new_x,'linear')
-            #newDarkData[k] = Utilities.interp(x,y,new_x,'slinear')
-            #newDarkData[k] = Utilities.interp(x,y,new_x,'quadratic')
             #newDarkData[k] = Utilities.interp(x,y,new_x,'cubic')
             newDarkData[k] = Utilities.interpSpline(x,y,new_x)
 

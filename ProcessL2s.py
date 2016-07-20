@@ -101,8 +101,6 @@ class ProcessL2s:
         #    print("Found NAN 1")
 
         # Perform interpolation
-        #ProcessL2s.interpolateL2s(xData, xTimer, yTimer, xData, 'slinear')
-        #ProcessL2s.interpolateL2s(xData, xTimer, yTimer, xData, 'quadratic')
         ProcessL2s.interpolateL2s(xData, xTimer, yTimer, xData, 'cubic')
         xData.columnsToDataset()
         
