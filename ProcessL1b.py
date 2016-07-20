@@ -178,16 +178,18 @@ class ProcessL1b:
         luUnits = None
 
         for gp in root.m_groups:
-            #cf = calibrationMap[gp.m_attributes["FrameTag"]]
-            cf = calibrationMap[gp.m_attributes["CalFileName"]]
-            #print(gp.m_id, gp.m_attributes)
-            print("File:", cf.m_id)
-            ProcessL1b.processGroup(gp, cf)
-
-            if esUnits == None:
-                esUnits = cf.getUnits("ES")
-            if luUnits == None:
-                luUnits = cf.getUnits("LI")
+            #print("Group: ", gp.m_id)
+            if "CalFileName" in gp.m_attributes:
+                #cf = calibrationMap[gp.m_attributes["FrameTag"]]
+                cf = calibrationMap[gp.m_attributes["CalFileName"]]
+                #print(gp.m_id, gp.m_attributes)
+                print("File:", cf.m_id)
+                ProcessL1b.processGroup(gp, cf)
+    
+                if esUnits == None:
+                    esUnits = cf.getUnits("ES")
+                if luUnits == None:
+                    luUnits = cf.getUnits("LI")
 
         #print(esUnits, luUnits)
         root.m_attributes["LU_UNITS"] = luUnits

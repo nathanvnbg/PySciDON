@@ -96,13 +96,15 @@ class RawFileReader:
                                     gp.m_attributes["FrameTag"] = cf.m_id
 
                                 num = cf.convertRaw(msg, gp)
-                                
-                                # Generate POSFRAME
-                                ds = gp.getDataset("POSFRAME")
-                                ds.appendColumn(u"COUNT", posframe)
-                                posframe += 1
 
-                                f.read(num)
+                                if num >= 0:
+                                    # Generate POSFRAME
+                                    ds = gp.getDataset("POSFRAME")
+                                    if ds is None:
+                                        ds = gp.addDataset("POSFRAME")
+                                    ds.appendColumn(u"COUNT", posframe)
+                                    posframe += 1
+                                    f.read(num)
 
                                 break
                         if num > 0:

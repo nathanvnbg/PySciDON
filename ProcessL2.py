@@ -2,7 +2,7 @@
 import collections
 
 import numpy as np
-
+import scipy as sp
 
 import HDFRoot
 #import HDFGroup
@@ -89,15 +89,29 @@ class ProcessL2:
         lightData.m_data = newLightData
         '''
 
+        #if Utilities.detectNan(darkData):
+        #    print("Found NAN 1")
+        #    exit
+
+
         # Interpolate Dark Dataset to match number of elements as Light Dataset
         newDarkData = np.copy(lightData.m_data)
         for k in darkData.m_data.dtype.fields.keys():
             x = np.copy(darkTimer.m_data["NONE"]).tolist()
             y = np.copy(darkData.m_data[k]).tolist()
             new_x = lightTimer.m_data["NONE"]
+            #print(x[0], new_x[0])
             #newDarkData[k] = Utilities.interp(x,y,new_x,'linear')
-            newDarkData[k] = Utilities.interp(x,y,new_x,'cubic')
+            #newDarkData[k] = Utilities.interp(x,y,new_x,'slinear')
+            #newDarkData[k] = Utilities.interp(x,y,new_x,'quadratic')
+            #newDarkData[k] = Utilities.interp(x,y,new_x,'cubic')
+            newDarkData[k] = Utilities.interpSpline(x,y,new_x)
+
         darkData.m_data = newDarkData
+
+        #if Utilities.detectNan(darkData):
+        #    print("Found NAN 2")
+        #    exit
 
         #print(lightData.m_data.shape)
         #print(newDarkData.shape)
@@ -108,6 +122,21 @@ class ProcessL2:
                 lightData.m_data[k][x] -= newDarkData[k][x]
 
         #print(lightData.m_data)
+
+    # Copies TIMETAG2 values to Timer and converts to seconds
+    @staticmethod
+    def copyTimetag2(timerDS, tt2DS):
+        if (timerDS.m_data is None) or (tt2DS.m_data is None):
+            print("copyTimetag2: Timer/TT2 is None")
+            return
+
+        #print("Time:", time)
+        #print(ds.m_data)
+        for i in range(0, len(timerDS.m_data)):
+            tt2 = float(tt2DS.m_data["NONE"][i])
+            t = Utilities.timeTag2ToSec(tt2)
+            timerDS.m_data["NONE"][i] = t
+        
 
     # Code to recalculate light/dark timer values to start near zero
     # Might work better when preforming interpolations?
@@ -146,6 +175,7 @@ class ProcessL2:
 
     @staticmethod
     def processDarkCorrection(node, sensorType):
+        print("Dark Correction:", sensorType)
         darkData = None
         darkTimer = None
         lightData = None
@@ -155,14 +185,17 @@ class ProcessL2:
             if gp.m_attributes["FrameType"] == "ShutterDark" and gp.hasDataset(sensorType):
                 darkData = gp.getDataset(sensorType)
                 darkTimer = gp.getDataset("TIMER")
+                darkTT2 = gp.getDataset("TIMETAG2")
 
             if gp.m_attributes["FrameType"] == "ShutterLight" and gp.hasDataset(sensorType):
                 lightData = gp.getDataset(sensorType)
                 lightTimer = gp.getDataset("TIMER")
+                lightTT2 = gp.getDataset("TIMETAG2")
 
+        ProcessL2.copyTimetag2(darkTimer, darkTT2)
+        ProcessL2.copyTimetag2(lightTimer, lightTT2)
         ProcessL2.processTimer(darkTimer, lightTimer)
         ProcessL2.darkCorrection(darkData, darkTimer, lightData, lightTimer)
-
 
 
     # Applies dark data correction / data deglitching
@@ -177,10 +210,6 @@ class ProcessL2:
         #root.m_attributes["STRAY_LIGHT_CORRECT"] = "OFF"
         #root.m_attributes["THERMAL_RESPONSIVITY_CORRECT"] = "OFF"
 
-        # Recalculate TIMER dataset, it is used for interpolating dark data
-        #print("Start Time:", root.getStartTime())
-        #root.processTIMER()
-        #root.processTIMERProsoft()
 
         #ProcessL2.processDataDeglitching(root, "ES")
         #ProcessL2.processDataDeglitching(root, "LI")

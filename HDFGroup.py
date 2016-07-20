@@ -34,6 +34,9 @@ class HDFGroup:
 
 
     def addDataset(self, name):
+        if len(name) == 0:
+            print("Name is 0")
+            exit(1)
         ds = None
         if not self.hasDataset(name):
             ds = HDFDataset()
@@ -47,10 +50,7 @@ class HDFGroup:
     def getDataset(self, name):
         if self.hasDataset(name):
             return self.m_datasets[name]
-        ds = HDFDataset()
-        ds.m_id = name
-        self.m_datasets[name] = ds
-        return ds
+        return None
 
 
     # Generates Head attributes
@@ -59,6 +59,8 @@ class HDFGroup:
         if name != "None":
             cnt = 1
             ds = self.getDataset(name)
+            if ds is None:
+                ds = self.addDataset(name)
             for item in ds.m_columns:
                 self.m_attributes["Head_"+str(cnt)] = name + " 1 1 " + item
                 cnt += 1
@@ -130,78 +132,4 @@ class HDFGroup:
         for key,ds in self.m_datasets.items():
             #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
             ds.writeHDF4(vg, vs)
-
-
-    # Returns the minimum TimeTag2 value
-    def getStartTime(self, time=sys.maxsize):
-        if self.hasDataset("TIMETAG2"):
-            ds = self.getDataset("TIMETAG2")
-            if ds.m_data is not None:
-                #print(ds.m_data.dtype)
-                tt2 = float(ds.m_data["NONE"][0])
-                t = Utilities.timeTag2ToSec(tt2)
-                if t < time:
-                    time = t
-        return time
-
-    # Process timer using TimeTag2 values
-    def processTIMER(self, time):
-        if self.hasDataset("TIMER"):
-            ds = self.getDataset("TIMER")
-            tt2DS = self.getDataset("TIMETAG2")
-            if ds.m_data is not None:
-                #print("Time:", time)
-                #print(ds.m_data)
-                for i in range(0, len(ds.m_data)):
-                    tt2 = float(tt2DS.m_data["NONE"][i])
-                    t = Utilities.timeTag2ToSec(tt2)
-                    ds.m_data["NONE"][i] = t - time
-                #print(ds.m_data)
-
-
-    # Looks like Prosoft recalculates TIMER by subtracting all values by t0 then adds an offset
-    # Note: if could be better to use TimeTag2 values?
-    def processTIMERProsoft(self):
-        if self.hasDataset("TIMER"):
-            ds = self.getDataset("TIMER")
-            t0 = ds.m_data["NONE"][0]
-            t1 = ds.m_data["NONE"][1]
-            #offset = t1 - t0
-
-            min0 = t1 - t0
-            total = len(ds.m_data["NONE"])
-            #print("test avg")
-            for i in range(1, total):
-                num = ds.m_data["NONE"][i] - ds.m_data["NONE"][i-1]
-                if num < min0:
-                    min0 = num
-            offset = min0
-            #print("min:",min0)
-
-
-            '''
-            avg = 0
-            total = len(ds.m_data["NONE"])
-            print("test avg")
-            for i in range(1, total):
-                num = ds.m_data["NONE"][i] - ds.m_data["NONE"][i-1]
-                if self.m_id == "ES":
-                    print(num)
-                avg += num
-            avg /= total
-            offset = avg
-            '''
-            
-            #print("offset",offset)
-            if self.m_attributes["FrameType"] == "LightAncCombined":
-                offset += 0.1
-            elif self.m_attributes["FrameType"] == "ShutterLight" or \
-                self.m_attributes["FrameType"] == "ShutterDark":
-                offset += 0.3
-            if ds.m_data is not None:
-                #print("Time:", time)
-                #print(ds.m_data)
-                for i in range(0, len(ds.m_data)):
-                    ds.m_data["NONE"][i] += -t0 + offset
-                #print(ds.m_data)
 

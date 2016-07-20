@@ -154,7 +154,7 @@ class HDFDataset:
 
     # Converts columns into numpy array
     def columnsToDataset(self):
-        #print(ds.m_columns)
+        #print("Id:", self.m_id, ", Columns:", self.m_columns)
         #dtype0 = np.dtype([(name, type(ds.m_columns[name][0])) for name in ds.m_columns.keys()])
         dtype = []
         for name in self.m_columns.keys():

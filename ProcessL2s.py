@@ -1,5 +1,7 @@
 
 import numpy as np
+import scipy as sp
+
 
 import HDFRoot
 #import HDFGroup
@@ -27,10 +29,11 @@ class ProcessL2s:
             #if not gp.m_id.startswith("GPS"):
             if not gp.hasDataset("UTCPOS"):
                 dsTimer = gp.getDataset("TIMER")
-                dsTimeTag2 = gp.getDataset("TIMETAG2")
-                for x in range(dsTimeTag2.m_data.shape[0]):
-                    v = dsTimer.m_data["NONE"][x] + sec
-                    dsTimeTag2.m_data["NONE"][x] = Utilities.secToTimeTag2(v)
+                if dsTimer is not None:
+                    dsTimeTag2 = gp.getDataset("TIMETAG2")
+                    for x in range(dsTimeTag2.m_data.shape[0]):
+                        v = dsTimer.m_data["NONE"][x] + sec
+                        dsTimeTag2.m_data["NONE"][x] = Utilities.secToTimeTag2(v)
 
 
     @staticmethod
@@ -38,10 +41,14 @@ class ProcessL2s:
         for k in [k for k,v in sorted(xData.m_data.dtype.fields.items(),key=lambda k: k[1])]:
             if k == "Datetag" or k == "Timetag2":
                 continue
+            #print(k)
             x = list(xTimer)
             new_x = list(yTimer)
             y = np.copy(xData.m_data[k]).tolist()
-            newXData.m_columns[k] = Utilities.interp(x, y, new_x, kind)
+            if kind == 'cubic':
+                newXData.m_columns[k] = Utilities.interpSpline(x, y, new_x)
+            else:
+                newXData.m_columns[k] = Utilities.interp(x, y, new_x, kind)
 
 
     # Converts a sensor group into the format used by Level 2s
@@ -89,9 +96,20 @@ class ProcessL2s:
         xData.m_columns["Datetag"] = yData.m_data["Datetag"].tolist()
         xData.m_columns["Timetag2"] = yData.m_data["Timetag2"].tolist()
 
+
+        #if Utilities.detectNan(xData):
+        #    print("Found NAN 1")
+
         # Perform interpolation
+        #ProcessL2s.interpolateL2s(xData, xTimer, yTimer, xData, 'slinear')
+        #ProcessL2s.interpolateL2s(xData, xTimer, yTimer, xData, 'quadratic')
         ProcessL2s.interpolateL2s(xData, xTimer, yTimer, xData, 'cubic')
         xData.columnsToDataset()
+        
+
+        #if Utilities.detectNan(xData):
+        #    print("Found NAN 2")
+        #    exit
 
 
     # interpolate GPS to match ES using linear interpolation

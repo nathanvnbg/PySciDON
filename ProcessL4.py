@@ -19,19 +19,19 @@ class ProcessL4:
         # Threshold for significant es
         v = es5Columns["480.0"][0]        
         if v < 2:
-            print("Quality Check: ES(480.0)=" + v)
+            print("Quality Check: ES(480.0) =", v)
             return False
 
         # Masking spectra affected by dawn/dusk radiation
         v = es5Columns["470.0"][0] / es5Columns["610.0"][0]
         if v < 1:
-            print("Quality Check: ES(470.0)/ES(610.0)=" + v)
+            print("Quality Check: ES(470.0)/ES(610.0) =", v)
             return False
 
         # Masking spectra affected by rainfall and high humidity
         v = es5Columns["720.0"][0] / es5Columns["370.0"][0]        
         if v < 1.2:
-            print("Quality Check: ES(720.0)/ES(370.0)=" + v)
+            print("Quality Check: ES(720.0)/ES(370.0) =", v)
             return False
 
         return True
@@ -55,6 +55,18 @@ class ProcessL4:
         ltColumns = ltData.m_columns
         ltColumns.pop("Datetag")
         ltColumns.pop("Timetag2")
+
+        if Utilities.detectNan(esData):
+            print("Found NAN 1") 
+            exit
+
+        if Utilities.detectNan(liData):
+            print("Found NAN 2") 
+            exit
+
+        if Utilities.detectNan(ltData):
+            print("Found NAN 3") 
+            exit
 
 
         esLength = len(list(esColumns.items())[0])
@@ -89,6 +101,7 @@ class ProcessL4:
         li5Columns = collections.OrderedDict()
         lt5Columns = collections.OrderedDict()
 
+
         hasNan = False
         for k in esColumns:
             v = [esColumns[k][i] for i in y]
@@ -109,12 +122,14 @@ class ProcessL4:
             if np.isnan(mean):
                 hasNan = True
 
+
         # Exit if detect nan
         if hasNan:
+            print("Error NaN Found")
             return False
 
-        if not ProcessL4.qualityCheck(es5Columns):
-            return False
+        #if not ProcessL4.qualityCheck(es5Columns):
+        #    return False
 
 
         # Calculate Rho_sky
@@ -127,10 +142,11 @@ class ProcessL4:
         # Calculate Rrs
         rrsColumns = collections.OrderedDict()
         for k in es5Columns:
-            es = es5Columns[k][0]
-            li = li5Columns[k][0]
-            lt = lt5Columns[k][0]
-            rrsColumns[k] = [(lt - (p_sky * li)) / es]
+            if (k in li5Columns) and (k in lt5Columns):
+                es = es5Columns[k][0]
+                li = li5Columns[k][0]
+                lt = lt5Columns[k][0]
+                rrsColumns[k] = [(lt - (p_sky * li)) / es]
 
         newRrsData.m_columns = rrsColumns
         newRrsData.columnsToDataset()
