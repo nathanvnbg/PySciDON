@@ -3,9 +3,6 @@ import collections
 import os
 #import sys
 
-from PyQt4.QtCore import pyqtSlot
-from PyQt4 import QtGui
-
 import h5py
 #import numpy as np
 #import scipy as sp
@@ -31,43 +28,98 @@ class Controller:
     def generateContext(calibrationMap):
         for key in calibrationMap:
             cf = calibrationMap[key]
-            if cf.m_id == "SATHED0150":
+            cf.printd()
+            if cf.m_id.startswith("SATHED"):
+                cf.m_instrumentType = "Reference"
+                cf.m_media = "Air"
+                cf.m_measMode = "Surface"
+                cf.m_frameType = "ShutterDark"
+                cf.m_sensorType = cf.getSensorType()
+            elif cf.m_id.startswith("SATHSE"):
+                cf.m_instrumentType = "Reference"
+                cf.m_media = "Air"
+                cf.m_measMode = "Surface"
+                cf.m_frameType = "ShutterLight"
+                cf.m_sensorType = cf.getSensorType()
+            elif cf.m_id.startswith("SATHLD"):
+                cf.m_instrumentType = "SAS"
+                cf.m_media = "Air"
+                cf.m_measMode = "VesselBorne"
+                cf.m_frameType = "ShutterDark"
+                cf.m_sensorType = cf.getSensorType()
+            elif cf.m_id.startswith("SATHSL"):
+                cf.m_instrumentType = "SAS"
+                cf.m_media = "Air"
+                cf.m_measMode = "VesselBorne"
+                cf.m_frameType = "ShutterLight"
+                cf.m_sensorType = cf.getSensorType()
+            elif cf.m_id.startswith("$GPRMC"):
+                cf.m_instrumentType = "GPS"
+                cf.m_media = "Not Required"
+                cf.m_measMode = "Not Required"
+                cf.m_frameType = "Not Required"
+                cf.m_sensorType = cf.getSensorType()
+            else:
+                cf.m_instrumentType = "SAS"
+                cf.m_media = "Air"
+                cf.m_measMode = "VesselBorne"
+                cf.m_frameType = "LightAncCombined"
+                cf.m_sensorType = cf.getSensorType()
+
+    '''
+    @staticmethod
+    def generateContext(calibrationMap):
+        for key in calibrationMap:
+            cf = calibrationMap[key]
+            if cf.m_id == "SATHED0526":
                 cf.m_instrumentType = "Reference"
                 cf.m_media = "Air"
                 cf.m_measMode = "Surface"
                 cf.m_frameType = "ShutterDark"
                 cf.m_sensorType = "ES"
-            elif cf.m_id == "SATHLD0151":
+            elif cf.m_id == "SATHLD0417":
                 cf.m_instrumentType = "SAS"
                 cf.m_media = "Air"
                 cf.m_measMode = "VesselBorne"
                 cf.m_frameType = "ShutterDark"
                 cf.m_sensorType = "LI"
-            elif cf.m_id == "SATHLD0152":
+            elif cf.m_id == "SATHLD0418":
                 cf.m_instrumentType = "SAS"
                 cf.m_media = "Air"
                 cf.m_measMode = "VesselBorne"
                 cf.m_frameType = "ShutterDark"
                 cf.m_sensorType = "LT"
-            elif cf.m_id == "SATHSE0150":
+            elif cf.m_id == "SATHSE0526":
                 cf.m_instrumentType = "Reference"
                 cf.m_media = "Air"
                 cf.m_measMode = "Surface"
                 cf.m_frameType = "ShutterLight"
                 cf.m_sensorType = "ES"
-            elif cf.m_id == "SATHSL0151":
+            elif cf.m_id == "SATHSL0417":
                 cf.m_instrumentType = "SAS"
                 cf.m_media = "Air"
                 cf.m_measMode = "VesselBorne"
                 cf.m_frameType = "ShutterLight"
                 cf.m_sensorType = "LI"
-            elif cf.m_id == "SATHSL0152":
+            elif cf.m_id == "SATHSL0418":
                 cf.m_instrumentType = "SAS"
                 cf.m_media = "Air"
                 cf.m_measMode = "VesselBorne"
                 cf.m_frameType = "ShutterLight"
                 cf.m_sensorType = "LT"
-            elif cf.m_id == "SATSAS0052":
+            elif cf.m_id == "SATPYR":
+                cf.m_instrumentType = "SAS"
+                cf.m_media = "Air"
+                cf.m_measMode = "VesselBorne"
+                cf.m_frameType = "LightAncCombined"
+                cf.m_sensorType = "None"
+            elif cf.m_id == "SATMSG":
+                cf.m_instrumentType = "SAS"
+                cf.m_media = "Air"
+                cf.m_measMode = "VesselBorne"
+                cf.m_frameType = "LightAncCombined"
+                cf.m_sensorType = "None"
+            elif cf.m_id == "SATNAV0003":
                 cf.m_instrumentType = "SAS"
                 cf.m_media = "Air"
                 cf.m_measMode = "VesselBorne"
@@ -79,6 +131,7 @@ class Controller:
                 cf.m_measMode = "Not Required"
                 cf.m_frameType = "Not Required"
                 cf.m_sensorType = "None"
+    '''
 
     @staticmethod
     def processCalibration(calPath):
@@ -93,20 +146,18 @@ class Controller:
     @staticmethod
     def processL1a(root, fp, calibrationMap):
         (dirpath, filename) = os.path.split(fp)
-        filename = os.path.splitext(filename)[0]
+        name = os.path.splitext(filename)[0]
+        
         print("ProcessL1a")
-        #root = RawFileReader.readRawFile("data.raw", calibrationMap)
-        #generateContext(root)
-        #print("HDFFile:")
-        #root.printd()
-        fp = os.path.join(dirpath, filename + ".raw")
-        #root = root.processL1a(calibrationMap, fp)
+
+        nm = os.path.join(dirpath, name + "_L0.txt")
+        f = open(nm, 'w')
+        
+        fp = os.path.join(dirpath, filename)
+
         root = ProcessL1a.processL1a(calibrationMap, fp)
-        root.writeHDF5(os.path.join(dirpath, filename + "_L1a.hdf"))
-        #fp = os.path.join(dirpath, filename + "_L1a.hdf4")
-        #if os.path.exists(fp):
-        #    os.remove(fp)
-        #root.writeHDF4(fp)
+        root.writeHDF5(os.path.join(dirpath, name + "_L1a.hdf"))
+
         return root
 
     def processL1b(root, fp, calibrationMap):
@@ -116,7 +167,6 @@ class Controller:
         root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L1a.hdf"))
         #print("HDFFile:")
         #root.printd()
-        #root = root.processL1b(calibrationMap)
         root = ProcessL1b.processL1b(root, calibrationMap)
         root.writeHDF5(os.path.join(dirpath, filename + "_L1b.hdf"))
         return root
@@ -127,8 +177,6 @@ class Controller:
         filename = os.path.splitext(filename)[0]
         print("ProcessL2")
         root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L1b.hdf"))
-        #root.processTIMER()
-        #root = root.processL2()
         root = ProcessL2.processL2(root)
         root.writeHDF5(os.path.join(dirpath, filename + "_L2.hdf"))
         return root
@@ -139,8 +187,6 @@ class Controller:
         filename = os.path.splitext(filename)[0]
         print("ProcessL2s")
         root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L2.hdf"))
-        #processGPSTime(root)
-        #root = root.processL2s()
         root = ProcessL2s.processL2s(root)
         #root.printd()
         root.writeHDF5(os.path.join(dirpath, filename + "_L2s.hdf"))
@@ -152,7 +198,6 @@ class Controller:
         filename = os.path.splitext(filename)[0]
         print("ProcessL3a")
         root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L2s.hdf"))
-        #root = root.processL3a()
         root = ProcessL3a.processL3a(root)
         root.writeHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
         return root
@@ -163,7 +208,6 @@ class Controller:
         filename = os.path.splitext(filename)[0]
         print("ProcessL4")
         root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
-        #root = root.processL4()
         root = ProcessL4.processL4(root)
         if root is not None:
             Utilities.plotReflectance(root, filename)
