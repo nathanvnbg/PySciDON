@@ -1,19 +1,27 @@
 
+import time
+import datetime
+
 import matplotlib.pyplot as plt
+import numpy as np
 import scipy.interpolate
+
 
 class Utilities:
 
     # Converts GPS UTC time to seconds
+    # Note: Does not support multiple days
     @staticmethod
     def utcToSec(utc):
-        t = str(int(utc))
-        #print(s)
-        #print(s[:2], s[2:4], s[4:])
+        # Use zfill to ensure correct width, fixes bug when hour is 0 (12 am)
+        t = str(int(utc)).zfill(6)
+        #print(t)
+        #print(t[:2], t[2:4], t[4:])
         h = int(t[:2])
         m = int(t[2:4])
         s = int(t[4:])
         return ((h*60)+m)*60+s
+
 
     # Converts seconds to TimeTag2
     @staticmethod
@@ -28,11 +36,12 @@ class Utilities:
     # Converts TimeTag2 to seconds
     @staticmethod
     def timeTag2ToSec(tt2):
-        t = str(int(tt2))
+        t = str(int(tt2)).zfill(9)
         h = int(t[:2])
         m = int(t[2:4])
         s = int(t[4:6])
         ms = int(t[6:])
+        #print(h, m, s, ms)
         return ((h*60)+m)*60+s+(float(ms)/1000.0)
 
     # Converts HDFRoot timestamp attribute to seconds
@@ -44,6 +53,15 @@ class Utilities:
         m = int(t[1])
         s = int(t[2])
         return ((h*60)+m)*60+s
+
+    # Check if dataset contains NANs
+    def detectNan(ds):
+        for k in ds.m_data.dtype.fields.keys():
+            for x in range(ds.m_data.shape[0]):
+                if np.isnan(ds.m_data[k][x]):
+                    return True
+        return False
+        
 
     # Wrapper for scipy interp1d that works even if
     # values in new_x are outside the range of values in x
@@ -62,8 +80,12 @@ class Utilities:
             x.insert(0, new_x[0])
             y.insert(0, y[0])
 
+        # Note: large jumps in time causes NANs to appear
         #print("t1", len(x), len(y))
-        new_y = scipy.interpolate.interp1d(x, y, kind=kind, bounds_error=False)(new_x)
+        #new_y = scipy.interpolate.interp1d(x, y, kind=kind, bounds_error=False)(new_x)
+        #new_y = scipy.interpolate.interp1d(x, y, kind=kind, bounds_error=False, fill_value=0.0)(new_x)
+        #new_y = scipy.interpolate.interp1d(x, y, kind='linear', bounds_error=False, fill_value=0.0)(new_x)
+        new_y = scipy.interpolate.interp1d(x, y, kind=kind, bounds_error=False, fill_value=0.0)(new_x)
 
         '''
         test = False
@@ -79,6 +101,32 @@ class Utilities:
         '''
 
         return new_y
+
+
+    # Wrapper for scipy UnivariateSpline interpolation
+    # This method does not seem stable unless points are uniform distance apart - results in all Nan output
+    @staticmethod
+    def interpSpline(x, y, new_x):
+
+        #print("t0", len(x), len(y))
+        n0 = len(x)-1
+        n1 = len(new_x)-1
+        if new_x[n1] > x[n0]:
+            #print(new_x[n], x[n])
+            x.append(new_x[n1])
+            y.append(y[n0])
+        if new_x[0] < x[0]:
+            #print(new_x[0], x[0])
+            x.insert(0, new_x[0])
+            y.insert(0, y[0])
+
+        #new_y = scipy.interpolate.interp1d(x, y, kind='quadratic', bounds_error=False, fill_value=0.0)(new_x)
+        #new_y = scipy.interpolate.interp1d(x, y, kind='cubic', bounds_error=False, fill_value=0.0)(new_x)
+        #new_y = scipy.interpolate.UnivariateSpline(x, y, k=3, s=5e8)(new_x)
+        new_y = scipy.interpolate.InterpolatedUnivariateSpline(x, y, k=3)(new_x)
+
+        return new_y
+
 
 
     @staticmethod
