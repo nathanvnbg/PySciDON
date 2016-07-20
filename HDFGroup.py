@@ -2,9 +2,10 @@
 import collections
 import sys
 
-from pyhdf.HDF import *
-from pyhdf.V import *
-from pyhdf.VS import *
+# For testing HDF4 support with pyhdf
+#from pyhdf.HDF import *
+#from pyhdf.V import *
+#from pyhdf.VS import *
 
 import h5py
 import numpy as np
@@ -12,7 +13,7 @@ import numpy as np
 
 
 from HDFDataset import HDFDataset
-from Utilities import Utilities
+#from Utilities import Utilities
 
 
 class HDFGroup:
