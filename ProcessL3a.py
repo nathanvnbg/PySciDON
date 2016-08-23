@@ -166,7 +166,8 @@ class ProcessL3a:
 
         newReferenceGroup = root.addGroup("Reference")
         newSASGroup = root.addGroup("SAS")
-        root.m_groups.append(node.getGroup("GPS"))
+        if node.hasGroup("GPS"):
+            root.m_groups.append(node.getGroup("GPS"))
 
         referenceGroup = node.getGroup("Reference")
         sasGroup = node.getGroup("SAS")

@@ -1,4 +1,6 @@
 
+import sys
+
 import numpy as np
 import scipy as sp
 
@@ -38,7 +40,7 @@ class ProcessL2s:
 
     @staticmethod
     def interpolateL2s(xData, xTimer, yTimer, newXData, kind='linear'):
-        for k in [k for k,v in sorted(xData.m_data.dtype.fields.items(),key=lambda k: k[1])]:
+        for k in xData.m_data.dtype.names:
             if k == "Datetag" or k == "Timetag2":
                 continue
             #print(k)
@@ -67,7 +69,7 @@ class ProcessL2s:
         newSensorData.m_columns["Timetag2"] = timeData.m_data["NONE"].tolist()
 
         # Copies over the dataset
-        for k in [k for k,v in sorted(sensorData.m_data.dtype.fields.items(),key=lambda k: k[1])]:
+        for k in sensorData.m_data.dtype.names:
             #print("type",type(esData.m_data[k]))
             newSensorData.m_columns[k] = sensorData.m_data[k].tolist()
         newSensorData.columnsToDataset()
@@ -93,11 +95,18 @@ class ProcessL2s:
         for i in range(len(yTimetag2)):
             yTimer.append(Utilities.timeTag2ToSec(yTimetag2[i]))
 
+        if not Utilities.isIncreasing(xTimer):
+            print("xTimer does not contain strictly increasing values")
+            return False
+        if not Utilities.isIncreasing(yTimer):
+            print("yTimer does not contain strictly increasing values")
+            return False
+
         xData.m_columns["Datetag"] = yData.m_data["Datetag"].tolist()
         xData.m_columns["Timetag2"] = yData.m_data["Timetag2"].tolist()
 
 
-        #if Utilities.detectNan(xData):
+        #if Utilities.hasNan(xData):
         #    print("Found NAN 1")
 
         # Perform interpolation
@@ -105,15 +114,21 @@ class ProcessL2s:
         xData.columnsToDataset()
         
 
-        #if Utilities.detectNan(xData):
+        #if Utilities.hasNan(xData):
         #    print("Found NAN 2")
         #    exit
+
+        return True
 
 
     # interpolate GPS to match ES using linear interpolation
     @staticmethod
     def interpolateGPSData(node, gpsGroup):
         print("Interpolate GPS Data")
+
+        if gpsGroup is None:
+            print("WARNING, gpsGroup is None")
+            return
 
         refGroup = node.getGroup("Reference")
         esData = refGroup.getDataset("ES_hyperspectral")
@@ -183,11 +198,6 @@ class ProcessL2s:
         root.m_attributes["PROCESSING_LEVEL"] = "2s"
         root.m_attributes["DEPTH_RESOLUTION"] = "0.1 m"
 
-        gpsGroup = root.addGroup("GPS")
-        refGroup = root.addGroup("Reference")
-        sasGroup = root.addGroup("SAS")
-
-
         esGroup = None
         gpsGroup = None
         liGroup = None
@@ -207,6 +217,12 @@ class ProcessL2s:
                 print("LT")
                 ltGroup = gp
 
+        refGroup = root.addGroup("Reference")
+        sasGroup = root.addGroup("SAS")
+        if gpsGroup is not None:
+            gpsGroup2 = root.addGroup("GPS")
+
+
         #ProcessL2s.interpolateGPSData(root, esGroup, gpsGroup)
         #ProcessL2s.interpolateSASData(root, liGroup, ltGroup)
 
@@ -221,8 +237,11 @@ class ProcessL2s:
         liData = sasGroup.getDataset("LI_hyperspectral")
         ltData = sasGroup.getDataset("LT_hyperspectral")
         
-        ProcessL2s.interpolateData(esData, liData)
-        ProcessL2s.interpolateData(ltData, liData)
+        # Perform time interpolation
+        if not ProcessL2s.interpolateData(esData, liData):
+            return None
+        if not ProcessL2s.interpolateData(ltData, liData):
+            return None
 
         ProcessL2s.interpolateGPSData(root, gpsGroup)
 

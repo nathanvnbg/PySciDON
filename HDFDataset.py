@@ -139,7 +139,7 @@ class HDFDataset:
     # Converts numpy array into columns (stored as a dictionary)
     def datasetToColumns(self):
         self.m_columns = collections.OrderedDict()
-        for k in [k for k,v in sorted(self.m_data.dtype.fields.items(), key=lambda k: k[1])]:
+        for k in self.m_data.dtype.names:
             #print("type",type(ltData.m_data[k]))
             self.m_columns[k] = self.m_data[k].tolist()
 
@@ -157,6 +157,11 @@ class HDFDataset:
     def columnsToDataset(self):
         #print("Id:", self.m_id, ", Columns:", self.m_columns)
         #dtype0 = np.dtype([(name, type(ds.m_columns[name][0])) for name in ds.m_columns.keys()])
+
+        if not self.m_columns:
+            print("Warning - columnsToDataset: m_columns is empty")
+            return
+
         dtype = []
         for name in self.m_columns.keys():
 

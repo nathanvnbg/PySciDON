@@ -8,6 +8,7 @@ class RawFileReader:
     MAX_TAG_READ = 32
     MAX_BLOCK_READ = 1024
     SATHDR_READ = 128
+    RESET_TAG_READ = MAX_TAG_READ-16
 
     # Function for reading SATHDR (Header) messages
     # Messages are in format: SATHDR <Value> (<Name>)\r\n
@@ -62,8 +63,10 @@ class RawFileReader:
                     testString = b[i:].upper()
                     #print("test: ", testString[:6])
 
+                    # Reset file position on max read
                     if i == RawFileReader.MAX_TAG_READ-1:
-                        f.read(RawFileReader.MAX_TAG_READ)
+                        #f.read(RawFileReader.MAX_TAG_READ)
+                        f.read(RawFileReader.RESET_TAG_READ)
                         break
 
                     # Detects message type from frame tag
@@ -110,4 +113,3 @@ class RawFileReader:
                         if num > 0:
                             break
 
- 
