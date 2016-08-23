@@ -97,8 +97,11 @@ class CalibrationFile:
 
                     end = msg[nRead:].find(delimiter)
                     #print("read:", nRead, end)
-                    b = msg[nRead:nRead+end]
-                    v = cd.convertRaw(b)
+                    if end == 0:
+                        v = 0.0
+                    else:
+                        b = msg[nRead:nRead+end]
+                        v = cd.convertRaw(b)
 
                     nRead += end
 
@@ -128,12 +131,14 @@ class CalibrationFile:
     # Returns nRead (number of bytes read) or -1 on error
     def convertRaw(self, msg, gp):
         nRead = 0
+        instrumentId = ""
 
         #for i in range(0, len(self.m_data)):
         #    self.m_data[i].printd()
         #print("file:", msg)
 
         if self.verifyRaw(msg) == False:
+            #print("Message not read successfully:\n" + str(msg))
             return -1
 
         for i in range(0, len(self.m_data)):
@@ -150,9 +155,12 @@ class CalibrationFile:
                 #print("delimiter:", delimiter)
 
                 end = msg[nRead:].find(delimiter)
-                #print("read:", nRead, end)
-                b = msg[nRead:nRead+end]
-                v = cd.convertRaw(b)
+                if end == 0:
+                    v = 0.0
+                else:
+                    #print("read:", nRead, end)
+                    b = msg[nRead:nRead+end]
+                    v = cd.convertRaw(b)
 
                 nRead += end
 
@@ -164,6 +172,11 @@ class CalibrationFile:
                         #print(nRead, cd.m_fieldLength, b)
                         v = cd.convertRaw(b)
                 nRead  += cd.m_fieldLength
+
+
+            # Stores the instrument id to check for DATETAG/TIMETAG2
+            if cd.m_type.upper() == "INSTRUMENT" or cd.m_type.upper() == "VLF_INSTRUMENT":
+                instrumentId = cd.m_id
 
 
             # Stores value in dataset or attribute depending on type
@@ -198,10 +211,14 @@ class CalibrationFile:
                         gp.m_attributes[cdtype] = cd.m_id 
 
 
-        # Satview appends additional bytes for DATETAG, TIMETAG2
-        # 3 bytes date tag, 4 bytes time tag
-        #if not gp.m_id.startswith("GPS"):
-        if not gp.hasDataset("UTCPOS"):
+        # Some instruments produce additional bytes for
+        # DATETAG (3 bytes), and TIMETAG2 (4 bytes)
+        if instrumentId.startswith("SATHED") or \
+                instrumentId.startswith("SATHLD") or \
+                instrumentId.startswith("SATHSE") or \
+                instrumentId.startswith("SATHSL") or \
+                instrumentId.startswith("SATPYR") or \
+                instrumentId.startswith("SATNAV"):
             #print("not gps")
             # date tag
             b = msg[nRead:nRead+3]
