@@ -1,5 +1,6 @@
 
 import collections
+import sys
 
 import numpy as np
 import scipy as sp
@@ -59,7 +60,7 @@ class ProcessL2:
     def darkCorrection(darkData, darkTimer, lightData, lightTimer):
         if (darkData == None) or (lightData == None):
             print("Dark Correction, dataset not found:", darkData, lightData)
-            return
+            return False
 
         '''
         #print("test", lightData.m_id)
@@ -89,7 +90,7 @@ class ProcessL2:
         lightData.m_data = newLightData
         '''
 
-        #if Utilities.detectNan(darkData):
+        #if Utilities.hasNan(darkData):
         #    print("Found NAN 1")
         #    exit
 
@@ -100,13 +101,23 @@ class ProcessL2:
             x = np.copy(darkTimer.m_data["NONE"]).tolist()
             y = np.copy(darkData.m_data[k]).tolist()
             new_x = lightTimer.m_data["NONE"]
+
+
+            if not Utilities.isIncreasing(x):
+                print("darkTimer does not contain strictly increasing values")
+                #return False
+            if not Utilities.isIncreasing(new_x):
+                print("lightTimer does not contain strictly increasing values")
+                #return False
+
+
             #print(x[0], new_x[0])
             #newDarkData[k] = Utilities.interp(x,y,new_x,'cubic')
             newDarkData[k] = Utilities.interpSpline(x,y,new_x)
 
         darkData.m_data = newDarkData
 
-        #if Utilities.detectNan(darkData):
+        #if Utilities.hasNan(darkData):
         #    print("Found NAN 2")
         #    exit
 
@@ -119,6 +130,9 @@ class ProcessL2:
                 lightData.m_data[k][x] -= newDarkData[k][x]
 
         #print(lightData.m_data)
+
+        return True
+
 
     # Copies TIMETAG2 values to Timer and converts to seconds
     @staticmethod
@@ -140,59 +154,89 @@ class ProcessL2:
     @staticmethod
     def processTimer(darkTimer, lightTimer):
 
-        if (darkTimer.m_data is not None) and (lightTimer.m_data is not None):
-            t0 = lightTimer.m_data["NONE"][0]
-            t1 = lightTimer.m_data["NONE"][1]
-            #offset = t1 - t0
+        if (darkTimer.m_data is None) or (lightTimer.m_data is None):
+            return
 
-            # Finds the minimum cycle time of the instrument to use as offset
-            min0 = t1 - t0
-            total = len(lightTimer.m_data["NONE"])
-            #print("test avg")
-            for i in range(1, total):
-                num = lightTimer.m_data["NONE"][i] - lightTimer.m_data["NONE"][i-1]
-                if num < min0:
-                    min0 = num
-            offset = min0
-            #print("min:",min0)
+        t0 = lightTimer.m_data["NONE"][0]
+        t1 = lightTimer.m_data["NONE"][1]
+        #offset = t1 - t0
 
-            # Set start time to minimum of light/dark timer values
-            if darkTimer.m_data["NONE"][0] < t0:
-                t0 = darkTimer.m_data["NONE"][0]
+        # Finds the minimum cycle time of the instrument to use as offset
+        min0 = t1 - t0
+        total = len(lightTimer.m_data["NONE"])
+        #print("test avg")
+        for i in range(1, total):
+            num = lightTimer.m_data["NONE"][i] - lightTimer.m_data["NONE"][i-1]
+            if num < min0 and num > 0:
+                min0 = num
+        offset = min0
+        #print("min:",min0)
 
-            # Recalculate timers by subtracting start time and adding offset
-            #print("Time:", time)
-            #print(darkTimer.m_data)
-            for i in range(0, len(darkTimer.m_data)):
-                darkTimer.m_data["NONE"][i] += -t0 + offset
-            for i in range(0, len(lightTimer.m_data)):
-                lightTimer.m_data["NONE"][i] += -t0 + offset
-            #print(darkTimer.m_data)
+        # Set start time to minimum of light/dark timer values
+        if darkTimer.m_data["NONE"][0] < t0:
+            t0 = darkTimer.m_data["NONE"][0]
+
+        # Recalculate timers by subtracting start time and adding offset
+        #print("Time:", time)
+        #print(darkTimer.m_data)
+        for i in range(0, len(darkTimer.m_data)):
+            darkTimer.m_data["NONE"][i] += -t0 + offset
+        for i in range(0, len(lightTimer.m_data)):
+            lightTimer.m_data["NONE"][i] += -t0 + offset
+        #print(darkTimer.m_data)
+
+
+    # Used to correct TIMETAG2 values if they are not strictly increasing
+    # (strictly increasing values required for interpolation)
+    @staticmethod
+    def fixTimeTag2(gp):
+        tt2 = gp.getDataset("TIMETAG2")
+        total = len(tt2.m_data["NONE"])
+        i = 1
+        while i < total:
+            num = tt2.m_data["NONE"][i] - tt2.m_data["NONE"][i-1]
+            if num <= 0:
+                gp.datasetDeleteRow(i)
+                total = total - 1
+                continue
+            i = i + 1
 
 
     @staticmethod
     def processDarkCorrection(node, sensorType):
         print("Dark Correction:", sensorType)
+        darkGroup = None
         darkData = None
         darkTimer = None
+        lightGroup = None
         lightData = None
         lightTimer = None
 
         for gp in node.m_groups:
             if gp.m_attributes["FrameType"] == "ShutterDark" and gp.hasDataset(sensorType):
+                darkGroup = gp
                 darkData = gp.getDataset(sensorType)
                 darkTimer = gp.getDataset("TIMER")
                 darkTT2 = gp.getDataset("TIMETAG2")
 
             if gp.m_attributes["FrameType"] == "ShutterLight" and gp.hasDataset(sensorType):
+                lightGroup = gp
                 lightData = gp.getDataset(sensorType)
                 lightTimer = gp.getDataset("TIMER")
                 lightTT2 = gp.getDataset("TIMETAG2")
 
+        if darkGroup is None or lightGroup is None:
+            return False
+
+        ProcessL2.fixTimeTag2(darkGroup)
+        ProcessL2.fixTimeTag2(lightGroup)
+
         ProcessL2.copyTimetag2(darkTimer, darkTT2)
         ProcessL2.copyTimetag2(lightTimer, lightTT2)
         ProcessL2.processTimer(darkTimer, lightTimer)
-        ProcessL2.darkCorrection(darkData, darkTimer, lightData, lightTimer)
+        if not ProcessL2.darkCorrection(darkData, darkTimer, lightData, lightTimer):
+            return False
+        return True
 
 
     # Applies dark data correction / data deglitching
@@ -212,8 +256,11 @@ class ProcessL2:
         #ProcessL2.processDataDeglitching(root, "LI")
         #ProcessL2.processDataDeglitching(root, "LT")
 
-        ProcessL2.processDarkCorrection(root, "ES")
-        ProcessL2.processDarkCorrection(root, "LI")
-        ProcessL2.processDarkCorrection(root, "LT")
+        if not ProcessL2.processDarkCorrection(root, "ES"):
+            return None
+        if not ProcessL2.processDarkCorrection(root, "LI"):
+            return None
+        if not ProcessL2.processDarkCorrection(root, "LT"):
+            return None
 
         return root

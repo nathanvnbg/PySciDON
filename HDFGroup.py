@@ -33,6 +33,10 @@ class HDFGroup:
         for k,v in gp.m_attributes.items():
             self.m_attributes[k] = v
 
+    def datasetDeleteRow(self, i):
+        for k in self.m_datasets:
+            ds = self.m_datasets[k]
+            ds.m_data = np.delete(ds.m_data, (i), axis=0)
 
     def addDataset(self, name):
         if len(name) == 0:
@@ -71,7 +75,12 @@ class HDFGroup:
     def printd(self):
         print("Group:", self.m_id)
         #print("Sensor Type:", self.m_sensorType)
-        print("Frame Type:", self.m_attributes["FrameType"])
+
+        if "FrameType" in self.m_attributes:
+            print("Frame Type:", self.m_attributes["FrameType"])
+        else:
+            print("Frame Type not found")
+
         for k in self.m_attributes:
             print("Attribute:", k, self.m_attributes[k])
         #    attr.printd()
@@ -107,12 +116,16 @@ class HDFGroup:
 
     def write(self, f):
         #print("Group:", self.m_id)
-        f = f.create_group(self.m_id)
-        for k in self.m_attributes:
-            f.attrs[k] = np.string_(self.m_attributes[k])
-        for key,ds in self.m_datasets.items():
-            #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
-            ds.write(f)
+        try:
+            f = f.create_group(self.m_id)
+            for k in self.m_attributes:
+                f.attrs[k] = np.string_(self.m_attributes[k])
+            for key,ds in self.m_datasets.items():
+                #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
+                ds.write(f)
+        except:
+            e = sys.exc_info()[0]
+            print(e)
 
 
     # Writing to HDF4 file using PyHdf
