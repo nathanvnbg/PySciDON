@@ -1,5 +1,6 @@
 
 import collections
+import sys
 
 import numpy as np
 import scipy as sp
@@ -9,6 +10,7 @@ import HDFRoot
 #import HDFDataset
 
 from Utilities import Utilities
+from WindSpeedReader import WindSpeedReader
 
 
 class ProcessL4:
@@ -37,52 +39,25 @@ class ProcessL4:
         return True
 
 
+    # Take a slice of a dataset stored in columns
     @staticmethod
-    def calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
-
-        # Copy datasets to dictionary
-        esData.datasetToColumns()
-        esColumns = esData.m_columns
-        esColumns.pop("Datetag")
-        esColumns.pop("Timetag2")
-
-        liData.datasetToColumns()
-        liColumns = liData.m_columns
-        liColumns.pop("Datetag")
-        liColumns.pop("Timetag2")
-
-        ltData.datasetToColumns()
-        ltColumns = ltData.m_columns
-        ltColumns.pop("Datetag")
-        ltColumns.pop("Timetag2")
-
-        if Utilities.detectNan(esData):
-            print("Found NAN 1") 
-            exit
-
-        if Utilities.detectNan(liData):
-            print("Found NAN 2") 
-            exit
-
-        if Utilities.detectNan(ltData):
-            print("Found NAN 3") 
-            exit
+    def columnToSlice(columns, start, end, index, resolution):
+        newSlice = collections.OrderedDict()
+        for k in columns:
+            start = index*resolution
+            end = start+resolution
+            newSlice[k] = columns[k][start:end]
+        return newSlice
 
 
-        esLength = len(list(esColumns.items())[0])
-        ltLength = len(list(ltColumns.items())[0])
-
-        if ltLength > esLength:
-            for col in ltColumns:
-                col = col[0:esLength]
-            for col in liColumns:
-                col = col[0:esLength]
+    @staticmethod
+    def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, windSpeedColumns):
 
 
         # Import wind data - ToDo
 
         # Calculates the lowest 5% (based on Hooker & Morel 2003)
-        n = len(list(ltColumns.items())[0])
+        n = len(list(ltColumns.values())[0])
         x = round(n*5/100)
         if n <= 5:
             x = n
@@ -100,6 +75,7 @@ class ProcessL4:
         es5Columns = collections.OrderedDict()
         li5Columns = collections.OrderedDict()
         lt5Columns = collections.OrderedDict()
+        windSpeedMean = 0
 
 
         hasNan = False
@@ -122,6 +98,14 @@ class ProcessL4:
             if np.isnan(mean):
                 hasNan = True
 
+        # Mean of wind speed
+        if windSpeedColumns is not None:
+            v = [windSpeedColumns[i] for i in y]
+            mean = np.nanmean(v)
+            windSpeedMean = mean
+            if np.isnan(mean):
+                hasNan = True
+
 
         # Exit if detect nan
         if hasNan:
@@ -133,36 +117,136 @@ class ProcessL4:
 
 
         # Calculate Rho_sky
-        sky750 = li5Columns["751.0"][0]/es5Columns["751.0"][0]
+        sky750 = li5Columns["750.0"][0]/es5Columns["750.0"][0]
 
         # ToDo: sunny/wind calculations
-        p_sky = 0.0256
+        if sky750 > 0.05:
+            p_sky = 0.0256
+        else:
+            # Set wind speed here
+            #w = windSpeedMean
+            #p_sky = 0.0256 + 0.00039 * w + 0.000034 * w * w
+            p_sky = 0.0256
 
 
         # Calculate Rrs
-        esColumns = collections.OrderedDict()
-        liColumns = collections.OrderedDict()
-        ltColumns = collections.OrderedDict()
-        rrsColumns = collections.OrderedDict()
         for k in es5Columns:
             if (k in li5Columns) and (k in lt5Columns):
+                if k not in newESData.m_columns:
+                    newESData.m_columns[k] = []
+                    newLIData.m_columns[k] = []
+                    newLTData.m_columns[k] = []
+                    newRrsData.m_columns[k] = []
+                #print(len(newESData.m_columns[k]))
                 es = es5Columns[k][0]
                 li = li5Columns[k][0]
                 lt = lt5Columns[k][0]
-                esColumns[k] = [es]
-                liColumns[k] = [li]
-                ltColumns[k] = [lt]
-                rrsColumns[k] = [(lt - (p_sky * li)) / es]
+                rrs = (lt - (p_sky * li)) / es
+                #esColumns[k] = [es]
+                #liColumns[k] = [li]
+                #ltColumns[k] = [lt]
+                #rrsColumns[k] = [(lt - (p_sky * li)) / es]
+                newESData.m_columns[k].append(es)
+                newLIData.m_columns[k].append(li)
+                newLTData.m_columns[k].append(lt)
+                newRrsData.m_columns[k].append(rrs)
 
-        newESData.m_columns = esColumns
-        newLIData.m_columns = liColumns
-        newLTData.m_columns = ltColumns
+        return True
+
+
+
+    @staticmethod
+    def calculateReflectance(root, node, resolution):
+    #def calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
+
+
+        referenceGroup = node.getGroup("Reference")
+        sasGroup = node.getGroup("SAS")
+
+        esData = referenceGroup.getDataset("ES_hyperspectral")
+        liData = sasGroup.getDataset("LI_hyperspectral")
+        ltData = sasGroup.getDataset("LT_hyperspectral")
+
+
+        newReflectanceGroup = root.getGroup("Reflectance")
+        newRrsData = newReflectanceGroup.addDataset("Rrs")
+        newESData = newReflectanceGroup.addDataset("ES")
+        newLIData = newReflectanceGroup.addDataset("LI")
+        newLTData = newReflectanceGroup.addDataset("LT")
+
+
+        # Copy datasets to dictionary
+        esData.datasetToColumns()
+        esColumns = esData.m_columns
+        esColumns.pop("Datetag")
+        esColumns.pop("Timetag2")
+
+        liData.datasetToColumns()
+        liColumns = liData.m_columns
+        liColumns.pop("Datetag")
+        liColumns.pop("Timetag2")
+
+        ltData.datasetToColumns()
+        ltColumns = ltData.m_columns
+        ltColumns.pop("Datetag")
+        ltColumns.pop("Timetag2")
+
+        if Utilities.hasNan(esData):
+            print("Found NAN 1") 
+            sys.exit(1)
+
+        if Utilities.hasNan(liData):
+            print("Found NAN 2") 
+            sys.exit(1)
+
+        if Utilities.hasNan(ltData):
+            print("Found NAN 3") 
+            sys.exit(1)
+
+        esLength = len(list(esColumns.values())[0])
+        ltLength = len(list(ltColumns.values())[0])
+
+        if ltLength > esLength:
+            for col in ltColumns:
+                col = col[0:esLength]
+            for col in liColumns:
+                col = col[0:esLength]
+
+
+        # Read wind speed file
+        windSpeedColumns = None
+        filepath = "WindSpeed/BritishColumbiaFerries_HorseshoeBay-DepartureBay_WindMonitoringSystem_WindSpeed_20160727T223014Z_20160727T232654Z-NaN_clean.csv"
+        windSpeedData = WindSpeedReader.readWindSpeed(filepath)
+        
+        # interpolate wind speed to match sensor time values
+        if windSpeedData is not None:
+            x = windSpeedData.getColumn("TIMETAG2")[0]
+            y = windSpeedData.getColumn("WINDSPEED")[0]
+            new_x = esData.m_data["Timetag2"].tolist()
+            new_y = Utilities.interp(x, y, new_x)
+            windSpeedData.m_columns["WINDSPEED"] = new_y
+            windSpeedData.m_columns["TIMETAG2"] = new_x
+            windSpeedData.columnsToDataset()
+            windSpeedColumns = new_y
+
+        #print("items:", esColumns.values())
+        #print(ltLength,resolution)
+        for i in range(0, int(esLength/resolution)):
+            #print(i)
+            start = i*resolution
+            end = start+resolution
+            esSlice = ProcessL4.columnToSlice(esColumns, start, end, i, resolution)
+            liSlice = ProcessL4.columnToSlice(liColumns, start, end, i, resolution)
+            ltSlice = ProcessL4.columnToSlice(ltColumns, start, end, i, resolution)
+
+            ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, windSpeedColumns)
+
+
         newESData.columnsToDataset()
         newLIData.columnsToDataset()
         newLTData.columnsToDataset()
-
-        newRrsData.m_columns = rrsColumns
         newRrsData.columnsToDataset()
+
 
         return True
 
@@ -175,21 +259,10 @@ class ProcessL4:
         root.copyAttributes(node)
         root.m_attributes["PROCESSING_LEVEL"] = "4"
 
-        newReflectanceGroup = root.addGroup("Reflectance")
+        root.addGroup("Reflectance")
 
-        referenceGroup = node.getGroup("Reference")
-        sasGroup = node.getGroup("SAS")
-
-        esData = referenceGroup.getDataset("ES_hyperspectral")
-        liData = sasGroup.getDataset("LI_hyperspectral")
-        ltData = sasGroup.getDataset("LT_hyperspectral")
-
-        newRrsData = newReflectanceGroup.addDataset("Rrs")
-        newESData = newReflectanceGroup.addDataset("ES")
-        newLIData = newReflectanceGroup.addDataset("LI")
-        newLTData = newReflectanceGroup.addDataset("LT")
-
-        if not ProcessL4.calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
+        # Can change time resolution here
+        if not ProcessL4.calculateReflectance(root, node, 27):
             return None
 
         return root
