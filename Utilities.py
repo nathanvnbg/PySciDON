@@ -1,8 +1,10 @@
 
 import time
 import datetime
+import sys
 
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm
 import numpy as np
 import scipy.interpolate
 
@@ -55,13 +57,17 @@ class Utilities:
         return ((h*60)+m)*60+s
 
     # Check if dataset contains NANs
-    def detectNan(ds):
+    def hasNan(ds):
         for k in ds.m_data.dtype.fields.keys():
             for x in range(ds.m_data.shape[0]):
                 if np.isnan(ds.m_data[k][x]):
                     return True
         return False
-        
+
+    # Check if the list contains strictly increasing values
+    def isIncreasing(l):
+        return all(x<y for x, y in zip(l, l[1:]))
+
 
     # Wrapper for scipy interp1d that works even if
     # values in new_x are outside the range of values in x
@@ -120,34 +126,88 @@ class Utilities:
         return new_y
 
 
-
     @staticmethod
     def plotReflectance(root, filename):
 
-        referenceGroup = root.getGroup("Reflectance")
-        rrsData = referenceGroup.getDataset("Rrs")
+        try:
+            referenceGroup = root.getGroup("Reflectance")
+            rrsData = referenceGroup.getDataset("Rrs")
 
-        font = {'family': 'serif',
-            'color':  'darkred',
-            'weight': 'normal',
-            'size': 16,
-            }
+            font = {'family': 'serif',
+                'color':  'darkred',
+                'weight': 'normal',
+                'size': 16,
+                }
 
-        x = []
-        y = []
-        for k in [k for k,v in sorted(rrsData.m_data.dtype.fields.items(), key=lambda k: k[1])]:
-            x.append(k)
-            y.append(rrsData.m_data[k][0])
+            x = []
+            for k in rrsData.m_data.dtype.names:
+                x.append(k)
 
-        plt.plot(x, y, 'k')
-        #plt.title('Remote sensing reflectance', fontdict=font)
-        #plt.text(2, 0.65, r'$\cos(2 \pi t) \exp(-t)$', fontdict=font)
-        plt.xlabel('wavelength (nm)', fontdict=font)
-        plt.ylabel('Rrs (sr^{-1})', fontdict=font)
+            total = rrsData.m_data.shape[0]
+            color=iter(cm.jet(np.linspace(0,1,total)))
+            for i in range(total):
+                y = []
+                for k in x:
+                    y.append(rrsData.m_data[k][i])
 
-        # Tweak spacing to prevent clipping of ylabel
-        plt.subplots_adjust(left=0.15)
-        #plt.show()
-        plt.savefig('Plots/' + filename + '.png')
-        plt.close() # This prevents displaying the polt on screen with certain IDEs
+                c=next(color)
+                plt.plot(x, y, 'k', c=c)
+                #if (i % 25) == 0:
+                #    plt.plot(x, y, 'k', color=(i/total, 0, 1-i/total, 1))
 
+            #plt.title('Remote sensing reflectance', fontdict=font)
+            #plt.text(2, 0.65, r'$\cos(2 \pi t) \exp(-t)$', fontdict=font)
+            plt.xlabel('wavelength (nm)', fontdict=font)
+            plt.ylabel('Rrs (sr^{-1})', fontdict=font)
+
+            # Tweak spacing to prevent clipping of ylabel
+            plt.subplots_adjust(left=0.15)
+            #plt.show()
+            plt.savefig('Plots/' + filename + '.png')
+            plt.close() # This prevents displaying the polt on screen with certain IDEs
+        except:
+            e = sys.exc_info()[0]
+            print("Error: %s" % e)
+
+
+    @staticmethod
+    def plotDataset(root, filename, name, label):
+        try:
+            referenceGroup = root.getGroup("Reflectance")
+            rrsData = referenceGroup.getDataset(name)
+
+            font = {'family': 'serif',
+                'color':  'darkred',
+                'weight': 'normal',
+                'size': 16,
+                }
+
+            x = []
+            for k in rrsData.m_data.dtype.names:
+                x.append(k)
+
+            total = rrsData.m_data.shape[0]
+            color=iter(cm.jet(np.linspace(0,1,total)))
+            for i in range(total):
+                y = []
+                for k in x:
+                    y.append(rrsData.m_data[k][i])
+
+                c=next(color)
+                plt.plot(x, y, 'k', c=c)
+                #if (i % 25) == 0:
+                #    plt.plot(x, y, 'k', color=(i/total, 0, 1-i/total, 1))
+
+            #plt.title('Remote sensing reflectance', fontdict=font)
+            #plt.text(2, 0.65, r'$\cos(2 \pi t) \exp(-t)$', fontdict=font)
+            plt.xlabel('wavelength (nm)', fontdict=font)
+            plt.ylabel(label, fontdict=font)
+
+            # Tweak spacing to prevent clipping of ylabel
+            plt.subplots_adjust(left=0.15)
+            #plt.show()
+            plt.savefig('Plots/' + filename + '.png')
+            plt.close() # This prevents displaying the polt on screen with certain IDEs
+        except:
+            e = sys.exc_info()[0]
+            print("Error: %s" % e)
