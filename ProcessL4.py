@@ -12,6 +12,8 @@ import HDFRoot
 from Utilities import Utilities
 from WindSpeedReader import WindSpeedReader
 
+from config import settings
+
 
 class ProcessL4:
     
@@ -261,8 +263,10 @@ class ProcessL4:
 
         root.addGroup("Reflectance")
 
+        resolution = int(settings["bL4Resolution"])
+
         # Can change time resolution here
-        if not ProcessL4.calculateReflectance(root, node, 27):
+        if not ProcessL4.calculateReflectance(root, node, resolution):
             return None
 
         return root

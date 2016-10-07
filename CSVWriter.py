@@ -6,6 +6,8 @@ import numpy as np
 
 from HDFRoot import HDFRoot
 
+from config import settings
+
 
 class CSVWriter:
     
@@ -84,9 +86,11 @@ class CSVWriter:
             print("outputCSV: root is None")
             return
 
-        dirpath = "csv"
+        dirpath = settings["sCSVFolder"].strip('"')
+
         #name = filename[28:43]
         name = filename[0:15]
+
         esData = None
         liData = None
         ltData = None
@@ -142,7 +146,8 @@ class CSVWriter:
             print("outputCSV: root is None")
             return
 
-        dirpath = "csv"
+        dirpath = settings["sCSVFolder"].strip('"')
+
         #name = filename[28:43]
         name = filename[0:15]
 
@@ -185,7 +190,8 @@ class CSVWriter:
             print("outputCSV: root is None")
             return
 
-        dirpath = "csv"
+        dirpath = settings["sCSVFolder"].strip('"')
+
         #name = filename[28:43]
         name = filename[0:15]
 

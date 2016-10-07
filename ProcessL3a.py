@@ -10,12 +10,14 @@ import HDFRoot
 
 from Utilities import Utilities
 
+from config import settings
+
 
 class ProcessL3a:
 
     # Interpolates by wavelength
     @staticmethod
-    def interpolateWavelength(ds, newDS):
+    def interpolateWavelength(ds, newDS, interval=1):
 
         # Copy dataset to dictionary
         ds.datasetToColumns()
@@ -35,7 +37,7 @@ class ProcessL3a:
         # Determine interpolated wavelength values
         start = np.ceil(wavelength[0])
         end = np.floor(wavelength[len(wavelength)-1])
-        new_x = np.arange(start, end, 1)
+        new_x = np.arange(start, end, interval)
         #print(new_x)
 
         newColumns = collections.OrderedDict()
@@ -179,10 +181,12 @@ class ProcessL3a:
         newESData = newReferenceGroup.addDataset("ES_hyperspectral")
         newLIData = newSASGroup.addDataset("LI_hyperspectral")
         newLTData = newSASGroup.addDataset("LT_hyperspectral")
+        
+        interval = int(settings["iL3aInterpInterval"])
 
-        ProcessL3a.interpolateWavelength(esData, newESData)
-        ProcessL3a.interpolateWavelength(liData, newLIData)
-        ProcessL3a.interpolateWavelength(ltData, newLTData)
+        ProcessL3a.interpolateWavelength(esData, newESData, interval)
+        ProcessL3a.interpolateWavelength(liData, newLIData, interval)
+        ProcessL3a.interpolateWavelength(ltData, newLTData, interval)
     
         #ProcessL3a.dataAveraging(newESData)
         #ProcessL3a.dataAveraging(newLIData)

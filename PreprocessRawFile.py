@@ -6,6 +6,9 @@ import time
 from HDFDataset import HDFDataset
 from HDFGroup import HDFGroup
 
+from config import settings
+
+
 class PreprocessRawFile:
     MAX_TAG_READ = 32
     MAX_BLOCK_READ = 1024
@@ -160,7 +163,13 @@ class PreprocessRawFile:
 
 
     @staticmethod
-    def processDirectory(path, calibrationMap, startLongitude, endLongitude, direction):
+    def processDirectory(path, calibrationMap):
+        # Load settings
+        startLongitude = float(settings["fL0LonMin"])
+        endLongitude = float(settings["fL0LonMax"])
+        direction = settings["cL0Direction"].strip("'")
+        print(startLongitude, endLongitude, direction)
+
         for (dirpath, dirnames, filenames) in os.walk(path):
             for name in sorted(filenames):
                 #print("infile:", name)

@@ -71,7 +71,7 @@ class Controller:
 
     @staticmethod
     def processCalibration(calPath):
-        print("ReadCalibrationFile")
+        print("ReadCalibrationFile ", calPath)
         calibrationMap = CalibrationFileReader.read(calPath)
         #calibrationMap = CalibrationFileReader.readSip("cal2013.sip")
         print("calibrationMap:", list(calibrationMap.keys()))
@@ -236,13 +236,13 @@ class Controller:
     def processAll(fp, calibrationMap):
         print("Processing: " + fp)
         root = HDFRoot()
-        #root = Controller.processL1a(root, fp, calibrationMap)
-        #root = Controller.processL1b(root, fp, calibrationMap)
-        #root = Controller.processL2(root, fp)
-        #root = Controller.processL2s(root, fp)
-        #root = Controller.processL3a(root, fp)
+        root = Controller.processL1a(root, fp, calibrationMap)
+        root = Controller.processL1b(root, fp, calibrationMap)
+        root = Controller.processL2(root, fp)
+        root = Controller.processL2s(root, fp)
+        root = Controller.processL3a(root, fp)
         root = Controller.processL4(root, fp)
-        #Controller.outputCSV_L4(fp)
+        Controller.outputCSV_L4(fp)
         #CSVWriter.outputTXT_L1a(fp)   
         #CSVWriter.outputTXT_L1b(fp)
         #CSVWriter.outputTXT_L2(fp)
