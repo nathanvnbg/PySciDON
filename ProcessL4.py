@@ -34,7 +34,7 @@ class ProcessL4:
 
         # Masking spectra affected by rainfall and high humidity
         v = es5Columns["720.0"][0] / es5Columns["370.0"][0]        
-        if v < 1.2:
+        if v < 1.095:
             print("Quality Check: ES(720.0)/ES(370.0) =", v)
             return False
 
@@ -53,7 +53,7 @@ class ProcessL4:
 
 
     @staticmethod
-    def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, windSpeedColumns):
+    def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, defaultWindSpeed=0.0, windSpeedColumns=None):
 
 
         # Import wind data - ToDo
@@ -77,7 +77,7 @@ class ProcessL4:
         es5Columns = collections.OrderedDict()
         li5Columns = collections.OrderedDict()
         lt5Columns = collections.OrderedDict()
-        windSpeedMean = 0
+        windSpeedMean = defaultWindSpeed
 
 
         hasNan = False
@@ -126,9 +126,9 @@ class ProcessL4:
             p_sky = 0.0256
         else:
             # Set wind speed here
-            #w = windSpeedMean
-            #p_sky = 0.0256 + 0.00039 * w + 0.000034 * w * w
-            p_sky = 0.0256
+            w = windSpeedMean
+            p_sky = 0.0256 + 0.00039 * w + 0.000034 * w * w
+            #p_sky = 0.0256
 
 
         # Calculate Rrs
@@ -158,7 +158,7 @@ class ProcessL4:
 
 
     @staticmethod
-    def calculateReflectance(root, node, resolution):
+    def calculateReflectance(root, node, resolution, defaultWindSpeed=0.0):
     #def calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
 
 
@@ -241,7 +241,7 @@ class ProcessL4:
             liSlice = ProcessL4.columnToSlice(liColumns, start, end, i, resolution)
             ltSlice = ProcessL4.columnToSlice(ltColumns, start, end, i, resolution)
 
-            ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, windSpeedColumns)
+            ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, defaultWindSpeed, windSpeedColumns)
 
 
         newESData.columnsToDataset()
@@ -264,9 +264,10 @@ class ProcessL4:
         root.addGroup("Reflectance")
 
         resolution = int(settings["bL4Resolution"])
+        defaultWindSpeed = float(settings["fDefaultWindSpeed"])
 
         # Can change time resolution here
-        if not ProcessL4.calculateReflectance(root, node, resolution):
+        if not ProcessL4.calculateReflectance(root, node, resolution, defaultWindSpeed):
             return None
 
         return root

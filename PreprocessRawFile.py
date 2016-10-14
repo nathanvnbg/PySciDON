@@ -28,6 +28,8 @@ class PreprocessRawFile:
     @staticmethod
     def processRawFile(filepath, calibrationMap, startLongitude, endLongitude, direction):
 
+        print("Read: " + filepath)
+
         gpsState = 0
         gpGPSStart = None
         gpGPSEnd = None
@@ -163,13 +165,7 @@ class PreprocessRawFile:
 
 
     @staticmethod
-    def processDirectory(path, calibrationMap):
-        # Load settings
-        startLongitude = float(settings["fL0LonMin"])
-        endLongitude = float(settings["fL0LonMax"])
-        direction = settings["cL0Direction"].strip("'")
-        print(startLongitude, endLongitude, direction)
-
+    def processDirectory(path, calibrationMap, startLongitude, endLongitude, direction):
         for (dirpath, dirnames, filenames) in os.walk(path):
             for name in sorted(filenames):
                 #print("infile:", name)
