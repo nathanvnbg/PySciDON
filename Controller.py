@@ -15,8 +15,10 @@ from HDFRoot import HDFRoot
 #from HDFGroup import HDFGroup
 #from HDFDataset import HDFDataset
 
+from config import settings
 from Utilities import Utilities
 
+from PreprocessRawFile import PreprocessRawFile
 from ProcessL1a import ProcessL1a
 from ProcessL1b import ProcessL1b
 from ProcessL2 import ProcessL2
@@ -78,6 +80,15 @@ class Controller:
         Controller.generateContext(calibrationMap)
         return calibrationMap
 
+    @staticmethod
+    def preprocessData(calibrationMap):
+        # Load settings
+        preprocessDirectory = settings["sPreprocessFolder"].strip('"')
+        startLongitude = float(settings["fL0LonMin"])
+        endLongitude = float(settings["fL0LonMax"])
+        direction = settings["cL0Direction"].strip("'")
+        #print(startLongitude, endLongitude, direction)
+        PreprocessRawFile.processDirectory(preprocessDirectory, calibrationMap, startLongitude, endLongitude, direction)
 
     @staticmethod
     def processL1a(root, fp, calibrationMap):
@@ -235,6 +246,7 @@ class Controller:
     @staticmethod
     def processAll(fp, calibrationMap):
         print("Processing: " + fp)
+        Controller.preprocessData(calibrationMap)
         root = HDFRoot()
         root = Controller.processL1a(root, fp, calibrationMap)
         root = Controller.processL1b(root, fp, calibrationMap)
@@ -252,11 +264,37 @@ class Controller:
         #root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
 
     @staticmethod
-    def processDirectory(path, calibrationMap):
+    def processMultiLevel(fp, calibrationMap, level=4):
+        print("Processing: " + fp)
+        root = HDFRoot()
+        root = Controller.processL1a(root, fp, calibrationMap)
+        root = Controller.processL1b(root, fp, calibrationMap)
+        #if level >= 1:
+        root = Controller.processL2(root, fp)
+        if level >= 2:
+            root = Controller.processL2s(root, fp)
+        if level >= 3:
+            root = Controller.processL3a(root, fp)
+        if level >= 4:
+            root = Controller.processL4(root, fp)
+            Controller.outputCSV_L4(fp)
+        print("Processing: " + fp + " - DONE")
+
+
+    # Used to process every file in the specified directory
+    @staticmethod
+    def processDirectory(path, calibrationMap, level=4):
         for (dirpath, dirnames, filenames) in os.walk(path):
             for name in sorted(filenames):
                 #print("infile:", name)
                 if os.path.splitext(name)[1].lower() == ".raw":
-                    Controller.processAll(os.path.join(dirpath, name), calibrationMap)
+                    #Controller.processAll(os.path.join(dirpath, name), calibrationMap)
+                    Controller.processMultiLevel(os.path.join(dirpath, name), calibrationMap, level)
             break
+
+    # Used to process every file in a list of files
+    @staticmethod
+    def processFiles(files, calibrationMap, level=4):
+        for fp in files:
+            Controller.processMultiLevel(fp, calibrationMap, level)
 
