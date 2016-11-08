@@ -24,6 +24,48 @@ class PreprocessRawFile:
         s = str(int(d)).zfill(6)
         return time.strftime("%Y%m%d", time.strptime(s, "%d%m%y"))
 
+    # Creates a raw file
+    # Inputs:
+    # gpGPSStart - Start GPS group
+    # gpGPSEnd - End GPS Group
+    # header - raw file header
+    # messageStart - Start index of message in raw file
+    # messageEnd - End index of message in raw file
+    @staticmethod
+    def createRawFile(gpGPSStart, gpGPSEnd, direction, f, header, messageStart, messageEnd):
+        # Determine filename from date/time
+        startDate = str(int(gpGPSStart.getDataset("DATE").m_columns["NONE"][0]))
+        endDate = str(int(gpGPSEnd.getDataset("DATE").m_columns["NONE"][0]))
+        startTime = str(int(gpGPSStart.getDataset("UTCPOS").m_columns["NONE"][0])).zfill(6)
+        endTime = str(int(gpGPSEnd.getDataset("UTCPOS").m_columns["NONE"][0])).zfill(6)
+
+        # Reformate date
+        startDate = PreprocessRawFile.dateFromInt(startDate)
+        endDate = PreprocessRawFile.dateFromInt(endDate)
+
+        # Determine direction
+        lonStart = gpGPSStart.getDataset("LONPOS").m_columns["NONE"][0]
+        lonEnd = gpGPSEnd.getDataset("LONPOS").m_columns["NONE"][0]
+        course = 'W'
+        if lonStart > lonEnd:
+            course = 'E'
+
+        if direction == course:
+            # Copy block of messages between start and end
+            pos = f.tell()
+            f.seek(messageStart)
+            message = f.read(messageEnd-messageStart)
+            f.seek(pos)
+
+            filename = startDate + "T" + startTime + "_" + endDate + "T" + endTime + ".raw"
+            print("Write:" + filename)
+
+            # Write file
+            data = header + message
+            with open(os.path.join("Data", filename), 'wb') as fout:
+                fout.write(data)
+            #message = ""
+
     # Reads a raw file
     @staticmethod
     def processRawFile(filepath, calibrationMap, startLongitude, endLongitude, direction):
@@ -36,7 +78,7 @@ class PreprocessRawFile:
 
         header = b""
         msg = b""
-        message = b""
+        #message = b""
         
         iStart = -1
         iEnd = -1
@@ -125,43 +167,16 @@ class PreprocessRawFile:
                                     else:
                                         if gpsState == 1:
                                             #print("Test")
-                                            # Determine filename from date/time
-                                            startDate = str(int(gpGPSStart.getDataset("DATE").m_columns["NONE"][0]))
-                                            endDate = str(int(gpGPSEnd.getDataset("DATE").m_columns["NONE"][0]))
-                                            startTime = str(int(gpGPSStart.getDataset("UTCPOS").m_columns["NONE"][0])).zfill(6)
-                                            endTime = str(int(gpGPSEnd.getDataset("UTCPOS").m_columns["NONE"][0])).zfill(6)
-
-                                            # Reformate date
-                                            startDate = PreprocessRawFile.dateFromInt(startDate)
-                                            endDate = PreprocessRawFile.dateFromInt(endDate)
-
-                                            # Determine direction
-                                            lonStart = gpGPSStart.getDataset("LONPOS").m_columns["NONE"][0]
-                                            lonEnd = gpGPSEnd.getDataset("LONPOS").m_columns["NONE"][0]
-                                            course = 'W'
-                                            if lonStart > lonEnd:
-                                                course = 'E'
-
-                                            if direction == course:
-                                                # Copy block of messages between start and end
-                                                pos = f.tell()
-                                                f.seek(iStart)
-                                                message = f.read(iEnd-iStart)
-                                                f.seek(pos)
-    
-                                                filename = startDate + "T" + startTime + "_" + endDate + "T" + endTime + ".raw"
-                                                print("Write:" + filename)
-    
-                                                # Write file
-                                                data = header + message
-                                                with open(os.path.join("Data", filename), 'wb') as fout:
-                                                    fout.write(data)
-                                                message = ""
+                                            PreprocessRawFile.createRawFile(gpGPSStart, gpGPSEnd, direction, f, header, iStart, iEnd)
                                         gpsState = 0
 
                                 break
                         if num > 0:
                             break
+            # In case file finished processing without reaching endLongitude
+            if gpsState == 1:
+                if gpGPSStart is not None and gpGPSEnd is not None:
+                    PreprocessRawFile.createRawFile(gpGPSStart, gpGPSEnd, direction, f, header, iStart, iEnd)
 
 
     @staticmethod

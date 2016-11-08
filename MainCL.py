@@ -9,9 +9,14 @@ def main():
     preprocessDirectory = settings["sPreprocessFolder"].strip('"')
     dataDirectory = settings["sProcessDataFolder"].strip('"')
 
+    startLongitude = float(settings["fL0LonMin"])
+    endLongitude = float(settings["fL0LonMax"])
+    direction = settings["cL0Direction"].strip("'")
+    #print(startLongitude, endLongitude, direction)
+
     calibrationMap = Controller.processCalibration(calibrationDirectory)
-    PreprocessRawFile.processDirectory(preprocessDirectory, calibrationMap)
-    Controller.processDirectory(dataDirectory, calibrationMap, settings)
+    PreprocessRawFile.processDirectory(preprocessDirectory, calibrationMap, startLongitude, endLongitude, direction)
+    Controller.processDirectory(dataDirectory, calibrationMap)
 
 
 if __name__ == "__main__":
