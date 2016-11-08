@@ -17,6 +17,7 @@ from HDFRoot import HDFRoot
 
 from config import settings
 from Utilities import Utilities
+from WindSpeedReader import WindSpeedReader
 
 from PreprocessRawFile import PreprocessRawFile
 from ProcessL1a import ProcessL1a
@@ -89,6 +90,24 @@ class Controller:
         direction = settings["cL0Direction"].strip("'")
         #print(startLongitude, endLongitude, direction)
         PreprocessRawFile.processDirectory(preprocessDirectory, calibrationMap, startLongitude, endLongitude, direction)
+
+    # Read wind speed file
+    @staticmethod
+    def processWindData(fp):
+        windDirectory = settings["sWindSpeedFolder"].strip('"')
+        (dirpath, filename) = os.path.split(fp)
+        filename = os.path.splitext(filename)[0]
+        filepath = os.path.join(windDirectory, filename + ".csv")
+
+        if not os.path.isfile(filepath):
+            return None
+
+        #filepath = "WindSpeed/BritishColumbiaFerries_HorseshoeBay-DepartureBay_WindMonitoringSystem_WindSpeed_20160727T223014Z_20160727T232654Z-NaN_clean.csv"
+        #windSpeedData = WindSpeedReader.readWindSpeed(filepath)
+        windSpeedData = WindSpeedReader.readWindSpeed(filepath)
+        
+        return windSpeedData
+
 
     @staticmethod
     def processL1a(root, fp, calibrationMap):
@@ -167,7 +186,7 @@ class Controller:
         return root
 
     @staticmethod
-    def processL4(root, fp):
+    def processL4(root, fp, windSpeedData):
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
         filepath = os.path.join(dirpath, filename + "_L3a.hdf")
@@ -175,7 +194,7 @@ class Controller:
             return None
         print("ProcessL4")
         root = HDFRoot.readHDF5(filepath)
-        root = ProcessL4.processL4(root)
+        root = ProcessL4.processL4(root, windSpeedData)
         if root is not None:
             Utilities.plotReflectance(root, filename)
             root.writeHDF5(os.path.join(dirpath, filename + "_L4.hdf"))
@@ -246,7 +265,7 @@ class Controller:
     @staticmethod
     def processAll(fp, calibrationMap):
         print("Processing: " + fp)
-        Controller.preprocessData(calibrationMap)
+        #Controller.preprocessData(calibrationMap)
         root = HDFRoot()
         root = Controller.processL1a(root, fp, calibrationMap)
         root = Controller.processL1b(root, fp, calibrationMap)
@@ -254,7 +273,7 @@ class Controller:
         root = Controller.processL2s(root, fp)
         root = Controller.processL3a(root, fp)
         root = Controller.processL4(root, fp)
-        Controller.outputCSV_L4(fp)
+        #Controller.outputCSV_L4(fp)
         #CSVWriter.outputTXT_L1a(fp)   
         #CSVWriter.outputTXT_L1b(fp)
         #CSVWriter.outputTXT_L2(fp)
@@ -276,8 +295,15 @@ class Controller:
         if level >= 3:
             root = Controller.processL3a(root, fp)
         if level >= 4:
-            root = Controller.processL4(root, fp)
-            Controller.outputCSV_L4(fp)
+            windSpeedData = Controller.processWindData(fp)
+            root = Controller.processL4(root, fp, windSpeedData)
+            #Controller.outputCSV_L4(fp)
+        CSVWriter.outputTXT_L1a(fp)   
+        CSVWriter.outputTXT_L1b(fp)
+        CSVWriter.outputTXT_L2(fp)
+        CSVWriter.outputTXT_L2s(fp)
+        CSVWriter.outputTXT_L3a(fp)
+        CSVWriter.outputTXT_L4(fp)
         print("Processing: " + fp + " - DONE")
 
 

@@ -16,44 +16,56 @@ from config import settings
 
 
 class ProcessL4:
-    
+
+
+    # Perform meteorological flag checking
     @staticmethod
-    def qualityCheck(es5Columns):
+    def qualityCheckVar(es5Columns, esFlag, dawnDuskFlag, humidityFlag):
 
         # Threshold for significant es
         v = es5Columns["480.0"][0]        
-        if v < 2:
+        if v < esFlag:
             print("Quality Check: ES(480.0) =", v)
             return False
 
         # Masking spectra affected by dawn/dusk radiation
         v = es5Columns["470.0"][0] / es5Columns["610.0"][0]
-        if v < 1:
+        if v < dawnDuskFlag:
             print("Quality Check: ES(470.0)/ES(610.0) =", v)
             return False
 
         # Masking spectra affected by rainfall and high humidity
         v = es5Columns["720.0"][0] / es5Columns["370.0"][0]        
-        if v < 1.095:
+        if v < humidityFlag:
             print("Quality Check: ES(720.0)/ES(370.0) =", v)
             return False
 
         return True
 
+    # Perform meteorological flag checking
+    # using setting from config
+    @staticmethod
+    def qualityCheck(es5Columns):
+        esFlag = float(settings["fL4SignificantEsFlag"])
+        dawnDuskFlag = float(settings["fL4DawnDuskFlag"])
+        humidityFlag = float(settings["fL4RainfallHumidityFlag"])
+
+        result = ProcessL4.qualityCheckVar(es5Columns, esFlag, dawnDuskFlag, humidityFlag)
+
+        return result
+
 
     # Take a slice of a dataset stored in columns
     @staticmethod
-    def columnToSlice(columns, start, end, index, resolution):
+    def columnToSlice(columns, start, end):
         newSlice = collections.OrderedDict()
         for k in columns:
-            start = index*resolution
-            end = start+resolution
             newSlice[k] = columns[k][start:end]
         return newSlice
 
 
     @staticmethod
-    def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, defaultWindSpeed=0.0, windSpeedColumns=None):
+    def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, defaultWindSpeed=0.0, windSpeedColumns=None):
 
 
         # Import wind data - ToDo
@@ -114,8 +126,9 @@ class ProcessL4:
             print("Error NaN Found")
             return False
 
-        #if not ProcessL4.qualityCheck(es5Columns):
-        #    return False
+        if enableQualityCheck:
+            if not ProcessL4.qualityCheck(es5Columns):
+                return False
 
 
         # Calculate Rho_sky
@@ -158,7 +171,7 @@ class ProcessL4:
 
 
     @staticmethod
-    def calculateReflectance(root, node, resolution, defaultWindSpeed=0.0):
+    def calculateReflectance(root, node, interval, enableQualityCheck, defaultWindSpeed=0.0, windSpeedData=None):
     #def calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
 
 
@@ -181,7 +194,7 @@ class ProcessL4:
         esData.datasetToColumns()
         esColumns = esData.m_columns
         esColumns.pop("Datetag")
-        esColumns.pop("Timetag2")
+        tt2 = esColumns.pop("Timetag2")
 
         liData.datasetToColumns()
         liColumns = liData.m_columns
@@ -214,12 +227,8 @@ class ProcessL4:
             for col in liColumns:
                 col = col[0:esLength]
 
+        windSpeedColumns=None
 
-        # Read wind speed file
-        windSpeedColumns = None
-        filepath = "WindSpeed/BritishColumbiaFerries_HorseshoeBay-DepartureBay_WindMonitoringSystem_WindSpeed_20160727T223014Z_20160727T232654Z-NaN_clean.csv"
-        windSpeedData = WindSpeedReader.readWindSpeed(filepath)
-        
         # interpolate wind speed to match sensor time values
         if windSpeedData is not None:
             x = windSpeedData.getColumn("TIMETAG2")[0]
@@ -233,15 +242,31 @@ class ProcessL4:
 
         #print("items:", esColumns.values())
         #print(ltLength,resolution)
-        for i in range(0, int(esLength/resolution)):
-            #print(i)
-            start = i*resolution
-            end = start+resolution
-            esSlice = ProcessL4.columnToSlice(esColumns, start, end, i, resolution)
-            liSlice = ProcessL4.columnToSlice(liColumns, start, end, i, resolution)
-            ltSlice = ProcessL4.columnToSlice(ltColumns, start, end, i, resolution)
+        start = 0
+        #end = 0
+        endTime = Utilities.timeTag2ToSec(tt2[0]) + interval
+        for i in range(0, len(tt2)):
+            time = Utilities.timeTag2ToSec(tt2[i])
+            if time > endTime:
+                end = i-1
+                esSlice = ProcessL4.columnToSlice(esColumns, start, end)
+                liSlice = ProcessL4.columnToSlice(liColumns, start, end)
+                ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
+                ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, defaultWindSpeed, windSpeedColumns)
+                
+                start = i
+                endTime = time + interval
 
-            ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, defaultWindSpeed, windSpeedColumns)
+
+#        for i in range(0, int(esLength/resolution)):
+#            #print(i)
+#            start = i*resolution
+#            end = start+resolution
+#            esSlice = ProcessL4.columnToSlice(esColumns, start, end, i, resolution)
+#            liSlice = ProcessL4.columnToSlice(liColumns, start, end, i, resolution)
+#            ltSlice = ProcessL4.columnToSlice(ltColumns, start, end, i, resolution)
+#
+#            ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, defaultWindSpeed, windSpeedColumns)
 
 
         newESData.columnsToDataset()
@@ -255,7 +280,7 @@ class ProcessL4:
 
     # Does wavelength interpolation and data averaging
     @staticmethod
-    def processL4(node):
+    def processL4(node, windSpeedData=None):
 
         root = HDFRoot.HDFRoot()
         root.copyAttributes(node)
@@ -263,11 +288,13 @@ class ProcessL4:
 
         root.addGroup("Reflectance")
 
-        resolution = int(settings["bL4Resolution"])
+        interval = float(settings["fL4TimeInterval"])
+        enableQualityCheck = int(settings["bEnableQualityFlags"])
         defaultWindSpeed = float(settings["fDefaultWindSpeed"])
+        #windDirectory = settings["sWindSpeedFolder"].strip('"')
 
         # Can change time resolution here
-        if not ProcessL4.calculateReflectance(root, node, resolution, defaultWindSpeed):
+        if not ProcessL4.calculateReflectance(root, node, interval, enableQualityCheck, defaultWindSpeed, windSpeedData):
             return None
 
         return root
