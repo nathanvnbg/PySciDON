@@ -21,9 +21,9 @@ class ProcessL1a:
         # Generate root header attributes
         root = HDFRoot.HDFRoot()
         root.m_id = "/"
-        root.m_attributes["PROSOFT"] = "Prosoft 9.0.4"
-        root.m_attributes["PROSOFT_INSTRUMENT_CONFIG"] = "testcfg"
-        root.m_attributes["PROSOFT_PARAMETERS_FILE_NAME"] = "test.mat"
+        #root.m_attributes["PROSOFT"] = "Prosoft 9.0.4"
+        #root.m_attributes["PROSOFT_INSTRUMENT_CONFIG"] = "testcfg"
+        #root.m_attributes["PROSOFT_PARAMETERS_FILE_NAME"] = "test.mat"
         root.m_attributes["CAL_FILE_NAMES"] = ','.join(calibrationMap.keys())
         root.m_attributes["WAVELENGTH_UNITS"] = "nm"
         root.m_attributes["LU_UNITS"] = "count"

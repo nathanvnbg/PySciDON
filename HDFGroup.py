@@ -97,12 +97,14 @@ class HDFGroup:
         #    name = "/"
         self.m_id = name
 
+        # Read attributes
         #print("Attributes:", [k for k in f.attrs.keys()])
         for k in f.attrs.keys():
             if type(f.attrs[k]) == np.ndarray:
                 self.m_attributes[k] = f.attrs[k]
-            else: # string
+            else: # string attribute
                 self.m_attributes[k] = f.attrs[k].decode("utf-8")
+        # Read datasets
         for k in f.keys():
             item = f.get(k)
             if isinstance(item, h5py.Group):
@@ -118,8 +120,10 @@ class HDFGroup:
         #print("Group:", self.m_id)
         try:
             f = f.create_group(self.m_id)
+            # Write attributes
             for k in self.m_attributes:
                 f.attrs[k] = np.string_(self.m_attributes[k])
+            # Write datasets
             for key,ds in self.m_datasets.items():
                 #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
                 ds.write(f)

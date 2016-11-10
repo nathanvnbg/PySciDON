@@ -5,8 +5,6 @@ import HDFRoot
 
 class ProcessL1b:
 
-
-
     # Used to calibrate raw data (convert from L1a to L1b)
     # Reference: "SAT-DN-00134_Instrument File Format.pdf"
     @staticmethod

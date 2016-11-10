@@ -42,8 +42,7 @@ class ProcessL4:
 
         return True
 
-    # Perform meteorological flag checking
-    # using setting from config
+    # Perform meteorological flag checking with settings from config
     @staticmethod
     def qualityCheck(es5Columns):
         esFlag = float(settings["fL4SignificantEsFlag"])
@@ -67,9 +66,6 @@ class ProcessL4:
     @staticmethod
     def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, defaultWindSpeed=0.0, windSpeedColumns=None):
 
-
-        # Import wind data - ToDo
-
         # Calculates the lowest 5% (based on Hooker & Morel 2003)
         n = len(list(ltColumns.values())[0])
         x = round(n*5/100)
@@ -92,6 +88,7 @@ class ProcessL4:
         windSpeedMean = defaultWindSpeed
 
 
+        # Checks if the data has NaNs
         hasNan = False
         for k in esColumns:
             v = [esColumns[k][i] for i in y]
@@ -112,7 +109,7 @@ class ProcessL4:
             if np.isnan(mean):
                 hasNan = True
 
-        # Mean of wind speed
+        # Mean of wind speed for data
         if windSpeedColumns is not None:
             v = [windSpeedColumns[i] for i in y]
             mean = np.nanmean(v)
@@ -121,11 +118,12 @@ class ProcessL4:
                 hasNan = True
 
 
-        # Exit if detect nan
+        # Exit if detect NaN
         if hasNan:
             print("Error NaN Found")
             return False
 
+        # Test meteorological flags
         if enableQualityCheck:
             if not ProcessL4.qualityCheck(es5Columns):
                 return False

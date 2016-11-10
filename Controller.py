@@ -82,13 +82,7 @@ class Controller:
         return calibrationMap
 
     @staticmethod
-    def preprocessData(calibrationMap):
-        # Load settings
-        preprocessDirectory = settings["sPreprocessFolder"].strip('"')
-        startLongitude = float(settings["fL0LonMin"])
-        endLongitude = float(settings["fL0LonMax"])
-        direction = settings["cL0Direction"].strip("'")
-        #print(startLongitude, endLongitude, direction)
+    def preprocessData(preprocessDirectory, calibrationMap, startLongitude, endLongitude, direction):
         PreprocessRawFile.processDirectory(preprocessDirectory, calibrationMap, startLongitude, endLongitude, direction)
 
     # Read wind speed file
@@ -127,6 +121,7 @@ class Controller:
             root.writeHDF5(os.path.join(dirpath, name + "_L1a.hdf"))
         return root
 
+    @staticmethod
     def processL1b(root, fp, calibrationMap):
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]

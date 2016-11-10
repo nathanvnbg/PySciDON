@@ -49,6 +49,8 @@ class HDFDataset:
     def read(self, f):
         name = f.name[f.name.rfind("/")+1:]
         self.m_id = name
+
+        # Read attributes
         for k in f.attrs.keys():
             if type(f.attrs[k]) == np.ndarray:
                 #print(f.attrs[k])
@@ -66,7 +68,10 @@ class HDFDataset:
                     self.m_attributes[k] = f.attrs[k]
         #print(f)
         #print(type(f[:]))
-        self.m_data = f[:] # Convert to numpy.ndarray
+
+        # Read dataset
+        self.m_data = f[:] # Gets converted to numpy.ndarray
+
         #print("Dataset:", name)
         #print("Data:", self.m_data.dtype)
 

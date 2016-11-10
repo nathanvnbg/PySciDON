@@ -79,11 +79,13 @@ class HDFRoot:
                 name = "/"
             root.m_id = name
 
+            # Read attributes
             #print("Attributes:", [k for k in f.attrs.keys()])
             for k in f.attrs.keys():
                 root.m_attributes[k] = f.attrs[k].decode("utf-8")
-                # Used following when using h5toh4 converter:
+                # Use the following when using h5toh4 converter:
                 #root.m_attributes[k.replace("__GLOSDS", "")] = f.attrs[k].decode("utf-8")
+            # Read groups
             for k in f.keys():
                 item = f.get(k)
                 #print(item)
@@ -97,15 +99,17 @@ class HDFRoot:
         return root
 
 
-
+    # Writing to HDF5 file
     def writeHDF5(self, fp):
         with h5py.File(fp, "w") as f:
             #print("Root:", self.m_id)
+            # Write attributes
             for k in self.m_attributes:
                 f.attrs[k] = np.string_(self.m_attributes[k])
                 # h5toh4 converter requires "__GLOSDS" to be appended
                 # to attribute name for it to be recognized correctly:
                 #f.attrs[k+"__GLOSDS"] = np.string_(self.m_attributes[k])
+            # Write groups
             for gp in self.m_groups:
                 gp.write(f)
 

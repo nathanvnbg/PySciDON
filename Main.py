@@ -79,11 +79,17 @@ class Window(QtGui.QWidget):
     def processMulti(self, level):
         print("Process Multi-Level")
         calibrationDirectory = settings["sCalibrationFolder"].strip('"')
+        preprocessDirectory = settings["sPreprocessFolder"].strip('"')
         dataDirectory = settings["sProcessDataFolder"].strip('"')
+
         print("Process Calibration Files")
         calibrationMap = Controller.processCalibration(calibrationDirectory)
         print("Preprocess Raw Files")
-        Controller.preprocessData(calibrationMap)
+        startLongitude = float(settings["fL0LonMin"])
+        endLongitude = float(settings["fL0LonMax"])
+        direction = settings["cL0Direction"].strip("'")
+        #print(startLongitude, endLongitude, direction)
+        Controller.preprocessData(preprocessDirectory, calibrationMap, startLongitude, endLongitude, direction)
         print("Process Raw Files")
         Controller.processDirectory(dataDirectory, calibrationMap, level)  
 
