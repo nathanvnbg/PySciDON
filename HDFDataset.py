@@ -131,6 +131,8 @@ class HDFDataset:
         else:
             print("Dataset.write(): Data is None")
 
+    def hasColumn(self, name):
+        return (name in self.m_columns)
 
     def getColumn(self, name):
         return self.m_columns[name]

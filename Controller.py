@@ -82,8 +82,8 @@ class Controller:
         return calibrationMap
 
     @staticmethod
-    def preprocessData(preprocessDirectory, calibrationMap, startLongitude, endLongitude, direction):
-        PreprocessRawFile.processDirectory(preprocessDirectory, calibrationMap, startLongitude, endLongitude, direction)
+    def preprocessData(preprocessDirectory, dataDirectory, calibrationMap, startLongitude, endLongitude, direction):
+        PreprocessRawFile.processDirectory(preprocessDirectory, dataDirectory, calibrationMap, startLongitude, endLongitude, direction)
 
     # Read wind speed file
     @staticmethod
@@ -267,7 +267,8 @@ class Controller:
         root = Controller.processL2(root, fp)
         root = Controller.processL2s(root, fp)
         root = Controller.processL3a(root, fp)
-        root = Controller.processL4(root, fp)
+        windSpeedData = Controller.processWindData(fp)
+        root = Controller.processL4(root, fp, windSpeedData)
         #Controller.outputCSV_L4(fp)
         #CSVWriter.outputTXT_L1a(fp)   
         #CSVWriter.outputTXT_L1b(fp)
@@ -309,8 +310,8 @@ class Controller:
             for name in sorted(filenames):
                 #print("infile:", name)
                 if os.path.splitext(name)[1].lower() == ".raw":
-                    #Controller.processAll(os.path.join(dirpath, name), calibrationMap)
-                    Controller.processMultiLevel(os.path.join(dirpath, name), calibrationMap, level)
+                    Controller.processAll(os.path.join(dirpath, name), calibrationMap)
+                    #Controller.processMultiLevel(os.path.join(dirpath, name), calibrationMap, level)
             break
 
     # Used to process every file in a list of files

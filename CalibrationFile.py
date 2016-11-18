@@ -50,7 +50,7 @@ class CalibrationFile:
 
             cdtype = cd.m_type.upper()
 
-            # Determines the frame syncronization string by appending
+            # Determines the frame synchronization string by appending
             # ids from INSTRUMENT and SN lines
             # ToDo: Add a check to ensure INSTRUMENT and SN are the first two lines
             if cdtype == "INSTRUMENT" or cdtype == "VLF_INSTRUMENT" or \
@@ -161,7 +161,6 @@ class CalibrationFile:
                     #print("read:", nRead, end)
                     b = msg[nRead:nRead+end]
                     v = cd.convertRaw(b)
-
                 nRead += end
 
             # Read fixed length message frames
@@ -195,12 +194,12 @@ class CalibrationFile:
                     ds.appendColumn(cd.m_id, v)
                 else:
                     # ToDo: move to better position
-                    if sys.version_info[0] < 3:
+                    if sys.version_info[0] < 3: # Python3
                         gp.m_attributes[cdtype.encode('utf-8')] = cd.m_id
-                    else:
+                    else: # Python2
                         gp.m_attributes[cdtype] = cd.m_id
 
-            # None types to store as attributes
+            # None types are stored as attributes
             if cd.m_fitType.upper() == "NONE":
                 cdtype = cd.m_type.upper()
                 if cdtype == "SN" or cdtype == "DATARATE" or cdtype == "RATE":
@@ -208,7 +207,7 @@ class CalibrationFile:
                     if sys.version_info[0] < 3:
                         gp.m_attributes[cdtype.encode('utf-8')] = cd.m_id
                     else:
-                        gp.m_attributes[cdtype] = cd.m_id 
+                        gp.m_attributes[cdtype] = cd.m_id
 
 
         # Some instruments produce additional bytes for
@@ -220,7 +219,7 @@ class CalibrationFile:
                 instrumentId.startswith("SATPYR") or \
                 instrumentId.startswith("SATNAV"):
             #print("not gps")
-            # date tag
+            # Read DATETAG
             b = msg[nRead:nRead+3]
             if sys.version_info[0] < 3:
                 v = int(binascii.hexlify(b), 16)
@@ -233,6 +232,7 @@ class CalibrationFile:
                 ds1 = gp.addDataset("DATETAG")
             ds1.appendColumn(u"NONE", v)
 
+            # Read TIMETAG2
             b = msg[nRead:nRead+4]
             if sys.version_info[0] < 3:
                 v = int(binascii.hexlify(b), 16)

@@ -15,7 +15,7 @@ def main():
     #print(startLongitude, endLongitude, direction)
 
     calibrationMap = Controller.processCalibration(calibrationDirectory)
-    Controller.preprocessData(preprocessDirectory, calibrationMap, startLongitude, endLongitude, direction)
+    #Controller.preprocessData(preprocessDirectory, dataDirectory, calibrationMap, startLongitude, endLongitude, direction)
     Controller.processDirectory(dataDirectory, calibrationMap)
 
 
