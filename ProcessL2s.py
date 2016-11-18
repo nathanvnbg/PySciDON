@@ -80,6 +80,10 @@ class ProcessL2s:
     def interpolateData(xData, yData):
         print("Interpolate Data")
 
+        # Interpolating to itself
+        if xData is yData:
+            return True
+
         #xDatetag= xData.m_data["Datetag"].tolist()
         xTimetag2 = xData.m_data["Timetag2"].tolist()
 
@@ -236,11 +240,31 @@ class ProcessL2s:
         esData = refGroup.getDataset("ES_hyperspectral")
         liData = sasGroup.getDataset("LI_hyperspectral")
         ltData = sasGroup.getDataset("LT_hyperspectral")
+
+        # Find dataset with lowest amount of data
+        esLength = len(esData.m_data["Timetag2"].tolist())
+        liLength = len(liData.m_data["Timetag2"].tolist())
+        ltLength = len(ltData.m_data["Timetag2"].tolist())
+
+        interpData = None
+        if esLength < liLength and esLength < ltLength:
+            print("Interpolating to ES")
+            interpData = esData
+        elif liLength < ltLength:
+            print("Interpolating to LI")
+            interpData = liData
+        else:
+            print("Interpolating to LT")
+            interpData = ltData
+
+        #interpData = liData # Testing against Prosoft
         
         # Perform time interpolation
-        if not ProcessL2s.interpolateData(esData, liData):
+        if not ProcessL2s.interpolateData(esData, interpData):
             return None
-        if not ProcessL2s.interpolateData(ltData, liData):
+        if not ProcessL2s.interpolateData(liData, interpData):
+            return None
+        if not ProcessL2s.interpolateData(ltData, interpData):
             return None
 
         ProcessL2s.interpolateGPSData(root, gpsGroup)
