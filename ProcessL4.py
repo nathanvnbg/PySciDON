@@ -29,7 +29,7 @@ class ProcessL4:
             return False
 
         # Masking spectra affected by dawn/dusk radiation
-        v = es5Columns["470.0"][0] / es5Columns["610.0"][0]
+        v = es5Columns["470.0"][0] / es5Columns["610.0"][0] # Fix 610 -> 680
         if v < dawnDuskFlag:
             print("Quality Check: ES(470.0)/ES(610.0) =", v)
             return False
@@ -203,6 +203,17 @@ class ProcessL4:
         ltColumns = ltData.m_columns
         ltColumns.pop("Datetag")
         ltColumns.pop("Timetag2")
+
+        # remove added LATPOS/LONPOS if added
+        if "LATPOS" in esColumns:
+            esColumns.pop("LATPOS")
+            liColumns.pop("LATPOS")
+            ltColumns.pop("LATPOS")
+        if "LONPOS" in esColumns:
+            esColumns.pop("LONPOS")
+            liColumns.pop("LONPOS")
+            ltColumns.pop("LONPOS")
+
 
         if Utilities.hasNan(esData):
             print("Found NAN 1") 

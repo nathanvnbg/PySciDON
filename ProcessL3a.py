@@ -43,6 +43,12 @@ class ProcessL3a:
         newColumns = collections.OrderedDict()
         newColumns["Datetag"] = saveDatetag
         newColumns["Timetag2"] = saveTimetag2
+
+        # Append latpos/lonpos
+        # ToDo: Do this better
+        newColumns["LATPOS"] = saveDatetag
+        newColumns["LONPOS"] = saveDatetag
+
         for i in range(new_x.shape[0]):
             #print(i, new_x[i])
             newColumns[str(new_x[i])] = []
@@ -187,7 +193,38 @@ class ProcessL3a:
         ProcessL3a.interpolateWavelength(esData, newESData, interval)
         ProcessL3a.interpolateWavelength(liData, newLIData, interval)
         ProcessL3a.interpolateWavelength(ltData, newLTData, interval)
-    
+
+
+        # Append latpos/lonpos to datasets
+        if root.hasGroup("GPS"):
+            gpsGroup = node.getGroup("GPS")
+            latposData = gpsGroup.getDataset("LATPOS")
+            lonposData = gpsGroup.getDataset("LONPOS")
+            
+            latposData.datasetToColumns()
+            lonposData.datasetToColumns()
+            
+            latpos = latposData.m_columns["NONE"]
+            lonpos = lonposData.m_columns["NONE"]
+            
+            newESData.datasetToColumns()
+            newLIData.datasetToColumns()
+            newLTData.datasetToColumns()
+
+            #print(newESData.m_columns)
+
+            newESData.m_columns["LATPOS"] = latpos
+            newLIData.m_columns["LATPOS"] = latpos
+            newLTData.m_columns["LATPOS"] = latpos
+
+            newESData.m_columns["LONPOS"] = lonpos
+            newLIData.m_columns["LONPOS"] = lonpos
+            newLTData.m_columns["LONPOS"] = lonpos
+
+            newESData.columnsToDataset()
+            newLIData.columnsToDataset()
+            newLTData.columnsToDataset()
+
         #ProcessL3a.dataAveraging(newESData)
         #ProcessL3a.dataAveraging(newLIData)
         #ProcessL3a.dataAveraging(newLTData)
