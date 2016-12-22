@@ -26,6 +26,7 @@ from ProcessL2 import ProcessL2
 from ProcessL2s import ProcessL2s
 from ProcessL3a import ProcessL3a
 from ProcessL4 import ProcessL4
+from ProcessL4a import ProcessL4a
 
 
 class Controller:
@@ -188,6 +189,7 @@ class Controller:
         print("ProcessL4")
         root = HDFRoot.readHDF5(filepath)
         root = ProcessL4.processL4(root, windSpeedData)
+        #root = ProcessL4a.processL4a(root)
         if root is not None:
             Utilities.plotReflectance(root, filename)
             root.writeHDF5(os.path.join(dirpath, filename + "_L4.hdf"))
