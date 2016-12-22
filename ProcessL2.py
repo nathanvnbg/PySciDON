@@ -22,7 +22,7 @@ class ProcessL2:
 
         # Copy dataset to dictionary
         ds.datasetToColumns()
-        columns = ds.m_columns
+        columns = ds.columns
 
         for k,v in columns.items():
             #print(k,v)
@@ -42,14 +42,14 @@ class ProcessL2:
                 if abs(v[i] - medN) > noiseThresh*stdS:
                     v[i] = np.nan
 
-        #ds.m_columns = columns
+        #ds.columns = columns
         ds.columnsToDataset()
 
     @staticmethod
     def processDataDeglitching(node, sensorType):
         darkData = None
-        for gp in node.m_groups:
-            if gp.m_attributes["FrameType"] == "ShutterDark" and gp.hasDataset(sensorType):
+        for gp in node.groups:
+            if gp.attributes["FrameType"] == "ShutterDark" and gp.hasDataset(sensorType):
                 darkData = gp.getDataset(sensorType)
       
         ProcessL2.dataDeglitching(darkData)
@@ -63,31 +63,31 @@ class ProcessL2:
             return False
 
         '''
-        #print("test", lightData.m_id)
+        #print("test", lightData.id)
         # Prosoft - Replace Light Timer with closest value in Dark Timer, interpolate Light Data
-        oldLightTimer = np.copy(lightTimer.m_data["NONE"]).tolist()
+        oldLightTimer = np.copy(lightTimer.data["NONE"]).tolist()
         j = 0
-        for i in range(len(darkTimer.m_data["NONE"])):
-            v = darkTimer.m_data["NONE"][i]
-            closest = [0, abs(lightTimer.m_data["NONE"][0] - v)]
-            for j in range(1, len(lightTimer.m_data["NONE"])):
-                if abs(lightTimer.m_data["NONE"][j] - v) < closest[1]:
+        for i in range(len(darkTimer.data["NONE"])):
+            v = darkTimer.data["NONE"][i]
+            closest = [0, abs(lightTimer.data["NONE"][0] - v)]
+            for j in range(1, len(lightTimer.data["NONE"])):
+                if abs(lightTimer.data["NONE"][j] - v) < closest[1]:
                     closest[0] = j
-                    closest[1] = abs(lightTimer.m_data["NONE"][j] - v)
-            if closest[0] != len(lightTimer.m_data["NONE"])-1:
+                    closest[1] = abs(lightTimer.data["NONE"][j] - v)
+            if closest[0] != len(lightTimer.data["NONE"])-1:
                 #print(closest)
-                lightTimer.m_data["NONE"][closest[0]] = v
+                lightTimer.data["NONE"][closest[0]] = v
 
-        newLightData = np.copy(lightData.m_data)
-        for k in darkData.m_data.dtype.fields.keys():
+        newLightData = np.copy(lightData.data)
+        for k in darkData.data.dtype.fields.keys():
             x = np.copy(oldLightTimer).tolist()
-            y = np.copy(lightData.m_data[k]).tolist()
+            y = np.copy(lightData.data[k]).tolist()
             #print("t1", len(x), len(y))
             #print(len(x),len(y))
-            new_x = lightTimer.m_data["NONE"]
+            new_x = lightTimer.data["NONE"]
             #newLightData[k] = Utilities.interp(x,y,new_x,'linear')
             newLightData[k] = Utilities.interp(x,y,new_x,'cubic')
-        lightData.m_data = newLightData
+        lightData.data = newLightData
         '''
 
         #if Utilities.hasNan(darkData):
@@ -96,11 +96,11 @@ class ProcessL2:
 
 
         # Interpolate Dark Dataset to match number of elements as Light Dataset
-        newDarkData = np.copy(lightData.m_data)
-        for k in darkData.m_data.dtype.fields.keys():
-            x = np.copy(darkTimer.m_data["NONE"]).tolist()
-            y = np.copy(darkData.m_data[k]).tolist()
-            new_x = lightTimer.m_data["NONE"]
+        newDarkData = np.copy(lightData.data)
+        for k in darkData.data.dtype.fields.keys():
+            x = np.copy(darkTimer.data["NONE"]).tolist()
+            y = np.copy(darkData.data[k]).tolist()
+            new_x = lightTimer.data["NONE"]
 
 
             if not Utilities.isIncreasing(x):
@@ -115,21 +115,21 @@ class ProcessL2:
             #newDarkData[k] = Utilities.interp(x,y,new_x,'cubic')
             newDarkData[k] = Utilities.interpSpline(x,y,new_x)
 
-        darkData.m_data = newDarkData
+        darkData.data = newDarkData
 
         #if Utilities.hasNan(darkData):
         #    print("Found NAN 2")
         #    exit
 
-        #print(lightData.m_data.shape)
+        #print(lightData.data.shape)
         #print(newDarkData.shape)
 
         # Correct light data by subtracting interpolated dark data from light data
-        for k in lightData.m_data.dtype.fields.keys():
-            for x in range(lightData.m_data.shape[0]):
-                lightData.m_data[k][x] -= newDarkData[k][x]
+        for k in lightData.data.dtype.fields.keys():
+            for x in range(lightData.data.shape[0]):
+                lightData.data[k][x] -= newDarkData[k][x]
 
-        #print(lightData.m_data)
+        #print(lightData.data)
 
         return True
 
@@ -137,16 +137,16 @@ class ProcessL2:
     # Copies TIMETAG2 values to Timer and converts to seconds
     @staticmethod
     def copyTimetag2(timerDS, tt2DS):
-        if (timerDS.m_data is None) or (tt2DS.m_data is None):
+        if (timerDS.data is None) or (tt2DS.data is None):
             print("copyTimetag2: Timer/TT2 is None")
             return
 
         #print("Time:", time)
-        #print(ds.m_data)
-        for i in range(0, len(timerDS.m_data)):
-            tt2 = float(tt2DS.m_data["NONE"][i])
+        #print(ds.data)
+        for i in range(0, len(timerDS.data)):
+            tt2 = float(tt2DS.data["NONE"][i])
             t = Utilities.timeTag2ToSec(tt2)
-            timerDS.m_data["NONE"][i] = t
+            timerDS.data["NONE"][i] = t
         
 
     # Code to recalculate light/dark timer values to start near zero
@@ -154,36 +154,36 @@ class ProcessL2:
     @staticmethod
     def processTimer(darkTimer, lightTimer):
 
-        if (darkTimer.m_data is None) or (lightTimer.m_data is None):
+        if (darkTimer.data is None) or (lightTimer.data is None):
             return
 
-        t0 = lightTimer.m_data["NONE"][0]
-        t1 = lightTimer.m_data["NONE"][1]
+        t0 = lightTimer.data["NONE"][0]
+        t1 = lightTimer.data["NONE"][1]
         #offset = t1 - t0
 
         # Finds the minimum cycle time of the instrument to use as offset
         min0 = t1 - t0
-        total = len(lightTimer.m_data["NONE"])
+        total = len(lightTimer.data["NONE"])
         #print("test avg")
         for i in range(1, total):
-            num = lightTimer.m_data["NONE"][i] - lightTimer.m_data["NONE"][i-1]
+            num = lightTimer.data["NONE"][i] - lightTimer.data["NONE"][i-1]
             if num < min0 and num > 0:
                 min0 = num
         offset = min0
         #print("min:",min0)
 
         # Set start time to minimum of light/dark timer values
-        if darkTimer.m_data["NONE"][0] < t0:
-            t0 = darkTimer.m_data["NONE"][0]
+        if darkTimer.data["NONE"][0] < t0:
+            t0 = darkTimer.data["NONE"][0]
 
         # Recalculate timers by subtracting start time and adding offset
         #print("Time:", time)
-        #print(darkTimer.m_data)
-        for i in range(0, len(darkTimer.m_data)):
-            darkTimer.m_data["NONE"][i] += -t0 + offset
-        for i in range(0, len(lightTimer.m_data)):
-            lightTimer.m_data["NONE"][i] += -t0 + offset
-        #print(darkTimer.m_data)
+        #print(darkTimer.data)
+        for i in range(0, len(darkTimer.data)):
+            darkTimer.data["NONE"][i] += -t0 + offset
+        for i in range(0, len(lightTimer.data)):
+            lightTimer.data["NONE"][i] += -t0 + offset
+        #print(darkTimer.data)
 
 
     # Used to correct TIMETAG2 values if they are not strictly increasing
@@ -191,10 +191,10 @@ class ProcessL2:
     @staticmethod
     def fixTimeTag2(gp):
         tt2 = gp.getDataset("TIMETAG2")
-        total = len(tt2.m_data["NONE"])
+        total = len(tt2.data["NONE"])
         i = 1
         while i < total:
-            num = tt2.m_data["NONE"][i] - tt2.m_data["NONE"][i-1]
+            num = tt2.data["NONE"][i] - tt2.data["NONE"][i-1]
             if num <= 0:
                 gp.datasetDeleteRow(i)
                 total = total - 1
@@ -212,14 +212,14 @@ class ProcessL2:
         lightData = None
         lightTimer = None
 
-        for gp in node.m_groups:
-            if gp.m_attributes["FrameType"] == "ShutterDark" and gp.hasDataset(sensorType):
+        for gp in node.groups:
+            if gp.attributes["FrameType"] == "ShutterDark" and gp.hasDataset(sensorType):
                 darkGroup = gp
                 darkData = gp.getDataset(sensorType)
                 darkTimer = gp.getDataset("TIMER")
                 darkTT2 = gp.getDataset("TIMETAG2")
 
-            if gp.m_attributes["FrameType"] == "ShutterLight" and gp.hasDataset(sensorType):
+            if gp.attributes["FrameType"] == "ShutterLight" and gp.hasDataset(sensorType):
                 lightGroup = gp
                 lightData = gp.getDataset(sensorType)
                 lightTimer = gp.getDataset("TIMER")
@@ -245,11 +245,11 @@ class ProcessL2:
         root = HDFRoot.HDFRoot()
         root.copy(node)
 
-        root.m_attributes["PROCESSING_LEVEL"] = "2"
-        root.m_attributes["DEGLITCH_PRODAT"] = "OFF"
-        root.m_attributes["DEGLITCH_REFDAT"] = "OFF"
-        #root.m_attributes["STRAY_LIGHT_CORRECT"] = "OFF"
-        #root.m_attributes["THERMAL_RESPONSIVITY_CORRECT"] = "OFF"
+        root.attributes["PROCESSING_LEVEL"] = "2"
+        root.attributes["DEGLITCH_PRODAT"] = "OFF"
+        root.attributes["DEGLITCH_REFDAT"] = "OFF"
+        #root.attributes["STRAY_LIGHT_CORRECT"] = "OFF"
+        #root.attributes["THERMAL_RESPONSIVITY_CORRECT"] = "OFF"
 
 
         #ProcessL2.processDataDeglitching(root, "ES")

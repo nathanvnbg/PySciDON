@@ -8,37 +8,37 @@ import sys
 # sensor definition lines and coewfficients from the calibration file
 class CalibrationData:
     def __init__(self):
-        self.m_type = ""
-        self.m_id = ""
-        self.m_units = ""
-        self.m_fieldLength = 0
-        self.m_dataType = ""
-        self.m_calLines = 0
-        self.m_fitType = ""
-        self.m_coefficients = []
+        self.type = ""
+        self.id = ""
+        self.units = ""
+        self.fieldLength = 0
+        self.dataType = ""
+        self.calLines = 0
+        self.fitType = ""
+        self.coefficients = []
 
     def printd(self):
-        print("%s %s \'%s\' %d %s %d %s" % (self.m_type, self.m_id, self.m_units,
-                                     self.m_fieldLength, self.m_dataType,
-                                     self.m_calLines, self.m_fitType))
-        print("coefficients = ", self.m_coefficients)
+        print("%s %s \'%s\' %d %s %d %s" % (self.type, self.id, self.units,
+                                     self.fieldLength, self.dataType,
+                                     self.calLines, self.fitType))
+        print("coefficients = ", self.coefficients)
 
     # Reads a sensor definition line from a cal file
     # Reference: (SAT-DN-00134_Instrument File Format.pdf)
     def read(self, line):
         parts = line.split()
-        self.m_type = parts[0]
-        self.m_id = parts[1]
-        self.m_units = parts[2][1:-1]
-        self.m_fieldLength = -1 if parts[3].upper() == 'V' else int(parts[3])
-        self.m_dataType = parts[4]
-        self.m_calLines = int(parts[5])
-        self.m_fitType = parts[6]
+        self.type = parts[0]
+        self.id = parts[1]
+        self.units = parts[2][1:-1]
+        self.fieldLength = -1 if parts[3].upper() == 'V' else int(parts[3])
+        self.dataType = parts[4]
+        self.calLines = int(parts[5])
+        self.fitType = parts[6]
 
     # Reads a coefficients line in the cal file
     # Notes: Does not support for OPTIC1, which uses 1-4 calibration lines
     def readCoefficients(self, line):
-        self.m_coefficients = line.split()
+        self.coefficients = line.split()
 
 
     # Duplicates functionality of Python 3, int.from_bytes() for use in Python 2
@@ -56,7 +56,7 @@ class CalibrationData:
     # Used when reading a raw file to convert binary data to correct type
     def convertRaw(self, b):
         v = 0
-        dataType = self.m_dataType.upper()
+        dataType = self.dataType.upper()
         if dataType == "BU":
             if sys.version_info[0] < 3:
                 v = self.intFromBytes(b, 'big', False)
@@ -94,7 +94,7 @@ class CalibrationData:
             v = int(b, 16)
             #print("hu", v)
         elif dataType == "AI":
-            if self.m_type.upper() == "NMEA_CHECKSUM":
+            if self.type.upper() == "NMEA_CHECKSUM":
                 v = int(b, 16)
             else:
                 v = int(b)

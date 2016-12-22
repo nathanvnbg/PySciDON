@@ -9,37 +9,37 @@ class ProcessL1b:
     # Reference: "SAT-DN-00134_Instrument File Format.pdf"
     @staticmethod
     def processDataset(ds, cd, inttime=None, immersed=False):
-        #print("FitType:", cd.m_fitType)
-        if cd.m_fitType == "OPTIC1":
+        #print("FitType:", cd.fitType)
+        if cd.fitType == "OPTIC1":
             ProcessL1b.processOPTIC1(ds, cd, immersed)
-        elif cd.m_fitType == "OPTIC2":
+        elif cd.fitType == "OPTIC2":
             ProcessL1b.processOPTIC2(ds, cd, immersed)
-        elif cd.m_fitType == "OPTIC3":
+        elif cd.fitType == "OPTIC3":
             ProcessL1b.processOPTIC3(ds, cd, immersed, inttime)
-        elif cd.m_fitType == "OPTIC4":
+        elif cd.fitType == "OPTIC4":
             ProcessL1b.processOPTIC4(ds, cd, immersed)
-        elif cd.m_fitType == "THERM1":
+        elif cd.fitType == "THERM1":
             ProcessL1b.processTHERM1(ds, cd)
-        elif cd.m_fitType == "POW10":
+        elif cd.fitType == "POW10":
             ProcessL1b.processPOW10(ds, cd, immersed)
-        elif cd.m_fitType == "POLYU":
+        elif cd.fitType == "POLYU":
             ProcessL1b.processPOLYU(ds, cd)
-        elif cd.m_fitType == "POLYF":
+        elif cd.fitType == "POLYF":
             ProcessL1b.processPOLYF(ds, cd)
-        elif cd.m_fitType == "DDMM":
+        elif cd.fitType == "DDMM":
             ProcessL1b.processDDMM(ds, cd)
-        elif cd.m_fitType == "HHMMSS":
+        elif cd.fitType == "HHMMSS":
             ProcessL1b.processHHMMSS(ds, cd)
-        elif cd.m_fitType == "DDMMYY":
+        elif cd.fitType == "DDMMYY":
             ProcessL1b.processDDMMYY(ds, cd)
-        elif cd.m_fitType == "TIME2":
+        elif cd.fitType == "TIME2":
             ProcessL1b.processTIME2(ds, cd)
-        elif cd.m_fitType == "COUNT":
+        elif cd.fitType == "COUNT":
             pass
-        elif cd.m_fitType == "NONE":
+        elif cd.fitType == "NONE":
             pass
         else:
-            print("Unknown Fit Type:", cd.m_fitType)
+            print("Unknown Fit Type:", cd.fitType)
 
     # Process OPTIC1 - not implemented
     @staticmethod
@@ -48,38 +48,38 @@ class ProcessL1b:
 
     @staticmethod
     def processOPTIC2(ds, cd, immersed):
-        a0 = float(cd.m_coefficients[0])
-        a1 = float(cd.m_coefficients[1])
-        im = float(cd.m_coefficients[2]) if immersed else 1.0
-        k = cd.m_id
-        for x in range(ds.m_data.shape[0]):
-            ds.m_data[k][x] = im * a1 * (ds.m_data[k][x] - a0)
+        a0 = float(cd.coefficients[0])
+        a1 = float(cd.coefficients[1])
+        im = float(cd.coefficients[2]) if immersed else 1.0
+        k = cd.id
+        for x in range(ds.data.shape[0]):
+            ds.data[k][x] = im * a1 * (ds.data[k][x] - a0)
 
     @staticmethod
     def processOPTIC3(ds, cd, immersed, inttime):
-        a0 = float(cd.m_coefficients[0])
-        a1 = float(cd.m_coefficients[1])
-        im = float(cd.m_coefficients[2]) if immersed else 1.0
-        cint = float(cd.m_coefficients[3])
-        #print(inttime.m_data.shape[0], self.m_data.shape[0])
-        k = cd.m_id
+        a0 = float(cd.coefficients[0])
+        a1 = float(cd.coefficients[1])
+        im = float(cd.coefficients[2]) if immersed else 1.0
+        cint = float(cd.coefficients[3])
+        #print(inttime.data.shape[0], self.data.shape[0])
+        k = cd.id
         #print(cint, aint)
-        #print(cd.m_id)
-        for x in range(ds.m_data.shape[0]):
-            aint = inttime.m_data[cd.m_type][x]
-            #v = self.m_data[k][x]
-            ds.m_data[k][x] = im * a1 * (ds.m_data[k][x] - a0) * (cint/aint)
+        #print(cd.id)
+        for x in range(ds.data.shape[0]):
+            aint = inttime.data[cd.type][x]
+            #v = self.data[k][x]
+            ds.data[k][x] = im * a1 * (ds.data[k][x] - a0) * (cint/aint)
 
     @staticmethod
     def processOPTIC4(ds, cd, immersed):
-        a0 = float(cd.m_coefficients[0])
-        a1 = float(cd.m_coefficients[1])
-        im = float(cd.m_coefficients[2]) if immersed else 1.0
-        cint = float(cd.m_coefficients[3])
-        k = cd.m_id
+        a0 = float(cd.coefficients[0])
+        a1 = float(cd.coefficients[1])
+        im = float(cd.coefficients[2]) if immersed else 1.0
+        cint = float(cd.coefficients[3])
+        k = cd.id
         aint = 1
-        for x in range(ds.m_data.shape[0]):
-            ds.m_data[k][x] = im * a1 * (ds.m_data[k][x] - a0) * (cint/aint)
+        for x in range(ds.data.shape[0]):
+            ds.data[k][x] = im * a1 * (ds.data[k][x] - a0) * (cint/aint)
 
     # Process THERM1 - not implemented
     @staticmethod
@@ -88,32 +88,32 @@ class ProcessL1b:
 
     @staticmethod
     def processPOW10(ds, cd, immersed):
-        a0 = float(cd.m_coefficients[0])
-        a1 = float(cd.m_coefficients[1])
-        im = float(cd.m_coefficients[2]) if immersed else 1.0
-        k = cd.m_id
-        for x in range(ds.m_data.shape[0]):
-            ds.m_data[k][x] = im * pow(10, ((ds.m_data[k][x]-a0)/a1))
+        a0 = float(cd.coefficients[0])
+        a1 = float(cd.coefficients[1])
+        im = float(cd.coefficients[2]) if immersed else 1.0
+        k = cd.id
+        for x in range(ds.data.shape[0]):
+            ds.data[k][x] = im * pow(10, ((ds.data[k][x]-a0)/a1))
 
     @staticmethod
     def processPOLYU(ds, cd):
-        k = cd.m_id
-        for x in range(ds.m_data.shape[0]):
+        k = cd.id
+        for x in range(ds.data.shape[0]):
             num = 0
-            for i in range(0, len(cd.m_coefficients)):
-                a = float(cd.m_coefficients[i])
-                num += a * pow(ds.m_data[k][x],i)
-            ds.m_data[k][x] = num
+            for i in range(0, len(cd.coefficients)):
+                a = float(cd.coefficients[i])
+                num += a * pow(ds.data[k][x],i)
+            ds.data[k][x] = num
 
     @staticmethod
     def processPOLYF(ds, cd):
-        a0 = float(cd.m_coefficients[0])
-        k = cd.m_id
-        for x in range(ds.m_data.shape[0]):
+        a0 = float(cd.coefficients[0])
+        k = cd.id
+        for x in range(ds.data.shape[0]):
             num = a0
-            for a in cd.m_coefficients[1:]:
-                num *= (ds.m_data[k][x] - float(a))
-            ds.m_data[k][x] = num
+            for a in cd.coefficients[1:]:
+                num *= (ds.data[k][x] - float(a))
+            ds.data[k][x] = num
 
     # Process DDMM - not implemented
     @staticmethod
@@ -148,17 +148,17 @@ class ProcessL1b:
     @staticmethod
     def processGroup(gp, cf):
         inttime = None
-        for cd in cf.m_data:
-            if cd.m_type == "INTTIME":
+        for cd in cf.data:
+            if cd.type == "INTTIME":
                 #print("Process INTTIME")
                 ds = gp.getDataset("INTTIME")
                 ProcessL1b.processDataset(ds, cd)
                 inttime = ds
 
-        for cd in cf.m_data:
-            if gp.hasDataset(cd.m_type) and cd.m_type != "INTTIME":
-                #print("Dataset:", cd.m_type)
-                ds = gp.getDataset(cd.m_type)
+        for cd in cf.data:
+            if gp.hasDataset(cd.type) and cd.type != "INTTIME":
+                #print("Dataset:", cd.type)
+                ds = gp.getDataset(cd.type)
                 ProcessL1b.processDataset(ds, cd, inttime)
 
 
@@ -170,18 +170,18 @@ class ProcessL1b:
         root = HDFRoot.HDFRoot()
         root.copy(node)
 
-        root.m_attributes["PROCESSING_LEVEL"] = "1b"
+        root.attributes["PROCESSING_LEVEL"] = "1b"
 
         esUnits = None
         luUnits = None
 
-        for gp in root.m_groups:
-            #print("Group: ", gp.m_id)
-            if "CalFileName" in gp.m_attributes:
-                #cf = calibrationMap[gp.m_attributes["FrameTag"]]
-                cf = calibrationMap[gp.m_attributes["CalFileName"]]
-                #print(gp.m_id, gp.m_attributes)
-                print("File:", cf.m_id)
+        for gp in root.groups:
+            #print("Group: ", gp.id)
+            if "CalFileName" in gp.attributes:
+                #cf = calibrationMap[gp.attributes["FrameTag"]]
+                cf = calibrationMap[gp.attributes["CalFileName"]]
+                #print(gp.id, gp.attributes)
+                print("File:", cf.id)
                 ProcessL1b.processGroup(gp, cf)
     
                 if esUnits == None:
@@ -190,8 +190,8 @@ class ProcessL1b:
                     luUnits = cf.getUnits("LI")
 
         #print(esUnits, luUnits)
-        root.m_attributes["LU_UNITS"] = luUnits
-        root.m_attributes["ED_UNITS"] = esUnits
-        root.m_attributes["ES_UNITS"] = esUnits
+        root.attributes["LU_UNITS"] = luUnits
+        root.attributes["ED_UNITS"] = esUnits
+        root.attributes["ES_UNITS"] = esUnits
 
         return root

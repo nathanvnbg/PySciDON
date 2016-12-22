@@ -76,14 +76,14 @@ class RawFileReader:
                             f.read(i)
                         hdr = f.read(RawFileReader.SATHDR_READ)
                         (k,v) = RawFileReader.readSATHDR(hdr)
-                        root.m_attributes[k] = v
+                        root.attributes[k] = v
 
                         break
                     else:
                         num = 0
                         for key in calibrationMap:
                             cf = calibrationMap[key]
-                            if testString.startswith(cf.m_id.upper().encode("utf-8")):
+                            if testString.startswith(cf.id.upper().encode("utf-8")):
                                 if i > 0:
                                     f.read(i)
 
@@ -91,14 +91,15 @@ class RawFileReader:
                                 msg = f.read(RawFileReader.MAX_BLOCK_READ)
                                 f.seek(pos)
 
-                                gp = contextMap[cf.m_id]
-                                if len(gp.m_attributes) == 0:
-                                    #gp.m_id += "_" + cf.m_id
-                                    gp.m_id = key                                    
-                                    gp.m_attributes["CalFileName"] = key
-                                    gp.m_attributes["FrameTag"] = cf.m_id
+                                gp = contextMap[cf.id]
+                                if len(gp.attributes) == 0:
+                                    #gp.id += "_" + cf.id
+                                    gp.id = key                                    
+                                    gp.attributes["CalFileName"] = key
+                                    gp.attributes["FrameTag"] = cf.id
 
                                 num = cf.convertRaw(msg, gp)
+
 
                                 if num >= 0:
                                     # Generate POSFRAME

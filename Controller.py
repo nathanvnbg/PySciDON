@@ -34,56 +34,59 @@ class Controller:
         for key in calibrationMap:
             cf = calibrationMap[key]
             cf.printd()
-            if cf.m_id.startswith("SATHED"):
-                cf.m_instrumentType = "Reference"
-                cf.m_media = "Air"
-                cf.m_measMode = "Surface"
-                cf.m_frameType = "ShutterDark"
-                cf.m_sensorType = cf.getSensorType()
-            elif cf.m_id.startswith("SATHSE"):
-                cf.m_instrumentType = "Reference"
-                cf.m_media = "Air"
-                cf.m_measMode = "Surface"
-                cf.m_frameType = "ShutterLight"
-                cf.m_sensorType = cf.getSensorType()
-            elif cf.m_id.startswith("SATHLD"):
-                cf.m_instrumentType = "SAS"
-                cf.m_media = "Air"
-                cf.m_measMode = "VesselBorne"
-                cf.m_frameType = "ShutterDark"
-                cf.m_sensorType = cf.getSensorType()
-            elif cf.m_id.startswith("SATHSL"):
-                cf.m_instrumentType = "SAS"
-                cf.m_media = "Air"
-                cf.m_measMode = "VesselBorne"
-                cf.m_frameType = "ShutterLight"
-                cf.m_sensorType = cf.getSensorType()
-            elif cf.m_id.startswith("$GPRMC"):
-                cf.m_instrumentType = "GPS"
-                cf.m_media = "Not Required"
-                cf.m_measMode = "Not Required"
-                cf.m_frameType = "Not Required"
-                cf.m_sensorType = cf.getSensorType()
+            if cf.id.startswith("SATHED"):
+                cf.instrumentType = "Reference"
+                cf.media = "Air"
+                cf.measMode = "Surface"
+                cf.frameType = "ShutterDark"
+                cf.sensorType = cf.getSensorType()
+            elif cf.id.startswith("SATHSE"):
+                cf.instrumentType = "Reference"
+                cf.media = "Air"
+                cf.measMode = "Surface"
+                cf.frameType = "ShutterLight"
+                cf.sensorType = cf.getSensorType()
+            elif cf.id.startswith("SATHLD"):
+                cf.instrumentType = "SAS"
+                cf.media = "Air"
+                cf.measMode = "VesselBorne"
+                cf.frameType = "ShutterDark"
+                cf.sensorType = cf.getSensorType()
+            elif cf.id.startswith("SATHSL"):
+                cf.instrumentType = "SAS"
+                cf.media = "Air"
+                cf.measMode = "VesselBorne"
+                cf.frameType = "ShutterLight"
+                cf.sensorType = cf.getSensorType()
+            elif cf.id.startswith("$GPRMC"):
+                cf.instrumentType = "GPS"
+                cf.media = "Not Required"
+                cf.measMode = "Not Required"
+                cf.frameType = "Not Required"
+                cf.sensorType = cf.getSensorType()
             else:
-                cf.m_instrumentType = "SAS"
-                cf.m_media = "Air"
-                cf.m_measMode = "VesselBorne"
-                cf.m_frameType = "LightAncCombined"
-                cf.m_sensorType = cf.getSensorType()
+                cf.instrumentType = "SAS"
+                cf.media = "Air"
+                cf.measMode = "VesselBorne"
+                cf.frameType = "LightAncCombined"
+                cf.sensorType = cf.getSensorType()
 
 
     @staticmethod
     def processCalibration(calPath):
+        print("processCalibration")
         print("ReadCalibrationFile ", calPath)
         calibrationMap = CalibrationFileReader.read(calPath)
         #calibrationMap = CalibrationFileReader.readSip("cal2013.sip")
         print("calibrationMap:", list(calibrationMap.keys()))
         Controller.generateContext(calibrationMap)
+        print("processCalibration - DONE")
         return calibrationMap
 
+
     @staticmethod
-    def preprocessData(preprocessDirectory, dataDirectory, calibrationMap, startLongitude, endLongitude, direction):
-        PreprocessRawFile.processDirectory(preprocessDirectory, dataDirectory, calibrationMap, startLongitude, endLongitude, direction)
+    def preprocessData(preprocessDirectory, dataDirectory, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax):
+        PreprocessRawFile.processDirectory(preprocessDirectory, dataDirectory, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax)
 
     # Read wind speed file
     @staticmethod
@@ -96,7 +99,7 @@ class Controller:
         if not os.path.isfile(filepath):
             return None
 
-        #filepath = "WindSpeed/BritishColumbiaFerries_HorseshoeBay-DepartureBay_WindMonitoringSystem_WindSpeed_20160727T223014Z_20160727T232654Z-NaN_clean.csv"
+        #filepath = "WindSpeed/BritishColumbiaFerries_HorseshoeBay-DepartureBay_WindMonitoringSysteWindSpeed_20160727T223014Z_20160727T232654Z-NaN_clean.csv"
         #windSpeedData = WindSpeedReader.readWindSpeed(filepath)
         windSpeedData = WindSpeedReader.readWindSpeed(filepath)
         
@@ -104,7 +107,7 @@ class Controller:
 
 
     @staticmethod
-    def processL1a(root, fp, calibrationMap):
+    def processL1a(fp, calibrationMap):
         (dirpath, filename) = os.path.split(fp)
         name = os.path.splitext(filename)[0]
         
@@ -119,10 +122,9 @@ class Controller:
         root = ProcessL1a.processL1a(calibrationMap, filepath)
         if root is not None:
             root.writeHDF5(os.path.join(dirpath, name + "_L1a.hdf"))
-        return root
 
     @staticmethod
-    def processL1b(root, fp, calibrationMap):
+    def processL1b(fp, calibrationMap):
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
         filepath = os.path.join(dirpath, filename + "_L1a.hdf")
@@ -135,10 +137,9 @@ class Controller:
         root = ProcessL1b.processL1b(root, calibrationMap)
         if root is not None:
             root.writeHDF5(os.path.join(dirpath, filename + "_L1b.hdf"))
-        return root
 
     @staticmethod
-    def processL2(root, fp):
+    def processL2(fp):
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
         filepath = os.path.join(dirpath, filename + "_L1b.hdf")
@@ -149,10 +150,9 @@ class Controller:
         root = ProcessL2.processL2(root)
         if root is not None:
             root.writeHDF5(os.path.join(dirpath, filename + "_L2.hdf"))
-        return root
 
     @staticmethod
-    def processL2s(root, fp):
+    def processL2s(fp):
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
         filepath = os.path.join(dirpath, filename + "_L2.hdf")
@@ -164,10 +164,9 @@ class Controller:
         #root.printd()
         if root is not None:
             root.writeHDF5(os.path.join(dirpath, filename + "_L2s.hdf"))
-        return root
 
     @staticmethod
-    def processL3a(root, fp):
+    def processL3a(fp):
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
         filepath = os.path.join(dirpath, filename + "_L2s.hdf")
@@ -178,10 +177,9 @@ class Controller:
         root = ProcessL3a.processL3a(root)
         if root is not None:
             root.writeHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
-        return root
 
     @staticmethod
-    def processL4(root, fp, windSpeedData):
+    def processL4(fp, windSpeedData):
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
         filepath = os.path.join(dirpath, filename + "_L3a.hdf")
@@ -193,7 +191,6 @@ class Controller:
         if root is not None:
             Utilities.plotReflectance(root, filename)
             root.writeHDF5(os.path.join(dirpath, filename + "_L4.hdf"))
-        return root
 
 
 
@@ -225,7 +222,7 @@ class Controller:
 
         gp = root.getGroup(gpName)
         ds = gp.getDataset(dsName)
-        #np.savetxt('Data/test.out', ds.m_data)
+        #np.savetxt('Data/test.out', ds.data)
 
         if not ds:
             print("Warning - outputCSV: missing dataset")
@@ -237,13 +234,13 @@ class Controller:
         outList = []
         columnName = dsName.lower()
 
-        total = ds.m_data.shape[0]
-        #ls = ["wl"] + [k for k,v in sorted(ds.m_data.dtype.fields.items(), key=lambda k: k[1])]
-        ls = ["wl"] + list(ds.m_data.dtype.names)
+        total = ds.data.shape[0]
+        #ls = ["wl"] + [k for k,v in sorted(ds.data.dtype.fields.items(), key=lambda k: k[1])]
+        ls = ["wl"] + list(ds.data.dtype.names)
         outList.append(ls)
         for i in range(total):
             n = str(i+1)
-            ls = [columnName + "_" + name + '_' + n] + ['%f' % num for num in ds.m_data[i]]
+            ls = [columnName + "_" + name + '_' + n] + ['%f' % num for num in ds.data[i]]
             outList.append(ls)
 
         outList = zip(*outList)
@@ -261,14 +258,13 @@ class Controller:
     def processAll(fp, calibrationMap):
         print("Processing: " + fp)
         #Controller.preprocessData(calibrationMap)
-        root = HDFRoot()
-        root = Controller.processL1a(root, fp, calibrationMap)
-        root = Controller.processL1b(root, fp, calibrationMap)
-        root = Controller.processL2(root, fp)
-        root = Controller.processL2s(root, fp)
-        root = Controller.processL3a(root, fp)
+        Controller.processL1a(fp, calibrationMap)
+        Controller.processL1b(fp, calibrationMap)
+        Controller.processL2(fp)
+        Controller.processL2s(fp)
+        Controller.processL3a(fp)
         windSpeedData = Controller.processWindData(fp)
-        root = Controller.processL4(root, fp, windSpeedData)
+        Controller.processL4(fp, windSpeedData)
         #Controller.outputCSV_L4(fp)
         #CSVWriter.outputTXT_L1a(fp)   
         #CSVWriter.outputTXT_L1b(fp)
@@ -278,21 +274,21 @@ class Controller:
         #CSVWriter.outputTXT_L4(fp)
         #root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
 
+
     @staticmethod
     def processMultiLevel(fp, calibrationMap, level=4):
         print("Processing: " + fp)
-        root = HDFRoot()
-        root = Controller.processL1a(root, fp, calibrationMap)
-        root = Controller.processL1b(root, fp, calibrationMap)
+        Controller.processL1a(fp, calibrationMap)
+        Controller.processL1b(fp, calibrationMap)
         #if level >= 1:
-        root = Controller.processL2(root, fp)
+        Controller.processL2(fp)
         if level >= 2:
-            root = Controller.processL2s(root, fp)
+            Controller.processL2s(fp)
         if level >= 3:
-            root = Controller.processL3a(root, fp)
+            Controller.processL3a(fp)
         if level >= 4:
             windSpeedData = Controller.processWindData(fp)
-            root = Controller.processL4(root, fp, windSpeedData)
+            Controller.processL4(fp, windSpeedData)
             #Controller.outputCSV_L4(fp)
         CSVWriter.outputTXT_L1a(fp)   
         CSVWriter.outputTXT_L1b(fp)
@@ -303,9 +299,8 @@ class Controller:
         print("Processing: " + fp + " - DONE")
 
 
-    # Used to process every file in the specified directory
     @staticmethod
-    def processDirectory(path, calibrationMap, level=4):
+    def processDirectoryTest(path, calibrationMap, level=4):
         for (dirpath, dirnames, filenames) in os.walk(path):
             for name in sorted(filenames):
                 #print("infile:", name)
@@ -314,9 +309,25 @@ class Controller:
                     #Controller.processMultiLevel(os.path.join(dirpath, name), calibrationMap, level)
             break
 
+
+    # Used to process every file in the specified directory
+    @staticmethod
+    def processDirectory(path, calibrationMap, level=4):
+        for (dirpath, dirnames, filenames) in os.walk(path):
+            for name in sorted(filenames):
+                #print("infile:", name)
+                if os.path.splitext(name)[1].lower() == ".raw":
+                    #Controller.processAll(os.path.join(dirpath, name), calibrationMap)
+                    Controller.processMultiLevel(os.path.join(dirpath, name), calibrationMap, level)
+            break
+
     # Used to process every file in a list of files
     @staticmethod
-    def processFiles(files, calibrationMap, level=4):
+    def processFilesMultiLevel(files, calibrationMap, level=4):
+        print("processFilesMultiLevel")
         for fp in files:
+            print("Processing: " + fp)
             Controller.processMultiLevel(fp, calibrationMap, level)
+        print("processFilesMultiLevel - DONE")
+
 

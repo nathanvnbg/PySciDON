@@ -22,7 +22,7 @@ class CalibrationFileReader:
                     with open(os.path.join(dirpath, name), 'rb') as f:
                         cf = CalibrationFile()
                         cf.read(f)
-                        #print("id:", cf.m_id)
+                        #print("id:", cf.id)
                         calibrationMap[name] = cf
             break
 
@@ -41,7 +41,7 @@ class CalibrationFileReader:
                     with zf.open(finfo) as f:
                         cf = CalibrationFile()
                         cf.read(f)
-                        #print("id:", cf.m_id)
+                        #print("id:", cf.id)
                         calibrationMap[finfo.filename] = cf
 
         return calibrationMap

@@ -13,42 +13,42 @@ import numpy as np
 
 class HDFDataset:
     def __init__(self):
-        self.m_id = ""
-        self.m_attributes = collections.OrderedDict()
-        self.m_columns = collections.OrderedDict()
-        self.m_data = None
+        self.id = ""
+        self.attributes = collections.OrderedDict()
+        self.columns = collections.OrderedDict()
+        self.data = None
 
 
     def copy(self, ds):
         self.copyAttributes(ds)
-        self.m_data = np.copy(ds.m_data)
+        self.data = np.copy(ds.data)
 
     def copyAttributes(self, ds):
-        for k,v in ds.m_attributes.items():
-            self.m_attributes[k] = v
+        for k,v in ds.attributes.items():
+            self.attributes[k] = v
 
 #    def getData(self, name='NONE'):
-#        return self.m_data[name]
+#        return self.data[name]
 
 #    def setData(self, name, data):
-#        self.m_data[name] = data
+#        self.data[name] = data
 
 
     def printd(self):
-        print("Dataset:", self.m_id)
+        print("Dataset:", self.id)
         #self.datasetToColumns()
         #self.datasetToColumns2()
         #self.columnsToDataset()
-        #for k in self.m_attributes:
-        #    print(k, self.m_attributes[k])
-        #print(self.m_data)
-        #for d in self.m_data:
+        #for k in self.attributes:
+        #    print(k, self.attributes[k])
+        #print(self.data)
+        #for d in self.data:
         #    print(d)
 
 
     def read(self, f):
         name = f.name[f.name.rfind("/")+1:]
-        self.m_id = name
+        self.id = name
 
         # Read attributes
         for k in f.attrs.keys():
@@ -56,49 +56,49 @@ class HDFDataset:
                 #print(f.attrs[k])
                 #print(type(f.attrs[k].tolist()[0]))
                 if type(f.attrs[k].tolist()[0]) == bytes:
-                    self.m_attributes[k] = [k.decode("utf-8") for k in f.attrs[k]]
-                    #print("Attr:", self.m_attributes[k])
+                    self.attributes[k] = [k.decode("utf-8") for k in f.attrs[k]]
+                    #print("Attr:", self.attributes[k])
                 else:
-                    self.m_attributes[k] = [k for k in f.attrs[k]]
+                    self.attributes[k] = [k for k in f.attrs[k]]
 
             else:
                 if type(f.attrs[k]) == bytes:
-                    self.m_attributes[k] = f.attrs[k].decode("utf-8")
+                    self.attributes[k] = f.attrs[k].decode("utf-8")
                 else:
-                    self.m_attributes[k] = f.attrs[k]
+                    self.attributes[k] = f.attrs[k]
         #print(f)
         #print(type(f[:]))
 
         # Read dataset
-        self.m_data = f[:] # Gets converted to numpy.ndarray
+        self.data = f[:] # Gets converted to numpy.ndarray
 
         #print("Dataset:", name)
-        #print("Data:", self.m_data.dtype)
+        #print("Data:", self.data.dtype)
 
 
     def write(self, f):
-        #print("id:", self.m_id)        
-        #print("columns:", self.m_columns)
-        #print("data:", self.m_data)
+        #print("id:", self.id)        
+        #print("columns:", self.columns)
+        #print("data:", self.data)
 
         # h4toh5 converter saves datatypes separately, but this doesn't seem required
-        #typeId = self.m_id + "_t"
-        #f[typeId] = self.m_data.dtype
-        #dset = f.create_dataset(self.m_id, data=self.m_data, dtype=f[typeId])
-        if self.m_data is not None:
-            dset = f.create_dataset(self.m_id, data=self.m_data, dtype=self.m_data.dtype)
+        #typeId = self.id + "_t"
+        #f[typeId] = self.data.dtype
+        #dset = f.create_dataset(self.id, data=self.data, dtype=f[typeId])
+        if self.data is not None:
+            dset = f.create_dataset(self.id, data=self.data, dtype=self.data.dtype)
         else:
             print("Dataset.write(): Data is None")
 
 
     # Writing to HDF4 file using PyHdf
     def writeHDF4(self, vg, vs):
-        if self.m_data is not None:
+        if self.data is not None:
             try:
-                name = self.m_id.encode('utf-8')
+                name = self.id.encode('utf-8')
                 dt = []
-                #print(self.m_data.dtype)
-                for (k,v) in [(x,y[0]) for x,y in sorted(self.m_data.dtype.fields.items(),key=lambda k: k[1])]:
+                #print(self.data.dtype)
+                for (k,v) in [(x,y[0]) for x,y in sorted(self.data.dtype.fields.items(),key=lambda k: k[1])]:
                     #print("type",k,v)
                     if v == np.float64:
                         dt.append((k, HC.FLOAT32, 1))
@@ -113,10 +113,10 @@ class HDFDataset:
                 vd = vs.create(name, dt)
 
                 records = []
-                for x in range(self.m_data.shape[0]):
+                for x in range(self.data.shape[0]):
                     rec = []
                     for t in dt:
-                        item = self.m_data[t[0]][x]
+                        item = self.data[t[0]][x]
                         rec.append(item)
                     records.append(rec)
                 #print(records)
@@ -132,51 +132,51 @@ class HDFDataset:
             print("Dataset.write(): Data is None")
 
     def hasColumn(self, name):
-        return (name in self.m_columns)
+        return (name in self.columns)
 
     def getColumn(self, name):
-        return self.m_columns[name]
+        return self.columns[name]
 
     def appendColumn(self, name, val):
-        if name not in self.m_columns:
-            self.m_columns[name] = [val]
+        if name not in self.columns:
+            self.columns[name] = [val]
         else:
-            self.m_columns[name].append(val)
+            self.columns[name].append(val)
 
     # Converts numpy array into columns (stored as a dictionary)
     def datasetToColumns(self):
-        self.m_columns = collections.OrderedDict()
-        for k in self.m_data.dtype.names:
-            #print("type",type(ltData.m_data[k]))
-            self.m_columns[k] = self.m_data[k].tolist()
+        self.columns = collections.OrderedDict()
+        for k in self.data.dtype.names:
+            #print("type",type(ltData.data[k]))
+            self.columns[k] = self.data[k].tolist()
 
     # Convert Prosoft format numpy array to columns    
     def datasetToColumns2(self):
-        self.m_columns = collections.OrderedDict()
-        ids = self.m_attributes["ID"]
+        self.columns = collections.OrderedDict()
+        ids = self.attributes["ID"]
         for k in ids:
-            self.m_columns[k] = []
+            self.columns[k] = []
         for k in ids:
-            self.m_columns[k].append(self.m_data[0][ids.index(k)])
+            self.columns[k].append(self.data[0][ids.index(k)])
         
 
     # Converts columns into numpy array
     def columnsToDataset(self):
-        #print("Id:", self.m_id, ", Columns:", self.m_columns)
-        #dtype0 = np.dtype([(name, type(ds.m_columns[name][0])) for name in ds.m_columns.keys()])
+        #print("Id:", self.id, ", Columns:", self.columns)
+        #dtype0 = np.dtype([(name, type(ds.columns[name][0])) for name in ds.columns.keys()])
 
-        if not self.m_columns:
-            print("Warning - columnsToDataset: m_columns is empty")
+        if not self.columns:
+            print("Warning - columnsToDataset: columns is empty")
             return
 
         dtype = []
-        for name in self.m_columns.keys():
+        for name in self.columns.keys():
 
             # Numpy dtype column name cannot be unicode in Python 2
             if sys.version_info[0] < 3:
                 name = name.encode('utf-8')
         
-            item = self.m_columns[name][0]
+            item = self.columns[name][0]
             if isinstance(item, bytes):
                 #dtype.append((name, h5py.special_dtype(vlen=str)))
                 dtype.append((name, "|S" + str(len(item))))
@@ -187,12 +187,12 @@ class HDFDataset:
             else:
                 dtype.append((name, type(item)))
 
-        #shape = (len(list(ds.m_columns.values())[0]), len(ds.m_columns))
-        shape = (len(list(self.m_columns.values())[0]), )
-        #print("Id:", self.m_id)
+        #shape = (len(list(ds.columns.values())[0]), len(ds.columns))
+        shape = (len(list(self.columns.values())[0]), )
+        #print("Id:", self.id)
         #print("Dtype:", dtype)
         #print("Shape:", shape)
-        self.m_data = np.empty(shape, dtype=dtype)
-        for k,v in self.m_columns.items():
-            self.m_data[k] = v
+        self.data = np.empty(shape, dtype=dtype)
+        for k,v in self.columns.items():
+            self.data[k] = v
 

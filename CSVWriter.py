@@ -16,15 +16,15 @@ class CSVWriter:
         dataOut = []
         #columnName = dsName.lower()
 
-        total = ds.m_data.shape[0]
-        #ls = ["wl"] + [k for k,v in sorted(ds.m_data.dtype.fields.items(), key=lambda k: k[1])]
-        ls = [""] + list(ds.m_data.dtype.names)
+        total = ds.data.shape[0]
+        #ls = ["wl"] + [k for k,v in sorted(ds.data.dtype.fields.items(), key=lambda k: k[1])]
+        ls = [""] + list(ds.data.dtype.names)
         dataOut.append(ls)
         for i in range(total):
             #n = str(i+1)
-            #ls = [columnName + "_" + name + '_' + n] + ['%f' % num for num in ds.m_data[i]]
-            #print(dsTimer.m_data["NONE"][i])
-            ls = [dsTimer.m_data["NONE"][i]] + ['%f' % num for num in ds.m_data[i]]
+            #ls = [columnName + "_" + name + '_' + n] + ['%f' % num for num in ds.data[i]]
+            #print(dsTimer.data["NONE"][i])
+            ls = [dsTimer.data["NONE"][i]] + ['%f' % num for num in ds.data[i]]
             dataOut.append(ls)
 
         return dataOut
@@ -36,13 +36,13 @@ class CSVWriter:
         #columnName = dsName.lower()
 
         total = data.shape[0]
-        #ls = ["wl"] + [k for k,v in sorted(ds.m_data.dtype.fields.items(), key=lambda k: k[1])]
+        #ls = ["wl"] + [k for k,v in sorted(ds.data.dtype.fields.items(), key=lambda k: k[1])]
         ls = [""] + list(data.dtype.names)
         dataOut.append(ls)
         for i in range(total):
             #n = str(i+1)
-            #ls = [columnName + "_" + name + '_' + n] + ['%f' % num for num in ds.m_data[i]]
-            #print(dsTimer.m_data["NONE"][i])
+            #ls = [columnName + "_" + name + '_' + n] + ['%f' % num for num in ds.data[i]]
+            #print(dsTimer.data["NONE"][i])
             ls = [timer[i]] + ['%f' % num for num in data[i]]
             dataOut.append(ls)
 
@@ -95,8 +95,8 @@ class CSVWriter:
         liData = None
         ltData = None
 
-        for gp in root.m_groups:
-            if gp.m_attributes["FrameType"] == "ShutterLight":
+        for gp in root.groups:
+            if gp.attributes["FrameType"] == "ShutterLight":
                 if gp.hasDataset("ES"):
                     esData = gp.getDataset("ES")
                     esTimer = gp.getDataset("TIMETAG2")
@@ -112,7 +112,7 @@ class CSVWriter:
             li = CSVWriter.formatData(liData, liTimer)
             lt = CSVWriter.formatData(ltData, ltTimer)
 
-            #ls = ["wl"] + list(ds.m_data.dtype.names)
+            #ls = ["wl"] + list(ds.data.dtype.names)
 
             CSVWriter.writeCSV(name, dirpath, es, "ES", level)
             CSVWriter.writeCSV(name, dirpath, li, "LI", level)
@@ -158,13 +158,13 @@ class CSVWriter:
         liData = sasGroup.getDataset("LI_hyperspectral")
         ltData = sasGroup.getDataset("LT_hyperspectral")
 
-        esTT2 = esData.m_data["Timetag2"]
-        liTT2 = liData.m_data["Timetag2"]
-        ltTT2 = ltData.m_data["Timetag2"]
+        esTT2 = esData.data["Timetag2"]
+        liTT2 = liData.data["Timetag2"]
+        ltTT2 = ltData.data["Timetag2"]
 
-        esData = CSVWriter.removeColumns(esData.m_data, ["Datetag", "Timetag2"])
-        liData = CSVWriter.removeColumns(liData.m_data, ["Datetag", "Timetag2"])
-        ltData = CSVWriter.removeColumns(ltData.m_data, ["Datetag", "Timetag2"])
+        esData = CSVWriter.removeColumns(esData.data, ["Datetag", "Timetag2"])
+        liData = CSVWriter.removeColumns(liData.data, ["Datetag", "Timetag2"])
+        ltData = CSVWriter.removeColumns(ltData.data, ["Datetag", "Timetag2"])
 
         es = CSVWriter.formatData2(esData, esTT2)
         li = CSVWriter.formatData2(liData, liTT2)
@@ -203,9 +203,9 @@ class CSVWriter:
         rrsData = gp.getDataset("Rrs")
 
         
-        CSVWriter.writeCSV(name, dirpath, esData.m_data, "ES", "L4")
-        CSVWriter.writeCSV(name, dirpath, liData.m_data, "LI", "L4")
-        CSVWriter.writeCSV(name, dirpath, ltData.m_data, "LT", "L4")
-        CSVWriter.writeCSV(name, dirpath, rrsData.m_data, "RRS", "L4")
+        CSVWriter.writeCSV(name, dirpath, esData.data, "ES", "L4")
+        CSVWriter.writeCSV(name, dirpath, liData.data, "LI", "L4")
+        CSVWriter.writeCSV(name, dirpath, ltData.data, "LT", "L4")
+        CSVWriter.writeCSV(name, dirpath, rrsData.data, "RRS", "L4")
 
 

@@ -10,7 +10,8 @@ import HDFRoot
 
 from Utilities import Utilities
 
-from config import settings
+#from config import settings
+from ConfigFile import ConfigFile
 
 
 class ProcessL3a:
@@ -21,7 +22,7 @@ class ProcessL3a:
 
         # Copy dataset to dictionary
         ds.datasetToColumns()
-        columns = ds.m_columns
+        columns = ds.columns
         saveDatetag = columns.pop("Datetag")
         saveTimetag2 = columns.pop("Timetag2")
 
@@ -61,16 +62,17 @@ class ProcessL3a:
             for k in columns:
                 values.append(columns[k][i])
             y = np.asarray(values)
-            new_y = sp.interpolate.interp1d(x, y)(new_x)
+            #new_y = sp.interpolate.interp1d(x, y)(new_x)
+            new_y = sp.interpolate.InterpolatedUnivariateSpline(x, y, k=3)(new_x)
 
             for i in range(new_x.shape[0]):
                 newColumns[str(new_x[i])].append(new_y[i])
 
 
         #newDS = HDFDataset()
-        newDS.m_columns = newColumns
+        newDS.columns = newColumns
         newDS.columnsToDataset()
-        #print(ds.m_columns)
+        #print(ds.columns)
         #return newDS
 
 
@@ -109,7 +111,7 @@ class ProcessL3a:
 
         # Copy dataset to dictionary
         ds.datasetToColumns()
-        columns = ds.m_columns
+        columns = ds.columns
         saveDatetag = columns.pop("Datetag")
         saveTimetag2 = columns.pop("Timetag2")
 
@@ -156,7 +158,7 @@ class ProcessL3a:
 
             newColumns = np.exp(newColumns)
 
-        ds.m_columns = newColumns
+        ds.columns = newColumns
         ds.columnsToDataset()
 
     # Does wavelength interpolation and data averaging
@@ -165,17 +167,17 @@ class ProcessL3a:
 
         root = HDFRoot.HDFRoot()
         root.copyAttributes(node)
-        root.m_attributes["PROCESSING_LEVEL"] = "3a"
-        root.m_attributes["BIN_INTERVAL"] = "1 m"
-        root.m_attributes["BIN_WIDTH"] = "0.5 m"
-        root.m_attributes["TIME_INTERVAL"] = "2 sec"
-        root.m_attributes["TIME_WIDTH"] = "1 sec"
-        root.m_attributes["WAVEL_INTERP"] = "1 nm"
+        root.attributes["PROCESSING_LEVEL"] = "3a"
+        root.attributes["BIN_INTERVAL"] = "1 m"
+        root.attributes["BIN_WIDTH"] = "0.5 m"
+        root.attributes["TIME_INTERVAL"] = "2 sec"
+        root.attributes["TIME_WIDTH"] = "1 sec"
+        root.attributes["WAVEL_INTERP"] = "1 nm"
 
         newReferenceGroup = root.addGroup("Reference")
         newSASGroup = root.addGroup("SAS")
         if node.hasGroup("GPS"):
-            root.m_groups.append(node.getGroup("GPS"))
+            root.groups.append(node.getGroup("GPS"))
 
         referenceGroup = node.getGroup("Reference")
         sasGroup = node.getGroup("SAS")
@@ -188,7 +190,8 @@ class ProcessL3a:
         newLIData = newSASGroup.addDataset("LI_hyperspectral")
         newLTData = newSASGroup.addDataset("LT_hyperspectral")
         
-        interval = int(settings["iL3aInterpInterval"])
+        #interval = float(settings["fL3aInterpInterval"])
+        interval = float(ConfigFile.settings["fL3aInterpInterval"])
 
         ProcessL3a.interpolateWavelength(esData, newESData, interval)
         ProcessL3a.interpolateWavelength(liData, newLIData, interval)
@@ -204,22 +207,22 @@ class ProcessL3a:
             latposData.datasetToColumns()
             lonposData.datasetToColumns()
             
-            latpos = latposData.m_columns["NONE"]
-            lonpos = lonposData.m_columns["NONE"]
+            latpos = latposData.columns["NONE"]
+            lonpos = lonposData.columns["NONE"]
             
             newESData.datasetToColumns()
             newLIData.datasetToColumns()
             newLTData.datasetToColumns()
 
-            #print(newESData.m_columns)
+            #print(newESData.columns)
 
-            newESData.m_columns["LATPOS"] = latpos
-            newLIData.m_columns["LATPOS"] = latpos
-            newLTData.m_columns["LATPOS"] = latpos
+            newESData.columns["LATPOS"] = latpos
+            newLIData.columns["LATPOS"] = latpos
+            newLTData.columns["LATPOS"] = latpos
 
-            newESData.m_columns["LONPOS"] = lonpos
-            newLIData.m_columns["LONPOS"] = lonpos
-            newLTData.m_columns["LONPOS"] = lonpos
+            newESData.columns["LONPOS"] = lonpos
+            newLIData.columns["LONPOS"] = lonpos
+            newLTData.columns["LONPOS"] = lonpos
 
             newESData.columnsToDataset()
             newLIData.columnsToDataset()

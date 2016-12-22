@@ -65,7 +65,7 @@ class WindSpeedReader:
 
         # Generate HDFDataset
         windSpeedData = HDFDataset()
-        windSpeedData.m_id = "WindSpeedData"
+        windSpeedData.id = "WindSpeedData"
         windSpeedData.appendColumn("WINDSPEED", wspd)
         #windSpeedData.appendColumn("LATPOS", lat)
         #windSpeedData.appendColumn("LONPOS", lon)

@@ -12,27 +12,28 @@ from CalibrationData import CalibrationData
 # obtained from reading a calibration file
 class CalibrationFile:
     def __init__(self):
-        self.m_id = ""
-        self.m_name = ""
-        self.m_data = []
+        self.id = ""
+        self.name = ""
+        self.data = []
 
-        self.m_instrumentType = ""
-        self.m_media = ""
-        self.m_measMode = ""
-        self.m_frameType = ""
-        self.m_sensorType = ""
+        self.instrumentType = ""
+        self.media = ""
+        self.measMode = ""
+        self.frameType = ""
+        self.sensorType = ""
 
 
     def printd(self):
-        if len(self.m_id) != 0:
-            print("id:", self.m_id)
-#        for cd in self.m_data:
+        if len(self.id) != 0:
+            print("id:", self.id)
+#        for cd in self.data:
 #            cd.printd()
 
     # Reads a calibration file and generates calibration data
     def read(self, f):
+        #print("CalibrationFile.read()")
         (dirpath, filename) = os.path.split(f.name)
-        self.m_name = filename
+        self.name = filename
         while 1:
             line = f.readline()
             line = line.decode("utf-8")
@@ -48,50 +49,50 @@ class CalibrationFile:
             cd = CalibrationData()
             cd.read(line)
 
-            cdtype = cd.m_type.upper()
+            cdtype = cd.type.upper()
 
             # Determines the frame synchronization string by appending
             # ids from INSTRUMENT and SN lines
             # ToDo: Add a check to ensure INSTRUMENT and SN are the first two lines
             if cdtype == "INSTRUMENT" or cdtype == "VLF_INSTRUMENT" or \
                cdtype == "SN" or cdtype == "VLF_SN":
-                self.m_id += cd.m_id
+                self.id += cd.id
 
             # Read in coefficients
-            for i in range(0, cd.m_calLines):
+            for i in range(0, cd.calLines):
                 line = f.readline()
                 cd.readCoefficients(line)
 
             #cd.printd()
-            self.m_data.append(cd)
+            self.data.append(cd)
 
     # Returns units for the calibration data with type t
     def getUnits(self, t):
-        for cd in self.m_data:
-            if cd.m_type == t:
-                return cd.m_units
+        for cd in self.data:
+            if cd.type == t:
+                return cd.units
         return None
 
     # Returns the sensor type
     def getSensorType(self):
-        for cd in self.m_data:
-            if cd.m_type == "ES" or \
-               cd.m_type == "LI" or \
-               cd.m_type == "LT":
-                return cd.m_type
+        for cd in self.data:
+            if cd.type == "ES" or \
+               cd.type == "LI" or \
+               cd.type == "LT":
+                return cd.type
         return "None"
 
     # Verify raw data message can be read successfully
     def verifyRaw(self, msg):
         try:
             nRead = 0
-            for i in range(0, len(self.m_data)):
+            for i in range(0, len(self.data)):
                 v = 0
-                cd = self.m_data[i]
+                cd = self.data[i]
 
                 # Read variable length message frames (field length == -1)
-                if cd.m_fieldLength == -1:
-                    delimiter = self.m_data[i+1].m_units
+                if cd.fieldLength == -1:
+                    delimiter = self.data[i+1].units
                     delimiter = delimiter.encode("utf-8").decode("unicode_escape").encode("utf-8")
                     #print("delimiter:", delimiter)
 
@@ -107,12 +108,12 @@ class CalibrationFile:
 
                 # Read fixed length message frames
                 else:
-                    if cd.m_fitType.upper() != "DELIMITER":
-                        if cd.m_fieldLength != 0:
-                            b = msg[nRead:nRead+cd.m_fieldLength]
-                            #print(nRead, cd.m_fieldLength, b)
+                    if cd.fitType.upper() != "DELIMITER":
+                        if cd.fieldLength != 0:
+                            b = msg[nRead:nRead+cd.fieldLength]
+                            #print(nRead, cd.fieldLength, b)
                             v = cd.convertRaw(b)
-                    nRead  += cd.m_fieldLength
+                    nRead  += cd.fieldLength
                 
                 # Passed EndOfFile
                 #if nRead > len(msg):
@@ -133,24 +134,24 @@ class CalibrationFile:
         nRead = 0
         instrumentId = ""
 
-        #for i in range(0, len(self.m_data)):
-        #    self.m_data[i].printd()
+        #for i in range(0, len(self.data)):
+        #    self.data[i].printd()
         #print("file:", msg)
 
         if self.verifyRaw(msg) == False:
             #print("Message not read successfully:\n" + str(msg))
             return -1
 
-        for i in range(0, len(self.m_data)):
+        for i in range(0, len(self.data)):
             v = 0
-            cd = self.m_data[i]
+            cd = self.data[i]
 
 
             # Get value from message frame
 
             # Read variable length message frames (field length == -1)
-            if cd.m_fieldLength == -1:
-                delimiter = self.m_data[i+1].m_units
+            if cd.fieldLength == -1:
+                delimiter = self.data[i+1].units
                 delimiter = delimiter.encode("utf-8").decode("unicode_escape").encode("utf-8")
                 #print("delimiter:", delimiter)
 
@@ -165,49 +166,49 @@ class CalibrationFile:
 
             # Read fixed length message frames
             else:
-                if cd.m_fitType.upper() != "DELIMITER":
-                    if cd.m_fieldLength != 0:
-                        b = msg[nRead:nRead+cd.m_fieldLength]
-                        #print(nRead, cd.m_fieldLength, b)
+                if cd.fitType.upper() != "DELIMITER":
+                    if cd.fieldLength != 0:
+                        b = msg[nRead:nRead+cd.fieldLength]
+                        #print(nRead, cd.fieldLength, b)
                         v = cd.convertRaw(b)
-                nRead  += cd.m_fieldLength
+                nRead  += cd.fieldLength
 
 
             # Stores the instrument id to check for DATETAG/TIMETAG2
-            if cd.m_type.upper() == "INSTRUMENT" or cd.m_type.upper() == "VLF_INSTRUMENT":
-                instrumentId = cd.m_id
+            if cd.type.upper() == "INSTRUMENT" or cd.type.upper() == "VLF_INSTRUMENT":
+                instrumentId = cd.id
 
 
             # Stores value in dataset or attribute depending on type
 
             # Stores raw data into hdf datasets according to type
-            if cd.m_fitType.upper() != "NONE" and cd.m_fitType.upper() != "DELIMITER":
-                cdtype = cd.m_type.upper()
+            if cd.fitType.upper() != "NONE" and cd.fitType.upper() != "DELIMITER":
+                cdtype = cd.type.upper()
                 if cdtype != "INSTRUMENT" and cdtype != "VLF_INSTRUMENT" and \
                    cdtype != "SN" and cdtype != "VLF_SN":
-                    ds = gp.getDataset(cd.m_type)
+                    ds = gp.getDataset(cd.type)
                     if ds is None:
-                        ds = gp.addDataset(cd.m_type)
-                    #print(cd.m_id)
-                    #ds.m_temp.append(v)
-                    #ds.addColumn(cd.m_id)
-                    ds.appendColumn(cd.m_id, v)
+                        ds = gp.addDataset(cd.type)
+                    #print(cd.id)
+                    #ds.temp.append(v)
+                    #ds.addColumn(cd.id)
+                    ds.appendColumn(cd.id, v)
                 else:
                     # ToDo: move to better position
                     if sys.version_info[0] < 3: # Python3
-                        gp.m_attributes[cdtype.encode('utf-8')] = cd.m_id
+                        gp.attributes[cdtype.encode('utf-8')] = cd.id
                     else: # Python2
-                        gp.m_attributes[cdtype] = cd.m_id
+                        gp.attributes[cdtype] = cd.id
 
             # None types are stored as attributes
-            if cd.m_fitType.upper() == "NONE":
-                cdtype = cd.m_type.upper()
+            if cd.fitType.upper() == "NONE":
+                cdtype = cd.type.upper()
                 if cdtype == "SN" or cdtype == "DATARATE" or cdtype == "RATE":
                     # ToDo: move to better position
                     if sys.version_info[0] < 3:
-                        gp.m_attributes[cdtype.encode('utf-8')] = cd.m_id
+                        gp.attributes[cdtype.encode('utf-8')] = cd.id
                     else:
-                        gp.m_attributes[cdtype] = cd.m_id
+                        gp.attributes[cdtype] = cd.id
 
 
         # Some instruments produce additional bytes for
@@ -231,7 +232,6 @@ class CalibrationFile:
             if ds1 is None:
                 ds1 = gp.addDataset("DATETAG")
             ds1.appendColumn(u"NONE", v)
-
             # Read TIMETAG2
             b = msg[nRead:nRead+4]
             if sys.version_info[0] < 3:

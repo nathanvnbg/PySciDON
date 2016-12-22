@@ -18,25 +18,25 @@ from HDFDataset import HDFDataset
 
 class HDFGroup:
     def __init__(self):
-        self.m_id = ""
-        self.m_datasets = collections.OrderedDict()
-        self.m_attributes = collections.OrderedDict()
+        self.id = ""
+        self.datasets = collections.OrderedDict()
+        self.attributes = collections.OrderedDict()
 
 
     def copy(self, gp):
         self.copyAttributes(gp)
-        for k, ds in gp.m_datasets.items():
-            newDS = self.addDataset(ds.m_id)
+        for k, ds in gp.datasets.items():
+            newDS = self.addDataset(ds.id)
             newDS.copy(ds)
 
     def copyAttributes(self, gp):
-        for k,v in gp.m_attributes.items():
-            self.m_attributes[k] = v
+        for k,v in gp.attributes.items():
+            self.attributes[k] = v
 
     def datasetDeleteRow(self, i):
-        for k in self.m_datasets:
-            ds = self.m_datasets[k]
-            ds.m_data = np.delete(ds.m_data, (i), axis=0)
+        for k in self.datasets:
+            ds = self.datasets[k]
+            ds.data = np.delete(ds.data, (i), axis=0)
 
     def addDataset(self, name):
         if len(name) == 0:
@@ -45,16 +45,16 @@ class HDFGroup:
         ds = None
         if not self.hasDataset(name):
             ds = HDFDataset()
-            ds.m_id = name
-            self.m_datasets[name] = ds
+            ds.id = name
+            self.datasets[name] = ds
         return ds
 
     def hasDataset(self, name):
-        return (name in self.m_datasets)
+        return (name in self.datasets)
 
     def getDataset(self, name):
         if self.hasDataset(name):
-            return self.m_datasets[name]
+            return self.datasets[name]
         return None
 
 
@@ -66,28 +66,28 @@ class HDFGroup:
             ds = self.getDataset(name)
             if ds is None:
                 ds = self.addDataset(name)
-            for item in ds.m_columns:
-                self.m_attributes["Head_"+str(cnt)] = name + " 1 1 " + item
+            for item in ds.columns:
+                self.attributes["Head_"+str(cnt)] = name + " 1 1 " + item
                 cnt += 1
 
 
 
     def printd(self):
-        print("Group:", self.m_id)
-        #print("Sensor Type:", self.m_sensorType)
+        print("Group:", self.id)
+        #print("Sensor Type:", self.sensorType)
 
-        if "FrameType" in self.m_attributes:
-            print("Frame Type:", self.m_attributes["FrameType"])
+        if "FrameType" in self.attributes:
+            print("Frame Type:", self.attributes["FrameType"])
         else:
             print("Frame Type not found")
 
-        for k in self.m_attributes:
-            print("Attribute:", k, self.m_attributes[k])
+        for k in self.attributes:
+            print("Attribute:", k, self.attributes[k])
         #    attr.printd()
-        #for gp in self.m_groups:
+        #for gp in self.groups:
         #    gp.printd()
-        for k in self.m_datasets:
-            ds = self.m_datasets[k]
+        for k in self.datasets:
+            ds = self.datasets[k]
             ds.printd()
 
 
@@ -95,15 +95,15 @@ class HDFGroup:
         name = f.name[f.name.rfind("/")+1:]
         #if len(name) == 0:
         #    name = "/"
-        self.m_id = name
+        self.id = name
 
         # Read attributes
         #print("Attributes:", [k for k in f.attrs.keys()])
         for k in f.attrs.keys():
             if type(f.attrs[k]) == np.ndarray:
-                self.m_attributes[k] = f.attrs[k]
+                self.attributes[k] = f.attrs[k]
             else: # string attribute
-                self.m_attributes[k] = f.attrs[k].decode("utf-8")
+                self.attributes[k] = f.attrs[k].decode("utf-8")
         # Read datasets
         for k in f.keys():
             item = f.get(k)
@@ -112,20 +112,20 @@ class HDFGroup:
             elif isinstance(item, h5py.Dataset):
                 #print("Item:", k)
                 ds = HDFDataset()
-                self.m_datasets[k] = ds
+                self.datasets[k] = ds
                 ds.read(item)
 
 
     def write(self, f):
-        #print("Group:", self.m_id)
+        #print("Group:", self.id)
         try:
-            f = f.create_group(self.m_id)
+            f = f.create_group(self.id)
             # Write attributes
-            for k in self.m_attributes:
-                f.attrs[k] = np.string_(self.m_attributes[k])
+            for k in self.attributes:
+                f.attrs[k] = np.string_(self.attributes[k])
             # Write datasets
-            for key,ds in self.m_datasets.items():
-                #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
+            for key,ds in self.datasets.items():
+                #f.create_dataset(ds.id, data=np.asarray(ds.data))
                 ds.write(f)
         except:
             e = sys.exc_info()[0]
@@ -134,20 +134,20 @@ class HDFGroup:
 
     # Writing to HDF4 file using PyHdf
     def writeHDF4(self, v, vs):
-        print("Group:", self.m_id)
-        name = self.m_id[:self.m_id.find("_")]
+        print("Group:", self.id)
+        name = self.id[:self.id.find("_")]
         if sys.version_info[0] < 3:
-            #vg = v.create(self.m_id.encode('utf-8'))
+            #vg = v.create(self.id.encode('utf-8'))
             vg = v.create(name.encode('utf-8'))
         else:
-            #vg = v.create(self.m_id)
+            #vg = v.create(self.id)
             vg = v.create(name)
 
-        for k in self.m_attributes:
+        for k in self.attributes:
             attr = vg.attr(k)
-            attr.set(HC.CHAR8, self.m_attributes[k])
+            attr.set(HC.CHAR8, self.attributes[k])
 
-        for key,ds in self.m_datasets.items():
-            #f.create_dataset(ds.m_id, data=np.asarray(ds.m_data))
+        for key,ds in self.datasets.items():
+            #f.create_dataset(ds.id, data=np.asarray(ds.data))
             ds.writeHDF4(vg, vs)
 

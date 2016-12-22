@@ -6,8 +6,6 @@ import time
 from HDFDataset import HDFDataset
 from HDFGroup import HDFGroup
 
-from config import settings
-
 
 class PreprocessRawFile:
     MAX_TAG_READ = 32
@@ -35,18 +33,18 @@ class PreprocessRawFile:
     @staticmethod
     def createRawFile(dataDir, gpGPSStart, gpGPSEnd, direction, f, header, iStart, iEnd):
         # Determine filename from date/time
-        startDate = str(int(gpGPSStart.getDataset("DATE").m_columns["NONE"][0]))
-        endDate = str(int(gpGPSEnd.getDataset("DATE").m_columns["NONE"][0]))
-        startTime = str(int(gpGPSStart.getDataset("UTCPOS").m_columns["NONE"][0])).zfill(6)
-        endTime = str(int(gpGPSEnd.getDataset("UTCPOS").m_columns["NONE"][0])).zfill(6)
+        startDate = str(int(gpGPSStart.getDataset("DATE").columns["NONE"][0]))
+        endDate = str(int(gpGPSEnd.getDataset("DATE").columns["NONE"][0]))
+        startTime = str(int(gpGPSStart.getDataset("UTCPOS").columns["NONE"][0])).zfill(6)
+        endTime = str(int(gpGPSEnd.getDataset("UTCPOS").columns["NONE"][0])).zfill(6)
 
         # Reformate date
         startDate = PreprocessRawFile.dateFromInt(startDate)
         endDate = PreprocessRawFile.dateFromInt(endDate)
 
         # Determine direction
-        lonStart = gpGPSStart.getDataset("LONPOS").m_columns["NONE"][0]
-        lonEnd = gpGPSEnd.getDataset("LONPOS").m_columns["NONE"][0]
+        lonStart = gpGPSStart.getDataset("LONPOS").columns["NONE"][0]
+        lonEnd = gpGPSEnd.getDataset("LONPOS").columns["NONE"][0]
         course = 'W'
         if lonStart > lonEnd:
             course = 'E'
@@ -138,7 +136,7 @@ class PreprocessRawFile:
                         bytesRead = 0
                         for key in calibrationMap:
                             cf = calibrationMap[key]
-                            if testString.startswith(b"$GPRMC") and testString.startswith(cf.m_id.upper().encode("utf-8")):
+                            if testString.startswith(b"$GPRMC") and testString.startswith(cf.id.upper().encode("utf-8")):
                                 if i > 0:
                                     f.read(i)
 
@@ -164,7 +162,7 @@ class PreprocessRawFile:
                                 if gp.hasDataset("LONPOS"):
                                     #print("has gps")
                                     lonData = gp.getDataset("LONPOS")
-                                    longitude = lonData.m_columns["NONE"][0]
+                                    longitude = lonData.columns["NONE"][0]
                                     #print(longitude)
                                     # Detect if we are in specified longitude
                                     if longitude > startLongitude and longitude < endLongitude:
@@ -202,7 +200,7 @@ class PreprocessRawFile:
     # Remove data where
     # sun_azimuth - SAS_true != [90,135]
     @staticmethod
-    def cleanRawFile(filepath, calibrationMap):
+    def cleanRawFile(filepath, calibrationMap, angleMin, angleMax):
         print("Clean Raw File")
 
         header = b""
@@ -248,7 +246,7 @@ class PreprocessRawFile:
                         bytesRead = 0
                         for key in calibrationMap:
                             cf = calibrationMap[key]
-                            if testString.startswith(b"SATNAV") and testString.startswith(cf.m_id.upper().encode("utf-8")):
+                            if testString.startswith(b"SATNAV") and testString.startswith(cf.id.upper().encode("utf-8")):
                                 if i > 0:
                                     f.read(i)
 
@@ -269,16 +267,16 @@ class PreprocessRawFile:
                                 #gp.printd()
                                 if gp.hasDataset("AZIMUTH") and gp.hasDataset("HEADING"):
                                     azimuthData = gp.getDataset("AZIMUTH")
-                                    azimuth = azimuthData.m_columns["SUN"][0]
+                                    azimuth = azimuthData.columns["SUN"][0]
 
                                     sasTrueData = gp.getDataset("HEADING")
-                                    sasTrue = sasTrueData.m_columns["SAS_TRUE"][0]
+                                    sasTrue = sasTrueData.columns["SAS_TRUE"][0]
 
                                     #angle = (azimuth - sasTrue) % 360
                                     angle = PreprocessRawFile.normalizeAngle(azimuth - sasTrue)
                                     #print("Angle: ", angle)
                                     #if angle >= 90 and angle <= 135:
-                                    if angle >= 85 and angle <= 140:
+                                    if angle >= angleMin and angle <= angleMax:
                                         if iStart != -1:
                                             iEnd = f.tell()
     
@@ -310,18 +308,20 @@ class PreprocessRawFile:
 
 
     @staticmethod
-    def processDirectory(path, dataDir, calibrationMap, startLongitude, endLongitude, direction):
-        for (dirpath, dirnames, filenames) in os.walk(path):
-            for name in sorted(filenames):
-                #print("infile:", name)
-                if os.path.splitext(name)[1].lower() == ".raw":
-                    PreprocessRawFile.processRawFile(os.path.join(dirpath, name), dataDir, calibrationMap, startLongitude, endLongitude, direction)
-            break
+    def processDirectory(path, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax):
+        if checkCoords:
+            for (dirpath, dirnames, filenames) in os.walk(path):
+                for name in sorted(filenames):
+                    #print("infile:", name)
+                    if os.path.splitext(name)[1].lower() == ".raw":
+                        PreprocessRawFile.processRawFile(os.path.join(dirpath, name), dataDir, calibrationMap, startLongitude, endLongitude, direction)
+                break
 
-        for (dirpath, dirnames, filenames) in os.walk(dataDir):
-            for name in sorted(filenames):
-                #print("infile:", name)
-                if os.path.splitext(name)[1].lower() == ".raw":
-                    PreprocessRawFile.cleanRawFile(os.path.join(dirpath, name), calibrationMap)
-            break
+        if doCleaning:
+            for (dirpath, dirnames, filenames) in os.walk(dataDir):
+                for name in sorted(filenames):
+                    #print("infile:", name)
+                    if os.path.splitext(name)[1].lower() == ".raw":
+                        PreprocessRawFile.cleanRawFile(os.path.join(dirpath, name), calibrationMap, angleMin, angleMax)
+                break
 

@@ -19,38 +19,38 @@ class ProcessL2s:
     def processGPSTime(node):
         sec = 0
 
-        for gp in node.m_groups:
-            #if gp.m_id.startswith("GPS"):
+        for gp in node.groups:
+            #if gp.id.startswith("GPS"):
             if gp.hasDataset("UTCPOS"):
                 ds = gp.getDataset("UTCPOS")
-                sec = Utilities.utcToSec(ds.m_data["NONE"][0])
-                #print("GPS UTCPOS:", ds.m_data["NONE"][0], "-> sec:", sec)
+                sec = Utilities.utcToSec(ds.data["NONE"][0])
+                #print("GPS UTCPOS:", ds.data["NONE"][0], "-> sec:", sec)
                 #print(secToUtc(sec))
 
-        for gp in node.m_groups:
-            #if not gp.m_id.startswith("GPS"):
+        for gp in node.groups:
+            #if not gp.id.startswith("GPS"):
             if not gp.hasDataset("UTCPOS"):
                 dsTimer = gp.getDataset("TIMER")
                 if dsTimer is not None:
                     dsTimeTag2 = gp.getDataset("TIMETAG2")
-                    for x in range(dsTimeTag2.m_data.shape[0]):
-                        v = dsTimer.m_data["NONE"][x] + sec
-                        dsTimeTag2.m_data["NONE"][x] = Utilities.secToTimeTag2(v)
+                    for x in range(dsTimeTag2.data.shape[0]):
+                        v = dsTimer.data["NONE"][x] + sec
+                        dsTimeTag2.data["NONE"][x] = Utilities.secToTimeTag2(v)
 
 
     @staticmethod
     def interpolateL2s(xData, xTimer, yTimer, newXData, kind='linear'):
-        for k in xData.m_data.dtype.names:
+        for k in xData.data.dtype.names:
             if k == "Datetag" or k == "Timetag2":
                 continue
             #print(k)
             x = list(xTimer)
             new_x = list(yTimer)
-            y = np.copy(xData.m_data[k]).tolist()
+            y = np.copy(xData.data[k]).tolist()
             if kind == 'cubic':
-                newXData.m_columns[k] = Utilities.interpSpline(x, y, new_x)
+                newXData.columns[k] = Utilities.interpSpline(x, y, new_x)
             else:
-                newXData.m_columns[k] = Utilities.interp(x, y, new_x, kind)
+                newXData.columns[k] = Utilities.interp(x, y, new_x, kind)
 
 
     # Converts a sensor group into the format used by Level 2s
@@ -65,13 +65,13 @@ class ProcessL2s:
         newSensorData = newGroup.addDataset(newDatasetName)
 
         # Datetag and Timetag2 columns added to sensor dataset
-        newSensorData.m_columns["Datetag"] = dateData.m_data["NONE"].tolist()
-        newSensorData.m_columns["Timetag2"] = timeData.m_data["NONE"].tolist()
+        newSensorData.columns["Datetag"] = dateData.data["NONE"].tolist()
+        newSensorData.columns["Timetag2"] = timeData.data["NONE"].tolist()
 
         # Copies over the dataset
-        for k in sensorData.m_data.dtype.names:
-            #print("type",type(esData.m_data[k]))
-            newSensorData.m_columns[k] = sensorData.m_data[k].tolist()
+        for k in sensorData.data.dtype.names:
+            #print("type",type(esData.data[k]))
+            newSensorData.columns[k] = sensorData.data[k].tolist()
         newSensorData.columnsToDataset()
 
 
@@ -84,11 +84,11 @@ class ProcessL2s:
         if xData is yData:
             return True
 
-        #xDatetag= xData.m_data["Datetag"].tolist()
-        xTimetag2 = xData.m_data["Timetag2"].tolist()
+        #xDatetag= xData.data["Datetag"].tolist()
+        xTimetag2 = xData.data["Timetag2"].tolist()
 
-        #yDatetag= yData.m_data["Datetag"].tolist()
-        yTimetag2 = yData.m_data["Timetag2"].tolist()
+        #yDatetag= yData.data["Datetag"].tolist()
+        yTimetag2 = yData.data["Timetag2"].tolist()
 
 
         # Convert TimeTag2 values to seconds to be used for interpolation
@@ -106,8 +106,8 @@ class ProcessL2s:
             print("yTimer does not contain strictly increasing values")
             return False
 
-        xData.m_columns["Datetag"] = yData.m_data["Datetag"].tolist()
-        xData.m_columns["Timetag2"] = yData.m_data["Timetag2"].tolist()
+        xData.columns["Datetag"] = yData.data["Datetag"].tolist()
+        xData.columns["Timetag2"] = yData.data["Timetag2"].tolist()
 
 
         #if Utilities.hasNan(xData):
@@ -153,27 +153,27 @@ class ProcessL2s:
         newGPSMagVarData = newGPSGroup.addDataset("MAGVAR")
         newGPSSpeedData = newGPSGroup.addDataset("SPEED")
 
-        newGPSCourseData.m_columns["Datetag"] = esData.m_data["Datetag"].tolist()
-        newGPSCourseData.m_columns["Timetag2"] = esData.m_data["Timetag2"].tolist()
-        newGPSLatPosData.m_columns["Datetag"] = esData.m_data["Datetag"].tolist()
-        newGPSLatPosData.m_columns["Timetag2"] = esData.m_data["Timetag2"].tolist()
-        newGPSLonPosData.m_columns["Datetag"] = esData.m_data["Datetag"].tolist()
-        newGPSLonPosData.m_columns["Timetag2"] = esData.m_data["Timetag2"].tolist()
-        newGPSMagVarData.m_columns["Datetag"] = esData.m_data["Datetag"].tolist()
-        newGPSMagVarData.m_columns["Timetag2"] = esData.m_data["Timetag2"].tolist()
-        newGPSSpeedData.m_columns["Datetag"] = esData.m_data["Datetag"].tolist()
-        newGPSSpeedData.m_columns["Timetag2"] = esData.m_data["Timetag2"].tolist()
+        newGPSCourseData.columns["Datetag"] = esData.data["Datetag"].tolist()
+        newGPSCourseData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
+        newGPSLatPosData.columns["Datetag"] = esData.data["Datetag"].tolist()
+        newGPSLatPosData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
+        newGPSLonPosData.columns["Datetag"] = esData.data["Datetag"].tolist()
+        newGPSLonPosData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
+        newGPSMagVarData.columns["Datetag"] = esData.data["Datetag"].tolist()
+        newGPSMagVarData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
+        newGPSSpeedData.columns["Datetag"] = esData.data["Datetag"].tolist()
+        newGPSSpeedData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
 
 
         # Convert GPS UTC time values to seconds to be used for interpolation
         xTimer = []
-        for i in range(gpsTimeData.m_data.shape[0]):
-            xTimer.append(Utilities.utcToSec(gpsTimeData.m_data["NONE"][i]))
+        for i in range(gpsTimeData.data.shape[0]):
+            xTimer.append(Utilities.utcToSec(gpsTimeData.data["NONE"][i]))
 
         # Convert ES TimeTag2 values to seconds to be used for interpolation
         yTimer = []
-        for i in range(esData.m_data.shape[0]):
-            yTimer.append(Utilities.timeTag2ToSec(esData.m_data["Timetag2"][i]))
+        for i in range(esData.data.shape[0]):
+            yTimer.append(Utilities.timeTag2ToSec(esData.data["Timetag2"][i]))
 
 
         # Interpolate by time values
@@ -199,25 +199,25 @@ class ProcessL2s:
 
         root = HDFRoot.HDFRoot()
         root.copyAttributes(node)
-        root.m_attributes["PROCESSING_LEVEL"] = "2s"
-        root.m_attributes["DEPTH_RESOLUTION"] = "0.1 m"
+        root.attributes["PROCESSING_LEVEL"] = "2s"
+        root.attributes["DEPTH_RESOLUTION"] = "0.1 m"
 
         esGroup = None
         gpsGroup = None
         liGroup = None
         ltGroup = None
-        for gp in node.m_groups:
-            #if gp.m_id.startswith("GPS"):
+        for gp in node.groups:
+            #if gp.id.startswith("GPS"):
             if gp.hasDataset("UTCPOS"):
                 print("GPS")
                 gpsGroup = gp
-            elif gp.hasDataset("ES") and gp.m_attributes["FrameType"] == "ShutterLight":
+            elif gp.hasDataset("ES") and gp.attributes["FrameType"] == "ShutterLight":
                 print("ES")
                 esGroup = gp
-            elif gp.hasDataset("LI") and gp.m_attributes["FrameType"] == "ShutterLight":
+            elif gp.hasDataset("LI") and gp.attributes["FrameType"] == "ShutterLight":
                 print("LI")
                 liGroup = gp
-            elif gp.hasDataset("LT") and gp.m_attributes["FrameType"] == "ShutterLight":
+            elif gp.hasDataset("LT") and gp.attributes["FrameType"] == "ShutterLight":
                 print("LT")
                 ltGroup = gp
 
@@ -242,9 +242,9 @@ class ProcessL2s:
         ltData = sasGroup.getDataset("LT_hyperspectral")
 
         # Find dataset with lowest amount of data
-        esLength = len(esData.m_data["Timetag2"].tolist())
-        liLength = len(liData.m_data["Timetag2"].tolist())
-        ltLength = len(ltData.m_data["Timetag2"].tolist())
+        esLength = len(esData.data["Timetag2"].tolist())
+        liLength = len(liData.data["Timetag2"].tolist())
+        ltLength = len(ltData.data["Timetag2"].tolist())
 
         interpData = None
         if esLength < liLength and esLength < ltLength:

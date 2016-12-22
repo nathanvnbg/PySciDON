@@ -58,9 +58,9 @@ class Utilities:
 
     # Check if dataset contains NANs
     def hasNan(ds):
-        for k in ds.m_data.dtype.fields.keys():
-            for x in range(ds.m_data.shape[0]):
-                if np.isnan(ds.m_data[k][x]):
+        for k in ds.data.dtype.fields.keys():
+            for x in range(ds.data.shape[0]):
+                if np.isnan(ds.data[k][x]):
                     return True
         return False
 
@@ -94,9 +94,9 @@ class Utilities:
             if np.isnan(new_y[i]):
                 #print("NaN")
                 if test:
-                    new_y[i] = darkData.m_data[k][darkData.m_data.shape[0]-1]
+                    new_y[i] = darkData.data[k][darkData.data.shape[0]-1]
                 else:
-                    new_y[i] = darkData.m_data[k][0]
+                    new_y[i] = darkData.data[k][0]
             else:
                 test = True
         '''
@@ -140,15 +140,16 @@ class Utilities:
                 }
 
             x = []
-            for k in rrsData.m_data.dtype.names:
-                x.append(k)
+            for k in rrsData.data.dtype.names:
+                if k != "Datetag" and k != "Timetag2" and k != "Latpos" and k != "Lonpos":
+                    x.append(k)
 
-            total = rrsData.m_data.shape[0]
+            total = rrsData.data.shape[0]
             color=iter(cm.jet(np.linspace(0,1,total)))
             for i in range(total):
                 y = []
                 for k in x:
-                    y.append(rrsData.m_data[k][i])
+                    y.append(rrsData.data[k][i])
 
                 c=next(color)
                 plt.plot(x, y, 'k', c=c)
@@ -158,7 +159,7 @@ class Utilities:
             #plt.title('Remote sensing reflectance', fontdict=font)
             #plt.text(2, 0.65, r'$\cos(2 \pi t) \exp(-t)$', fontdict=font)
             plt.xlabel('wavelength (nm)', fontdict=font)
-            plt.ylabel('Rrs (sr^{-1})', fontdict=font)
+            plt.ylabel('Rrs ($sr^{-1}$)', fontdict=font)
 
             # Tweak spacing to prevent clipping of ylabel
             plt.subplots_adjust(left=0.15)
@@ -183,15 +184,15 @@ class Utilities:
                 }
 
             x = []
-            for k in rrsData.m_data.dtype.names:
+            for k in rrsData.data.dtype.names:
                 x.append(k)
 
-            total = rrsData.m_data.shape[0]
+            total = rrsData.data.shape[0]
             color=iter(cm.jet(np.linspace(0,1,total)))
             for i in range(total):
                 y = []
                 for k in x:
-                    y.append(rrsData.m_data[k][i])
+                    y.append(rrsData.data[k][i])
 
                 c=next(color)
                 plt.plot(x, y, 'k', c=c)
