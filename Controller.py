@@ -84,6 +84,35 @@ class Controller:
         print("processCalibration - DONE")
         return calibrationMap
 
+    @staticmethod
+    def processCalibrationConfig(configName, calFiles):
+        print("processCalibrationConfig")
+        calFolder = os.path.splitext(configName)[0] + "_Calibration"
+        calPath = os.path.join("Config", calFolder)
+        print("ReadCalibrationFile ", calPath)
+        calibrationMap = CalibrationFileReader.read(calPath)
+        #calibrationMap = CalibrationFileReader.readSip("cal2013.sip")
+        #print("calibrationMap:", list(calibrationMap.keys()))
+        Controller.generateContext(calibrationMap)
+
+        # Settings from Config file
+        print("Apply ConfigFile settings")
+        print("calibrationMap keys:", calibrationMap.keys())
+        print("config keys:", calFiles.keys())
+        for key in list(calibrationMap.keys()):
+            print(key)
+            if key in calFiles.keys():
+                if calFiles[key]["enabled"]:
+                    calibrationMap[key].frameType = calFiles[key]["frameType"]
+                else:
+                    del calibrationMap[key]
+            else:
+                print("1")
+                del calibrationMap[key]
+        print("calibrationMap keys 2:", calibrationMap.keys())
+        
+        print("processCalibrationConfig - DONE")
+        return calibrationMap
 
     @staticmethod
     def preprocessData(preprocessDirectory, dataDirectory, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax):
@@ -276,6 +305,26 @@ class Controller:
         #CSVWriter.outputTXT_L4(fp)
         #root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
 
+    @staticmethod
+    def processSingleLevel(fp, calibrationMap, level):
+        if level == "1a":
+            Controller.processL1a(fp, calibrationMap)
+        elif level == "1b":
+            fp = fp.replace("_L1a.hdf", ".hdf")
+            Controller.processL1b(fp, calibrationMap)
+        elif level == "2":
+            fp = fp.replace("_L1b.hdf", ".hdf")
+            Controller.processL2(fp)
+        elif level == "2s":
+            fp = fp.replace("_L2.hdf", ".hdf")
+            Controller.processL2s(fp)
+        elif level == "3a":
+            fp = fp.replace("_L2s.hdf", ".hdf")
+            Controller.processL3a(fp)
+        elif level == "4":
+            fp = fp.replace("_L3a.hdf", ".hdf")
+            windSpeedData = Controller.processWindData(fp)
+            Controller.processL4(fp, windSpeedData)
 
     @staticmethod
     def processMultiLevel(fp, calibrationMap, level=4):
@@ -332,4 +381,13 @@ class Controller:
             Controller.processMultiLevel(fp, calibrationMap, level)
         print("processFilesMultiLevel - DONE")
 
+
+    # Used to process every file in a list of files
+    @staticmethod
+    def processFilesSingleLevel(files, calibrationMap, level):
+        print("processFilesSingleLevel")
+        for fp in files:
+            print("Processing: " + fp)
+            Controller.processSingleLevel(fp, calibrationMap, level)
+        print("processFilesSingleLevel - DONE")
 
