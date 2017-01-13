@@ -97,6 +97,16 @@ class ConfigFile:
         ConfigFile.settings = json.loads(text, object_pairs_hook=collections.OrderedDict)
         ConfigFile.createCalibrationFolder()
         #ConfigFile.printd()
+
+    # Deletes a config
+    @staticmethod
+    def deleteConfig(filename):
+        print("ConfigFile - Delete Config")
+        ConfigFile.filename = filename
+        configPath = os.path.join("Config", filename)
+        calibrationPath = ConfigFile.getCalibrationDirectory()
+        os.remove(configPath)
+        os.removedirs(calibrationPath)
         
 
     @staticmethod

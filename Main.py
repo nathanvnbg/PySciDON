@@ -56,10 +56,12 @@ class Window(QtWidgets.QWidget):
         self.configEditButton = QtWidgets.QPushButton("Edit", self)
         #self.configEditButton.move(130, 80)
 
+        self.configDeleteButton = QtWidgets.QPushButton("Delete", self)
 
 
         self.configNewButton.clicked.connect(self.configNewButtonPressed)
         self.configEditButton.clicked.connect(self.configEditButtonPressed)
+        self.configDeleteButton.clicked.connect(self.configDeleteButtonPressed)
 
 
         self.singleLevelLabel = QtWidgets.QLabel('Single-Level Processing', self)
@@ -131,6 +133,7 @@ class Window(QtWidgets.QWidget):
         configHBox = QtWidgets.QHBoxLayout()
         configHBox.addWidget(self.configNewButton)
         configHBox.addWidget(self.configEditButton)
+        configHBox.addWidget(self.configDeleteButton)
 
         vBox.addLayout(configHBox)
 
@@ -179,6 +182,19 @@ class Window(QtWidgets.QWidget):
         configDialog = ConfigWindow(configFileName, self)
         #configDialog = CalibrationEditWindow(configFileName, self)
         configDialog.show()
+
+    def configDeleteButtonPressed(self):
+        print("Delete Config Dialogue")
+        print("index: ", self.configComboBox.currentIndex())
+        print("text: ", self.configComboBox.currentText())
+        configFileName = self.configComboBox.currentText()
+        configDeleteMessage = "Delete " + configFileName + "?"
+
+        reply = QtWidgets.QMessageBox.question(self, 'Message', configDeleteMessage, \
+                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+
+        if reply == QtWidgets.QMessageBox.Yes:
+            ConfigFile.deleteConfig(configFileName)
 
 
     def processSingle(self, level):
