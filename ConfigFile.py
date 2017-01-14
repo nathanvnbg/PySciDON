@@ -2,6 +2,7 @@
 import collections
 import json
 import os
+import shutil
 
 class ConfigFile:
     filename = ""
@@ -45,11 +46,11 @@ class ConfigFile:
         #        'HSL419A.cal': 1, 'HSL420A.cal': 1, 'SATMSG.tdf': 1, 'SATNAV0004A.tdf': 1}
         ConfigFile.settings["CalibrationFiles"] = {}
 
-        ConfigFile.settings["bL0CheckCoords"] = 1
+        ConfigFile.settings["bL0CheckCoords"] = 0
         ConfigFile.settings["fL0LonMin"] = 0.0
         ConfigFile.settings["fL0LonMax"] = 0.0
         ConfigFile.settings["cL0Direction"] = 'E'
-        ConfigFile.settings["bL0PerformCleaning"] = 1
+        ConfigFile.settings["bL0PerformCleaning"] = 0
         ConfigFile.settings["fL0AngleMin"] = 90.0
         ConfigFile.settings["fL0AngleMax"] = 135.0
 
@@ -61,7 +62,7 @@ class ConfigFile:
         ConfigFile.settings["fL4DawnDuskFlag"] = 1.0
         ConfigFile.settings["fL4RainfallHumidityFlag"] = 1.095
         ConfigFile.settings["fL4DefaultWindSpeed"] = 0.0
-        ConfigFile.settings["bL4PerformNIRCorrection"] = 1
+        ConfigFile.settings["bL4PerformNIRCorrection"] = 0
 
         if not name.endswith(".cfg"):
             name = name + ".cfg"
@@ -106,7 +107,7 @@ class ConfigFile:
         configPath = os.path.join("Config", filename)
         calibrationPath = ConfigFile.getCalibrationDirectory()
         os.remove(configPath)
-        os.removedirs(calibrationPath)
+        shutil.rmtree(calibrationPath)
         
 
     @staticmethod

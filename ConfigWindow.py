@@ -48,6 +48,7 @@ class ConfigWindow(QtWidgets.QDialog):
         self.calibrationFileComboBox.setRootModelIndex(index)
         self.calibrationFileComboBox.currentIndexChanged.connect(self.calibrationFileChanged)
 
+        
         self.calibrationEnabledCheckBox = QtWidgets.QCheckBox("Enabled", self)
         self.calibrationEnabledCheckBox.stateChanged.connect(self.calibrationEnabledStateChanged)
 
@@ -105,7 +106,7 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l0AngleMaxLineEdit.setValidator(doubleValidator)
 
 
-        l3InterpIntervalLabel = QtWidgets.QLabel("Level 3 - Interpolation Interval", self)
+        l3InterpIntervalLabel = QtWidgets.QLabel("Level 3 - Interpolation Interval (nm)", self)
         self.l3InterpIntervalLineEdit = QtWidgets.QLineEdit(self)
         self.l3InterpIntervalLineEdit.setText(str(ConfigFile.settings["fL3aInterpInterval"]))
         self.l3InterpIntervalLineEdit.setValidator(doubleValidator)
@@ -113,7 +114,7 @@ class ConfigWindow(QtWidgets.QDialog):
 
         l4QualityFlagLabel = QtWidgets.QLabel("Level 4 - Enable Meteorological Flags", self)
         self.l4QualityFlagCheckBox = QtWidgets.QCheckBox("", self)
-        if int(ConfigFile.settings["fL4DawnDuskFlag"]) == 1:
+        if int(ConfigFile.settings["bL4EnableQualityFlags"]) == 1:
             self.l4QualityFlagCheckBox.setChecked(True)
 
         l4EsFlagLabel = QtWidgets.QLabel("Es Flag", self)
@@ -131,20 +132,20 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l4RainfallHumidityFlagLineEdit.setText(str(ConfigFile.settings["fL4RainfallHumidityFlag"]))
         self.l4RainfallHumidityFlagLineEdit.setValidator(doubleValidator)
 
-        l4TimeIntervalLabel = QtWidgets.QLabel("Level 4 - Rrs Time Interval", self)
+        l4TimeIntervalLabel = QtWidgets.QLabel("Level 4 - Rrs Time Interval (seconds)", self)
         self.l4TimeIntervalLineEdit = QtWidgets.QLineEdit(self)
         self.l4TimeIntervalLineEdit.setText(str(ConfigFile.settings["fL4TimeInterval"]))
         self.l4TimeIntervalLineEdit.setValidator(intValidator)
 
-        l4DefaultWindSpeedLabel = QtWidgets.QLabel("Level 4 - Default Wind Speed", self)
+        l4DefaultWindSpeedLabel = QtWidgets.QLabel("Level 4 - Default Wind Speed (km/h)", self)
         self.l4DefaultWindSpeedLineEdit = QtWidgets.QLineEdit(self)
         self.l4DefaultWindSpeedLineEdit.setText(str(ConfigFile.settings["fL4DefaultWindSpeed"]))
         self.l4DefaultWindSpeedLineEdit.setValidator(doubleValidator)
 
-        l4NIRCorrectionLabel = QtWidgets.QLabel("Level 4 - Enable Near-infrared Correction", self)
-        self.l4NIRCorrectionCheckBox = QtWidgets.QCheckBox("", self)
-        if int(ConfigFile.settings["bL4PerformNIRCorrection"]) == 1:
-            self.l4NIRCorrectionCheckBox.setChecked(True)
+        #l4NIRCorrectionLabel = QtWidgets.QLabel("Level 4 - Enable Near-infrared Correction", self)
+        #self.l4NIRCorrectionCheckBox = QtWidgets.QCheckBox("", self)
+        #if int(ConfigFile.settings["bL4PerformNIRCorrection"]) == 1:
+        #    self.l4NIRCorrectionCheckBox.setChecked(True)
 
 
         self.saveButton = QtWidgets.QPushButton("Save")
@@ -203,8 +204,8 @@ class ConfigWindow(QtWidgets.QDialog):
         vBox.addWidget(self.l4TimeIntervalLineEdit)
         vBox.addWidget(l4DefaultWindSpeedLabel)
         vBox.addWidget(self.l4DefaultWindSpeedLineEdit)
-        vBox.addWidget(l4NIRCorrectionLabel)
-        vBox.addWidget(self.l4NIRCorrectionCheckBox)
+        #vBox.addWidget(l4NIRCorrectionLabel)
+        #vBox.addWidget(self.l4NIRCorrectionCheckBox)
 
         saveHBox = QtWidgets.QHBoxLayout()
         saveHBox.addStretch(1)
@@ -301,11 +302,12 @@ class ConfigWindow(QtWidgets.QDialog):
         ConfigFile.settings["fL4RainfallHumidityFlag"] = float(self.l4RainfallHumidityFlagLineEdit.text())
         ConfigFile.settings["fL4TimeInterval"] = int(self.l4TimeIntervalLineEdit.text())
         ConfigFile.settings["fDefaultWindSpeed"] = float(self.l4DefaultWindSpeedLineEdit.text())
-        ConfigFile.settings["bL4PerformNIRCorrection"] = int(self.l4NIRCorrectionCheckBox.isChecked())
+        #ConfigFile.settings["bL4PerformNIRCorrection"] = int(self.l4NIRCorrectionCheckBox.isChecked())
 
         ConfigFile.saveConfig(self.name)
 
         QtWidgets.QMessageBox.about(self, "Edit Config File", "Config File Saved")
+        self.close()
 
 
 
