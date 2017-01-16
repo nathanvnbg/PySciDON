@@ -1,5 +1,7 @@
 
+import os
 import sys
+import shutil
 #from PyQt4 import QtCore, QtGui
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -49,6 +51,7 @@ class Window(QtWidgets.QWidget):
         #self.configComboBox.addItem("A")
         #self.configComboBox.addItem("qwerty")
         #self.configComboBox.move(30, 50)
+
 
         self.configNewButton = QtWidgets.QPushButton("New", self)
         #self.configNewButton.move(30, 80)
@@ -171,6 +174,7 @@ class Window(QtWidgets.QWidget):
         if ok:
             print("Create Config File: ", text)
             ConfigFile.createDefaultConfig(text)
+            # ToDo: Add code to change text for the combobox once file is created
 
 
     def configEditButtonPressed(self):
@@ -196,6 +200,15 @@ class Window(QtWidgets.QWidget):
         if reply == QtWidgets.QMessageBox.Yes:
             ConfigFile.deleteConfig(configFileName)
 
+    def copyPreprocessFiles(self, files):
+        preprocessFolder= settings["sPreprocessFolder"].strip('"')
+        cwd = os.getcwd()
+        preprocessDirectory = os.path.join(cwd, preprocessFolder)
+        
+        for fp in files:
+            (dirpath, filename) = os.path.split(fp)
+            newfp = os.path.join(preprocessDirectory, filename)
+            shutil.copy(fp, newfp)
 
     def processSingle(self, level):
         print("Process Single-Level")
@@ -214,6 +227,8 @@ class Window(QtWidgets.QWidget):
         calibrationMap = Controller.processCalibrationConfig(filename, calFiles)
         
         if level == "0":
+            self.copyPreprocessFiles(fnames[0])
+
             print("Preprocess Raw Files")
             checkCoords = int(ConfigFile.settings["bL0CheckCoords"])
             startLongitude = float(ConfigFile.settings["fL0LonMin"])
@@ -263,6 +278,8 @@ class Window(QtWidgets.QWidget):
         preprocessDirectory = settings["sPreprocessFolder"].strip('"')
         dataDirectory = settings["sProcessDataFolder"].strip('"')
 
+        self.copyPreprocessFiles(fnames[0])
+
         print("Process Calibration Files")
         filename = ConfigFile.filename
         calFiles = ConfigFile.settings["CalibrationFiles"]
@@ -282,8 +299,8 @@ class Window(QtWidgets.QWidget):
                                   checkCoords, startLongitude, endLongitude, direction, \
                                   doCleaning, angleMin, angleMax)
         print("Process Raw Files")
-        #Controller.processDirectory(dataDirectory, calibrationMap, level)
-        Controller.processFilesMultiLevel(fnames[0], calibrationMap, level)
+        Controller.processDirectory(dataDirectory, calibrationMap, level)
+        #Controller.processFilesMultiLevel(fnames[0], calibrationMap, level)
 
     def multi1Clicked(self):
         self.processMulti(1)
