@@ -61,10 +61,20 @@ class Window(QtWidgets.QWidget):
 
         self.configDeleteButton = QtWidgets.QPushButton("Delete", self)
 
+        
+        self.windFileLabel = QtWidgets.QLabel("Wind Speed File")
+        self.windFileLineEdit = QtWidgets.QLineEdit()
+        self.windAddButton = QtWidgets.QPushButton("Add", self)
+        self.windRemoveButton = QtWidgets.QPushButton("Remove", self)
+        
 
         self.configNewButton.clicked.connect(self.configNewButtonPressed)
         self.configEditButton.clicked.connect(self.configEditButtonPressed)
         self.configDeleteButton.clicked.connect(self.configDeleteButtonPressed)
+
+
+        self.windAddButton.clicked.connect(self.windAddButtonPressed)
+        self.windRemoveButton.clicked.connect(self.windRemoveButtonPressed)
 
 
         self.singleLevelLabel = QtWidgets.QLabel('Single-Level Processing', self)
@@ -140,6 +150,20 @@ class Window(QtWidgets.QWidget):
 
         vBox.addLayout(configHBox)
 
+
+        vBox.addStretch(1)
+
+        vBox.addWidget(self.windFileLabel)
+        
+        vBox.addWidget(self.windFileLineEdit)
+
+        windHBox = QtWidgets.QHBoxLayout()        
+        windHBox.addWidget(self.windAddButton)
+        windHBox.addWidget(self.windRemoveButton)
+
+        vBox.addLayout(windHBox)
+
+
         vBox.addStretch(1)
 
         vBox.addWidget(self.singleLevelLabel)
@@ -200,6 +224,19 @@ class Window(QtWidgets.QWidget):
         if reply == QtWidgets.QMessageBox.Yes:
             ConfigFile.deleteConfig(configFileName)
 
+
+    def windAddButtonPressed(self):
+        print("Wind File Add Dialogue")
+        fnames = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Wind File")
+        print(fnames)
+        if len(fnames[0]) == 1:
+            self.windFileLineEdit.setText(fnames[0][0])
+
+    def windRemoveButtonPressed(self):
+        print("Wind File Remove Dialogue")
+        self.windFileLineEdit.setText("")
+
+
     def copyPreprocessFiles(self, files):
         preprocessFolder= settings["sPreprocessFolder"].strip('"')
         cwd = os.getcwd()
@@ -220,12 +257,14 @@ class Window(QtWidgets.QWidget):
         preprocessDirectory = settings["sPreprocessFolder"].strip('"')
         dataDirectory = settings["sProcessDataFolder"].strip('"')
 
+        windFile = self.windFileLineEdit.text()
+
         print("Process Calibration Files")
         #calibrationMap = Controller.processCalibration(calibrationDirectory)
         filename = ConfigFile.filename
         calFiles = ConfigFile.settings["CalibrationFiles"]
         calibrationMap = Controller.processCalibrationConfig(filename, calFiles)
-        
+
         if level == "0":
             self.copyPreprocessFiles(fnames[0])
 
@@ -243,8 +282,7 @@ class Window(QtWidgets.QWidget):
                                       doCleaning, angleMin, angleMax)
         else:
             print("Process Raw Files")
-            #Controller.processDirectory(dataDirectory, calibrationMap, level)
-            Controller.processFilesSingleLevel(fnames[0], calibrationMap, level)
+            Controller.processFilesSingleLevel(fnames[0], calibrationMap, level, windFile)
 
     def singleL0Clicked(self):
         self.processSingle("0")
@@ -278,6 +316,8 @@ class Window(QtWidgets.QWidget):
         preprocessDirectory = settings["sPreprocessFolder"].strip('"')
         dataDirectory = settings["sProcessDataFolder"].strip('"')
 
+        windFile = self.windFileLineEdit.text()
+
         self.copyPreprocessFiles(fnames[0])
 
         print("Process Calibration Files")
@@ -299,7 +339,7 @@ class Window(QtWidgets.QWidget):
                                   checkCoords, startLongitude, endLongitude, direction, \
                                   doCleaning, angleMin, angleMax)
         print("Process Raw Files")
-        Controller.processDirectory(dataDirectory, calibrationMap, level)
+        Controller.processDirectory(dataDirectory, calibrationMap, level, windFile)
         #Controller.processFilesMultiLevel(fnames[0], calibrationMap, level)
 
     def multi1Clicked(self):

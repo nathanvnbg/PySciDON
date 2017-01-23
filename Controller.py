@@ -306,7 +306,7 @@ class Controller:
         #root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
 
     @staticmethod
-    def processSingleLevel(fp, calibrationMap, level):
+    def processSingleLevel(fp, calibrationMap, level, windFile=None):
         if level == "1a":
             Controller.processL1a(fp, calibrationMap)
         elif level == "1b":
@@ -323,11 +323,11 @@ class Controller:
             Controller.processL3a(fp)
         elif level == "4":
             fp = fp.replace("_L3a.hdf", ".hdf")
-            windSpeedData = Controller.processWindData(fp)
+            windSpeedData = Controller.processWindData(windFile)
             Controller.processL4(fp, windSpeedData)
 
     @staticmethod
-    def processMultiLevel(fp, calibrationMap, level=4):
+    def processMultiLevel(fp, calibrationMap, level=4, windFile=None):
         print("Processing: " + fp)
         Controller.processL1a(fp, calibrationMap)
         Controller.processL1b(fp, calibrationMap)
@@ -338,7 +338,7 @@ class Controller:
         if level >= 3:
             Controller.processL3a(fp)
         if level >= 4:
-            windSpeedData = Controller.processWindData(fp)
+            windSpeedData = Controller.processWindData(windFile)
             Controller.processL4(fp, windSpeedData)
             #Controller.outputCSV_L4(fp)
         CSVWriter.outputTXT_L1a(fp)   
@@ -374,20 +374,20 @@ class Controller:
 
     # Used to process every file in a list of files
     @staticmethod
-    def processFilesMultiLevel(files, calibrationMap, level=4):
+    def processFilesMultiLevel(files, calibrationMap, level=4, windFile=None):
         print("processFilesMultiLevel")
         for fp in files:
             print("Processing: " + fp)
-            Controller.processMultiLevel(fp, calibrationMap, level)
+            Controller.processMultiLevel(fp, calibrationMap, level, windFile)
         print("processFilesMultiLevel - DONE")
 
 
     # Used to process every file in a list of files
     @staticmethod
-    def processFilesSingleLevel(files, calibrationMap, level):
+    def processFilesSingleLevel(files, calibrationMap, level, windFile=None):
         print("processFilesSingleLevel")
         for fp in files:
             print("Processing: " + fp)
-            Controller.processSingleLevel(fp, calibrationMap, level)
+            Controller.processSingleLevel(fp, calibrationMap, level, windFile)
         print("processFilesSingleLevel - DONE")
 
