@@ -31,6 +31,19 @@ class ConfigWindow(QtWidgets.QDialog):
 class Window(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        # Create folders if they don't exist
+        if not os.path.exists("RawData"):
+            os.makedirs("RawData")
+        if not os.path.exists("Data"):
+            os.makedirs("Data")
+        if not os.path.exists("Plots"):
+            os.makedirs("Plots")
+        if not os.path.exists("csv"):
+            os.makedirs("csv")
+        if not os.path.exists("Config"):
+            os.makedirs("Config")
+
         self.initUI()
 
     def initUI(self):
