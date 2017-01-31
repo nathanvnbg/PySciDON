@@ -121,17 +121,21 @@ class Controller:
     # Read wind speed file
     @staticmethod
     def processWindData(fp):
-        windDirectory = settings["sWindSpeedFolder"].strip('"')
-        (dirpath, filename) = os.path.split(fp)
-        filename = os.path.splitext(filename)[0]
-        filepath = os.path.join(windDirectory, filename + ".csv")
+        if fp is None:
+            return None
 
-        if not os.path.isfile(filepath):
+        #windDirectory = settings["sWindSpeedFolder"].strip('"')
+        #(dirpath, filename) = os.path.split(fp)
+        #filename = os.path.splitext(filename)[0]
+        #filepath = os.path.join(windDirectory, filename + ".csv")
+
+        #if not os.path.isfile(filepath):
+        if not os.path.isfile(fp):
             return None
 
         #filepath = "WindSpeed/BritishColumbiaFerries_HorseshoeBay-DepartureBay_WindMonitoringSysteWindSpeed_20160727T223014Z_20160727T232654Z-NaN_clean.csv"
         #windSpeedData = WindSpeedReader.readWindSpeed(filepath)
-        windSpeedData = WindSpeedReader.readWindSpeed(filepath)
+        windSpeedData = WindSpeedReader.readWindSpeed(fp)
         
         return windSpeedData
 
@@ -363,13 +367,13 @@ class Controller:
 
     # Used to process every file in the specified directory
     @staticmethod
-    def processDirectory(path, calibrationMap, level=4):
+    def processDirectory(path, calibrationMap, level=4, windFile=None):
         for (dirpath, dirnames, filenames) in os.walk(path):
             for name in sorted(filenames):
                 #print("infile:", name)
                 if os.path.splitext(name)[1].lower() == ".raw":
                     #Controller.processAll(os.path.join(dirpath, name), calibrationMap)
-                    Controller.processMultiLevel(os.path.join(dirpath, name), calibrationMap, level)
+                    Controller.processMultiLevel(os.path.join(dirpath, name), calibrationMap, level, windFile)
             break
 
     # Used to process every file in a list of files
