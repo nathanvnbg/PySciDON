@@ -258,7 +258,13 @@ class Window(QtWidgets.QWidget):
         for fp in files:
             (dirpath, filename) = os.path.split(fp)
             newfp = os.path.join(preprocessDirectory, filename)
-            shutil.copy(fp, newfp)
+            try:
+                shutil.copy(fp, newfp)
+            except shutil.Error as e:
+                print('Error: %s' % e)
+            except IOError as e:
+                print('Error: %s' % e.strerror)
+
 
     def processSingle(self, level):
         print("Process Single-Level")
