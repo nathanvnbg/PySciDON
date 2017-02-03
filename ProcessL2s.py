@@ -145,6 +145,8 @@ class ProcessL2s:
         gpsLonPosData = gpsGroup.getDataset("LONPOS")
         gpsMagVarData = gpsGroup.getDataset("MAGVAR")
         gpsSpeedData = gpsGroup.getDataset("SPEED")
+        gpsLatHemiData = gpsGroup.getDataset("LATHEMI")
+        gpsLonHemiData = gpsGroup.getDataset("LONHEMI")
 
         newGPSGroup = node.getGroup("GPS")
         newGPSCourseData = newGPSGroup.addDataset("COURSE")
@@ -163,6 +165,27 @@ class ProcessL2s:
         newGPSMagVarData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
         newGPSSpeedData.columns["Datetag"] = esData.data["Datetag"].tolist()
         newGPSSpeedData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
+
+
+        x = []
+        y = []
+        # Convert degrees minutes to decimal degrees format
+        for i in range(gpsTimeData.data.shape[0]):
+            latDM = gpsLatPosData.data["NONE"][i]
+            latDirection = gpsLatHemiData.data["NONE"][i]
+            latDD = Utilities.dmToDd(latDM, latDirection)
+            gpsLatPosData.data["NONE"][i] = latDD
+
+            lonDM = gpsLonPosData.data["NONE"][i]
+            lonDirection = gpsLonHemiData.data["NONE"][i]
+            lonDD = Utilities.dmToDd(lonDM, lonDirection)
+            gpsLonPosData.data["NONE"][i] = lonDD
+            x.append(lonDD)
+            y.append(latDD)
+
+        #print("PlotGPS")
+        #Utilities.plotGPS(x, y, 'test1')
+        #print("PlotGPS - DONE")
 
 
         # Convert GPS UTC time values to seconds to be used for interpolation

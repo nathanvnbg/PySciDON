@@ -10,6 +10,23 @@ import scipy.interpolate
 
 
 class Utilities:
+    
+    # Converts degrees minutes to decimal degrees format
+    def dmToDd(dm, direction):
+        d = int(dm/100)
+        m = dm-d*100
+        dd = d + m/60
+        if direction == b'W' or direction == b'S':
+            dd *= -1
+        return dd
+
+    # Converts decimal degrees to degrees minutes format
+    def ddToDm(dd):
+        d = int(dd)
+        m = abs(dd - d)*60
+        dm = (d*100) + m
+        return dm
+
 
     # Converts GPS UTC time to seconds
     # Note: Does not support multiple days
@@ -128,7 +145,6 @@ class Utilities:
 
     @staticmethod
     def plotReflectance(root, filename):
-
         try:
             referenceGroup = root.getGroup("Reflectance")
             rrsData = referenceGroup.getDataset("Rrs")

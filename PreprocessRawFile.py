@@ -5,6 +5,7 @@ import time
 
 from HDFDataset import HDFDataset
 from HDFGroup import HDFGroup
+from Utilities import Utilities
 
 
 class PreprocessRawFile:
@@ -162,7 +163,10 @@ class PreprocessRawFile:
                                 if gp.hasDataset("LONPOS"):
                                     #print("has gps")
                                     lonData = gp.getDataset("LONPOS")
-                                    longitude = lonData.columns["NONE"][0]
+                                    lonHemiData = gp.getDataset("LONHEMI")
+                                    lonDM = lonData.columns["NONE"][0]
+                                    lonDirection = lonHemiData.columns["NONE"][0]
+                                    longitude = Utilities.dmToDd(lonDM, lonDirection)
                                     #print(longitude)
                                     # Detect if we are in specified longitude
                                     if longitude > startLongitude and longitude < endLongitude:
