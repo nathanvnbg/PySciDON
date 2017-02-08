@@ -16,6 +16,7 @@ from HDFRoot import HDFRoot
 #from HDFDataset import HDFDataset
 
 from config import settings
+from ConfigFile import ConfigFile
 from Utilities import Utilities
 from WindSpeedReader import WindSpeedReader
 
@@ -219,13 +220,24 @@ class Controller:
         filepath = os.path.join(dirpath, filename + "_L3a.hdf")
         if not os.path.isfile(filepath):
             return None
+
         print("ProcessL4")
         root = HDFRoot.readHDF5(filepath)
-        root = ProcessL4.processL4(root, windSpeedData)
+        root = ProcessL4.processL4(root, False, windSpeedData)
         #root = ProcessL4a.processL4a(root)
         if root is not None:
             Utilities.plotReflectance(root, filename)
             root.writeHDF5(os.path.join(dirpath, filename + "_L4.hdf"))
+
+        # Write to separate file if quality flags are enabled
+        enableQualityFlags = int(ConfigFile.settings["bL4EnableQualityFlags"])
+        if enableQualityFlags:
+            root = HDFRoot.readHDF5(filepath)
+            root = ProcessL4.processL4(root, True, windSpeedData)
+            #root = ProcessL4a.processL4a(root)
+            if root is not None:
+                Utilities.plotReflectance(root, filename + "-flags")
+                root.writeHDF5(os.path.join(dirpath, filename + "_L4-flags.hdf"))
 
 
 
@@ -311,6 +323,7 @@ class Controller:
 
     @staticmethod
     def processSingleLevel(fp, calibrationMap, level, windFile=None):
+        print("Process Single Level: " + fp)
         if level == "1a":
             Controller.processL1a(fp, calibrationMap)
         elif level == "1b":
@@ -329,10 +342,19 @@ class Controller:
             fp = fp.replace("_L3a.hdf", ".hdf")
             windSpeedData = Controller.processWindData(windFile)
             Controller.processL4(fp, windSpeedData)
+        print("Output CSV: " + fp)
+        CSVWriter.outputTXT_L1a(fp)
+        CSVWriter.outputTXT_L1b(fp)
+        CSVWriter.outputTXT_L2(fp)
+        CSVWriter.outputTXT_L2s(fp)
+        CSVWriter.outputTXT_L3a(fp)
+        CSVWriter.outputTXT_L4(fp)
+        print("Process Single Level: " + fp + " - DONE")
+
 
     @staticmethod
     def processMultiLevel(fp, calibrationMap, level=4, windFile=None):
-        print("Processing: " + fp)
+        print("Process Multi Level: " + fp)
         Controller.processL1a(fp, calibrationMap)
         Controller.processL1b(fp, calibrationMap)
         #if level >= 1:
@@ -345,13 +367,14 @@ class Controller:
             windSpeedData = Controller.processWindData(windFile)
             Controller.processL4(fp, windSpeedData)
             #Controller.outputCSV_L4(fp)
-        CSVWriter.outputTXT_L1a(fp)   
+        print("Output CSV: " + fp)
+        CSVWriter.outputTXT_L1a(fp)
         CSVWriter.outputTXT_L1b(fp)
         CSVWriter.outputTXT_L2(fp)
         CSVWriter.outputTXT_L2s(fp)
         CSVWriter.outputTXT_L3a(fp)
         CSVWriter.outputTXT_L4(fp)
-        print("Processing: " + fp + " - DONE")
+        print("Process Multi Level: " + fp + " - DONE")
 
 
     @staticmethod

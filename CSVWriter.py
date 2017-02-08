@@ -178,10 +178,16 @@ class CSVWriter:
 
     @staticmethod
     def outputTXT_L4(fp):
+        CSVWriter.outputTXT_Type3(fp, "L4")
+        CSVWriter.outputTXT_Type3(fp, "L4-flags")
+
+
+    @staticmethod
+    def outputTXT_Type3(fp, level):
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
 
-        filepath = os.path.join(dirpath, filename + "_L4.hdf")
+        filepath = os.path.join(dirpath, filename + "_" + level +".hdf")
         if not os.path.isfile(filepath):
             return
 
@@ -189,7 +195,6 @@ class CSVWriter:
         if root is None:
             print("outputCSV: root is None")
             return
-
         dirpath = settings["sCSVFolder"].strip('"')
 
         #name = filename[28:43]
@@ -201,11 +206,11 @@ class CSVWriter:
         liData = gp.getDataset("LI")
         ltData = gp.getDataset("LT")
         rrsData = gp.getDataset("Rrs")
-
-        
-        CSVWriter.writeCSV(name, dirpath, esData.data, "ES", "L4")
-        CSVWriter.writeCSV(name, dirpath, liData.data, "LI", "L4")
-        CSVWriter.writeCSV(name, dirpath, ltData.data, "LT", "L4")
-        CSVWriter.writeCSV(name, dirpath, rrsData.data, "RRS", "L4")
+        if esData is None or liData is None or ltData is None or rrsData is None:
+            return
+        CSVWriter.writeCSV(name, dirpath, esData.data, "ES", level)
+        CSVWriter.writeCSV(name, dirpath, liData.data, "LI", level)
+        CSVWriter.writeCSV(name, dirpath, ltData.data, "LT", level)
+        CSVWriter.writeCSV(name, dirpath, rrsData.data, "RRS", level)
 
 

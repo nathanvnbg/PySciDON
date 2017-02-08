@@ -424,7 +424,7 @@ class ProcessL4:
 
     # Calculates Rrs
     @staticmethod
-    def processL4(node, windSpeedData=None):
+    def processL4(node, enableQualityCheck, windSpeedData=None):
 
         root = HDFRoot.HDFRoot()
         root.copyAttributes(node)
@@ -433,7 +433,6 @@ class ProcessL4:
         root.addGroup("Reflectance")
 
         interval = float(ConfigFile.settings["fL4TimeInterval"])
-        enableQualityCheck = int(ConfigFile.settings["bL4EnableQualityFlags"])
         performNIRCorrection = int(ConfigFile.settings["bL4PerformNIRCorrection"])
         defaultWindSpeed = float(ConfigFile.settings["fL4DefaultWindSpeed"])
         #windDirectory = settings["sWindSpeedFolder"].strip('"')
