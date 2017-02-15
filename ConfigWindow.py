@@ -137,7 +137,7 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l4TimeIntervalLineEdit.setText(str(ConfigFile.settings["fL4TimeInterval"]))
         self.l4TimeIntervalLineEdit.setValidator(intValidator)
 
-        l4DefaultWindSpeedLabel = QtWidgets.QLabel("Level 4 - Default Wind Speed (km/h)", self)
+        l4DefaultWindSpeedLabel = QtWidgets.QLabel("Level 4 - Default Wind Speed (m/s)", self)
         self.l4DefaultWindSpeedLineEdit = QtWidgets.QLineEdit(self)
         self.l4DefaultWindSpeedLineEdit.setText(str(ConfigFile.settings["fL4DefaultWindSpeed"]))
         self.l4DefaultWindSpeedLineEdit.setValidator(doubleValidator)
@@ -301,7 +301,7 @@ class ConfigWindow(QtWidgets.QDialog):
         ConfigFile.settings["fL4DawnDuskFlag"] = float(self.l4DawnDuskFlagLineEdit.text())
         ConfigFile.settings["fL4RainfallHumidityFlag"] = float(self.l4RainfallHumidityFlagLineEdit.text())
         ConfigFile.settings["fL4TimeInterval"] = int(self.l4TimeIntervalLineEdit.text())
-        ConfigFile.settings["fDefaultWindSpeed"] = float(self.l4DefaultWindSpeedLineEdit.text())
+        ConfigFile.settings["fL4DefaultWindSpeed"] = float(self.l4DefaultWindSpeedLineEdit.text())
         #ConfigFile.settings["bL4PerformNIRCorrection"] = int(self.l4NIRCorrectionCheckBox.isChecked())
 
         ConfigFile.saveConfig(self.name)
