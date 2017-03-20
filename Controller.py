@@ -224,7 +224,7 @@ class Controller:
         print("ProcessL4")
         root = HDFRoot.readHDF5(filepath)
         root = ProcessL4.processL4(root, False, windSpeedData)
-        #root = ProcessL4a.processL4a(root)
+        root = ProcessL4a.processL4a(root)
         if root is not None:
             Utilities.plotReflectance(root, filename)
             root.writeHDF5(os.path.join(dirpath, filename + "_L4.hdf"))
@@ -234,7 +234,7 @@ class Controller:
         if enableQualityFlags:
             root = HDFRoot.readHDF5(filepath)
             root = ProcessL4.processL4(root, True, windSpeedData)
-            #root = ProcessL4a.processL4a(root)
+            root = ProcessL4a.processL4a(root)
             if root is not None:
                 Utilities.plotReflectance(root, filename + "-flags")
                 root.writeHDF5(os.path.join(dirpath, filename + "_L4-flags.hdf"))

@@ -101,9 +101,6 @@ class ProcessL4a:
         bandData.columns["Band11"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band11)
         bandData.columns["Band12"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band12)
         bandData.columns["Band13"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band13)
-        bandData.columns["Band14"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band14)
-        bandData.columns["Band15"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band15)
-        bandData.columns["Band16"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band16)
         
         bandData.columnsToDataset()
 
