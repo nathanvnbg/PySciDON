@@ -88,26 +88,26 @@ class ConfigFile:
     @staticmethod
     def loadConfig(filename):
         print("ConfigFile - Load Config")
+        configPath = os.path.join("Config", filename)
+        if os.path.isfile(configPath):
+            ConfigFile.filename = filename
+            text = ""
+            with open(configPath, 'r') as f:
+                text = f.read()
+                ConfigFile.settings = json.loads(text, object_pairs_hook=collections.OrderedDict)
+                ConfigFile.createCalibrationFolder()
 
-        ConfigFile.filename = filename
-
-        text = ""
-        fp = os.path.join("Config", filename)
-        with open(fp, 'r') as f:
-            text = f.read()
-        ConfigFile.settings = json.loads(text, object_pairs_hook=collections.OrderedDict)
-        ConfigFile.createCalibrationFolder()
-        #ConfigFile.printd()
 
     # Deletes a config
     @staticmethod
     def deleteConfig(filename):
         print("ConfigFile - Delete Config")
-        ConfigFile.filename = filename
         configPath = os.path.join("Config", filename)
-        calibrationPath = ConfigFile.getCalibrationDirectory()
-        os.remove(configPath)
-        shutil.rmtree(calibrationPath)
+        if os.path.isfile(configPath):
+            ConfigFile.filename = filename
+            calibrationPath = ConfigFile.getCalibrationDirectory()
+            os.remove(configPath)
+            shutil.rmtree(calibrationPath)
         
 
     @staticmethod

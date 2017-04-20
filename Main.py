@@ -31,7 +31,7 @@ class ConfigWindow(QtWidgets.QDialog):
 class Window(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-
+        
         # Create folders if they don't exist
         if not os.path.exists("RawData"):
             os.makedirs("RawData")
@@ -219,23 +219,36 @@ class Window(QtWidgets.QWidget):
         print("index: ", self.configComboBox.currentIndex())
         print("text: ", self.configComboBox.currentText())
         configFileName = self.configComboBox.currentText()
-        ConfigFile.loadConfig(configFileName)
-        configDialog = ConfigWindow(configFileName, self)
-        #configDialog = CalibrationEditWindow(configFileName, self)
-        configDialog.show()
+        configPath = os.path.join("Config", configFileName)
+        if os.path.isfile(configPath):
+            ConfigFile.loadConfig(configFileName)
+            configDialog = ConfigWindow(configFileName, self)
+            #configDialog = CalibrationEditWindow(configFileName, self)
+            configDialog.show()
+        else:
+            #print("Not a Config File: " + configFileName)
+            message = "Not a Config File: " + configFileName
+            QtWidgets.QMessageBox.critical(self, "Error", message)
+
 
     def configDeleteButtonPressed(self):
         print("Delete Config Dialogue")
         print("index: ", self.configComboBox.currentIndex())
         print("text: ", self.configComboBox.currentText())
         configFileName = self.configComboBox.currentText()
-        configDeleteMessage = "Delete " + configFileName + "?"
+        configPath = os.path.join("Config", configFileName)
+        if os.path.isfile(configPath):
+            configDeleteMessage = "Delete " + configFileName + "?"
 
-        reply = QtWidgets.QMessageBox.question(self, 'Message', configDeleteMessage, \
+            reply = QtWidgets.QMessageBox.question(self, 'Message', configDeleteMessage, \
                     QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
 
-        if reply == QtWidgets.QMessageBox.Yes:
-            ConfigFile.deleteConfig(configFileName)
+            if reply == QtWidgets.QMessageBox.Yes:
+                ConfigFile.deleteConfig(configFileName)
+        else:
+            #print("Not a Config File: " + configFileName)
+            message = "Not a Config File: " + configFileName
+            QtWidgets.QMessageBox.critical(self, "Error", message)
 
 
     def windAddButtonPressed(self):
