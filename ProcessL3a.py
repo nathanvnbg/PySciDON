@@ -161,6 +161,64 @@ class ProcessL3a:
         ds.columns = newColumns
         ds.columnsToDataset()
 
+
+    # Makes each dataset have matching wavelength values
+    # (this is not required, only for testing)
+    @staticmethod
+    def matchColumns(esData, liData, ltData):
+
+        print("Match Columns")
+
+        esData.datasetToColumns()
+        liData.datasetToColumns()
+        ltData.datasetToColumns()
+
+        matchMin = -1
+        matchMax = -1
+
+        # Determine the minimum and maximum values for k
+        for ds in [esData, liData, ltData]:
+            nMin = -1
+            nMax = -1
+            for k in ds.columns.keys():
+                if k != "Datetag" and k != "Timetag2" and k != "LATPOS" and k != "LONPOS":
+                    num = float(k)
+                    if nMin == -1:
+                        nMin = num
+                        nMax = num
+                    elif num < nMin:
+                        nMin = num
+                    elif num > nMax:
+                        nMax = num
+            if matchMin == -1:
+                matchMin = nMin
+                matchMax = nMax
+            if matchMin < nMin:
+                matchMin = nMin
+            if matchMax > nMax:
+                matchMax = nMax
+
+        #print(matchMin, matchMax)
+
+        # Remove values to match minimum and maximum
+        for ds in [esData, liData, ltData]:
+            l = []
+            for k in ds.columns.keys():
+                if k != "Datetag" and k != "Timetag2" and k != "LATPOS" and k != "LONPOS":
+                    num = float(k)
+                    if num < matchMin:
+                        l.append(k)
+                    elif num > matchMax:
+                        l.append(k)
+            for k in l:
+                del ds.columns[k]
+
+        esData.columnsToDataset()
+        liData.columnsToDataset()
+        ltData.columnsToDataset()
+
+
+
     # Does wavelength interpolation and data averaging
     @staticmethod
     def processL3a(node):
@@ -189,7 +247,7 @@ class ProcessL3a:
         newESData = newReferenceGroup.addDataset("ES_hyperspectral")
         newLIData = newSASGroup.addDataset("LI_hyperspectral")
         newLTData = newSASGroup.addDataset("LT_hyperspectral")
-        
+
         #interval = float(settings["fL3aInterpInterval"])
         interval = float(ConfigFile.settings["fL3aInterpInterval"])
 
@@ -203,13 +261,13 @@ class ProcessL3a:
             gpsGroup = node.getGroup("GPS")
             latposData = gpsGroup.getDataset("LATPOS")
             lonposData = gpsGroup.getDataset("LONPOS")
-            
+
             latposData.datasetToColumns()
             lonposData.datasetToColumns()
-            
+
             latpos = latposData.columns["NONE"]
             lonpos = lonposData.columns["NONE"]
-            
+
             newESData.datasetToColumns()
             newLIData.datasetToColumns()
             newLTData.datasetToColumns()
@@ -227,6 +285,10 @@ class ProcessL3a:
             newESData.columnsToDataset()
             newLIData.columnsToDataset()
             newLTData.columnsToDataset()
+
+
+        # Make each dataset have matching wavelength values (for testing)
+        ProcessL3a.matchColumns(newESData, newLIData, newLTData)
 
         #ProcessL3a.dataAveraging(newESData)
         #ProcessL3a.dataAveraging(newLIData)
