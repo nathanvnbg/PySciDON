@@ -263,31 +263,25 @@ class Window(QtWidgets.QWidget):
         self.windFileLineEdit.setText("")
 
 
-    def copyPreprocessFiles(self, files):
-        preprocessFolder= settings["sPreprocessFolder"].strip('"')
-        cwd = os.getcwd()
-        preprocessDirectory = os.path.join(cwd, preprocessFolder)
-        
-        for fp in files:
-            (dirpath, filename) = os.path.split(fp)
-            newfp = os.path.join(preprocessDirectory, filename)
-            try:
-                shutil.copy(fp, newfp)
-            except shutil.Error as e:
-                print('Error: %s' % e)
-            except IOError as e:
-                print('Error: %s' % e.strerror)
-
-
     def processSingle(self, level):
         print("Process Single-Level")
+
+        # Load Config file
         configFileName = self.configComboBox.currentText()
+        configPath = os.path.join("Config", configFileName)
+        if not os.path.isfile(configPath):
+            message = "Not valid Config File: " + configFileName
+            QtWidgets.QMessageBox.critical(self, "Error", message)
+            return
         ConfigFile.loadConfig(configFileName)
-        fnames = QtWidgets.QFileDialog.getOpenFileNames(self, "Open File")
-        print("Files:", fnames)
+
+        # Select data files
+        fileNames = QtWidgets.QFileDialog.getOpenFileNames(self, "Open File")
+        print("Files:", fileNames)
+        if not fileNames[0]:
+            return
         #calibrationDirectory = settings["sCalibrationFolder"].strip('"')
-        preprocessDirectory = settings["sPreprocessFolder"].strip('"')
-        dataDirectory = settings["sProcessDataFolder"].strip('"')
+        #preprocessDirectory = settings["sPreprocessFolder"].strip('"')
 
         windFile = self.windFileLineEdit.text()
 
@@ -298,8 +292,12 @@ class Window(QtWidgets.QWidget):
         calibrationMap = Controller.processCalibrationConfig(filename, calFiles)
 
         if level == "0":
-            self.copyPreprocessFiles(fnames[0])
-
+            # Select Output Directory
+            dataDirectory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Output Directory")
+            print("Output Directory:", dataDirectory)
+            if not dataDirectory[0]:
+                return
+        
             print("Preprocess Raw Files")
             checkCoords = int(ConfigFile.settings["bL0CheckCoords"])
             startLongitude = float(ConfigFile.settings["fL0LonMin"])
@@ -309,12 +307,15 @@ class Window(QtWidgets.QWidget):
             angleMin = float(ConfigFile.settings["fL0AngleMin"])
             angleMax = float(ConfigFile.settings["fL0AngleMax"])
             print(startLongitude, endLongitude, direction)
-            Controller.preprocessData(preprocessDirectory, dataDirectory, calibrationMap, \
+            #Controller.preprocessData(preprocessDirectory, dataDirectory, calibrationMap, \
+            #                          checkCoords, startLongitude, endLongitude, direction, \
+            #                          doCleaning, angleMin, angleMax)
+            Controller.preprocessFiles(fileNames[0], dataDirectory, calibrationMap, \
                                       checkCoords, startLongitude, endLongitude, direction, \
                                       doCleaning, angleMin, angleMax)
         else:
             print("Process Raw Files")
-            Controller.processFilesSingleLevel(fnames[0], calibrationMap, level, windFile)
+            Controller.processFilesSingleLevel(fileNames[0], calibrationMap, level, windFile)
 
     def singleL0Clicked(self):
         self.processSingle("0")
@@ -340,17 +341,31 @@ class Window(QtWidgets.QWidget):
 
     def processMulti(self, level):
         print("Process Multi-Level")
+
+        # Load Config file
         configFileName = self.configComboBox.currentText()
+        configPath = os.path.join("Config", configFileName)
+        if not os.path.isfile(configPath):
+            message = "Not valid Config File: " + configFileName
+            QtWidgets.QMessageBox.critical(self, "Error", message)
+            return
         ConfigFile.loadConfig(configFileName)
-        fnames = QtWidgets.QFileDialog.getOpenFileNames(self, "Open File")
-        print("Files:", fnames)
+
+        # Select data files
+        fileNames = QtWidgets.QFileDialog.getOpenFileNames(self, "Open File")
+        print("Files:", fileNames)
+        if not fileNames[0]:
+            return
         #calibrationDirectory = settings["sCalibrationFolder"].strip('"')
-        preprocessDirectory = settings["sPreprocessFolder"].strip('"')
-        dataDirectory = settings["sProcessDataFolder"].strip('"')
+        #preprocessDirectory = settings["sPreprocessFolder"].strip('"')
+
+        # Select Output Directory
+        dataDirectory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Output Directory")
+        print("Output Directory:", dataDirectory)
+        if not dataDirectory[0]:
+            return
 
         windFile = self.windFileLineEdit.text()
-
-        self.copyPreprocessFiles(fnames[0])
 
         print("Process Calibration Files")
         filename = ConfigFile.filename
@@ -367,7 +382,10 @@ class Window(QtWidgets.QWidget):
         angleMin = float(ConfigFile.settings["fL0AngleMin"])
         angleMax = float(ConfigFile.settings["fL0AngleMax"])
         print(doCleaning, angleMin, angleMax)
-        Controller.preprocessData(preprocessDirectory, dataDirectory, calibrationMap, \
+        #Controller.preprocessData(preprocessDirectory, dataDirectory, calibrationMap, \
+        #                          checkCoords, startLongitude, endLongitude, direction, \
+        #                          doCleaning, angleMin, angleMax)
+        Controller.preprocessFiles(fileNames[0], dataDirectory, calibrationMap, \
                                   checkCoords, startLongitude, endLongitude, direction, \
                                   doCleaning, angleMin, angleMax)
         print("Process Raw Files")

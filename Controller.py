@@ -116,6 +116,10 @@ class Controller:
         return calibrationMap
 
     @staticmethod
+    def preprocessFiles(fileNames, dataDirectory, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax):
+        PreprocessRawFile.processFiles(fileNames, dataDirectory, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax)
+
+    @staticmethod
     def preprocessData(preprocessDirectory, dataDirectory, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax):
         PreprocessRawFile.processDirectory(preprocessDirectory, dataDirectory, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax)
 

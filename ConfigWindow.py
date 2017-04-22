@@ -51,6 +51,7 @@ class ConfigWindow(QtWidgets.QDialog):
         
         self.calibrationEnabledCheckBox = QtWidgets.QCheckBox("Enabled", self)
         self.calibrationEnabledCheckBox.stateChanged.connect(self.calibrationEnabledStateChanged)
+        self.calibrationEnabledCheckBox.setEnabled(False)
 
         calibrationFrameTypeLabel = QtWidgets.QLabel("Frame Type:", self)
         self.calibrationFrameTypeComboBox = QtWidgets.QComboBox(self)
@@ -59,7 +60,7 @@ class ConfigWindow(QtWidgets.QDialog):
         self.calibrationFrameTypeComboBox.addItem("Not Required")
         self.calibrationFrameTypeComboBox.addItem("LightAncCombined")
         self.calibrationFrameTypeComboBox.currentIndexChanged.connect(self.calibrationFrameTypeChanged)
-
+        self.calibrationFrameTypeComboBox.setEnabled(False)
 
 
 
@@ -269,7 +270,17 @@ class ConfigWindow(QtWidgets.QDialog):
     def calibrationFileChanged(self, i):
         print("CalibrationEditWindow - Calibration File Changed")
         print("Current index",i,"selection changed ", self.calibrationFileComboBox.currentText())
-        self.getCalibrationSettings()
+        calFileName = self.calibrationFileComboBox.currentText()
+        calDir = ConfigFile.getCalibrationDirectory()
+        calPath = os.path.join(calDir, calFileName)
+        #print("calPath: " + calPath)
+        if os.path.isfile(calPath):
+            self.getCalibrationSettings()
+            self.calibrationEnabledCheckBox.setEnabled(True)
+            self.calibrationFrameTypeComboBox.setEnabled(True)
+        else:
+            self.calibrationEnabledCheckBox.setEnabled(False)
+            self.calibrationFrameTypeComboBox.setEnabled(False)
 
 
     def calibrationEnabledStateChanged(self):

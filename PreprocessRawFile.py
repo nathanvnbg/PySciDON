@@ -281,7 +281,9 @@ class PreprocessRawFile:
                                     #print("Angle: ", angle)
                                     #if angle >= 90 and angle <= 135:
                                     if angle >= angleMin and angle <= angleMax:
+                                        # iStart is -1 if previous SATNAV was bad angle
                                         if iStart != -1:
+                                            # Append measurements from previous block to new file
                                             iEnd = f.tell()
     
                                             pos = f.tell()
@@ -292,9 +294,11 @@ class PreprocessRawFile:
                                             message += msg
                                             iStart = f.tell()
                                         else:
+                                            # Reset iStart to start of current SATNAV
                                             iStart = f.tell() - bytesRead
                                         
                                     else:
+                                        # Found bad angles, set iStart to -1 to ignore raw data
                                         print("Skip Bad Angle: ", angle)
                                         iStart = -1
                                         
@@ -310,6 +314,20 @@ class PreprocessRawFile:
         with open(filepath, 'wb') as fout:
             fout.write(message)
 
+
+    @staticmethod
+    def processFiles(fileNames, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax):
+        if checkCoords:
+            for name in fileNames:
+                #print("infile:", name)
+                if os.path.splitext(name)[1].lower() == ".raw":
+                    PreprocessRawFile.processRawFile(name, dataDir, calibrationMap, startLongitude, endLongitude, direction)
+
+        if doCleaning:
+            for name in fileNames:
+                #print("infile:", name)
+                if os.path.splitext(name)[1].lower() == ".raw":
+                    PreprocessRawFile.cleanRawFile(name, calibrationMap, angleMin, angleMax)
 
     @staticmethod
     def processDirectory(path, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax):
