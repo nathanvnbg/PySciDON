@@ -143,8 +143,9 @@ class ProcessL4:
             ltColumns.pop("LONPOS")
 
         # Stores the middle element
-        date = datetag[int(len(datetag)/2)]
-        time = timetag[int(len(timetag)/2)]
+        if len(datetag) > 0:
+            date = datetag[int(len(datetag)/2)]
+            time = timetag[int(len(timetag)/2)]
         if latpos:
             lat = latpos[int(len(latpos)/2)]
         if lonpos:
