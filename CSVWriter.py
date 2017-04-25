@@ -2,8 +2,6 @@
 import csv
 import os
 
-import numpy as np
-
 from HDFRoot import HDFRoot
 
 from config import settings

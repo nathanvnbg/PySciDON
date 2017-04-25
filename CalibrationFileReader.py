@@ -3,7 +3,6 @@ import collections
 import os.path
 import zipfile
 
-#from CalibrationData import CalibrationData
 from CalibrationFile import CalibrationFile
 
 

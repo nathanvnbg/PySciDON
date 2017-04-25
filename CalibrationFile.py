@@ -4,8 +4,6 @@ import os
 import sys
 
 from CalibrationData import CalibrationData
-#from HDFGroup import HDFGroup
-#from HDFDataset import HDFDataset
 
 
 # CalibrationFile class stores information about an instrument

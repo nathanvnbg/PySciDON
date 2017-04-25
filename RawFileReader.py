@@ -2,8 +2,6 @@
 import sys
 
 
-from HDFDataset import HDFDataset
-
 class RawFileReader:
     MAX_TAG_READ = 32
     MAX_BLOCK_READ = 1024

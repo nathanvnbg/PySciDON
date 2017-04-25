@@ -1,12 +1,6 @@
 
-import collections
 import csv
 import os
-#import sys
-
-import h5py
-import numpy as np
-#import scipy as sp
 
 from CSVWriter import CSVWriter
 from CalibrationFileReader import CalibrationFileReader
@@ -15,7 +9,6 @@ from HDFRoot import HDFRoot
 #from HDFGroup import HDFGroup
 #from HDFDataset import HDFDataset
 
-from config import settings
 from ConfigFile import ConfigFile
 from Utilities import Utilities
 from WindSpeedReader import WindSpeedReader
@@ -129,7 +122,6 @@ class Controller:
         if fp is None:
             return None
 
-        #windDirectory = settings["sWindSpeedFolder"].strip('"')
         #(dirpath, filename) = os.path.split(fp)
         #filename = os.path.splitext(filename)[0]
         #filepath = os.path.join(windDirectory, filename + ".csv")

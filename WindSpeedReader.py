@@ -1,16 +1,9 @@
 
 import csv
-import os
-import time
 
 from datetime import datetime
 
 from HDFDataset import HDFDataset
-
-#import numpy as np
-#import scipy
-#import scipy.interpolate
-#import scipy.stats
 
 
 class WindSpeedReader:

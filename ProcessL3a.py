@@ -10,7 +10,6 @@ import HDFRoot
 
 from Utilities import Utilities
 
-#from config import settings
 from ConfigFile import ConfigFile
 
 

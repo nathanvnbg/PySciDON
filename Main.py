@@ -1,12 +1,11 @@
 
 import os
 import sys
-import shutil
+#import shutil
 #from PyQt4 import QtCore, QtGui
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from Controller import Controller
-from config import settings
 
 from ConfigFile import ConfigFile
 from ConfigWindow import ConfigWindow

@@ -10,9 +10,7 @@ import HDFRoot
 #import HDFDataset
 
 from Utilities import Utilities
-#from WindSpeedReader import WindSpeedReader
 
-#from config import settings
 from ConfigFile import ConfigFile
 
 
@@ -436,7 +434,6 @@ class ProcessL4:
         interval = float(ConfigFile.settings["fL4TimeInterval"])
         performNIRCorrection = int(ConfigFile.settings["bL4PerformNIRCorrection"])
         defaultWindSpeed = float(ConfigFile.settings["fL4DefaultWindSpeed"])
-        #windDirectory = settings["sWindSpeedFolder"].strip('"')
 
         # Can change time resolution here
         if not ProcessL4.calculateReflectance(root, node, interval, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedData):

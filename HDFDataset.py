@@ -7,7 +7,6 @@ import sys
 #from pyhdf.V import *
 #from pyhdf.VS import *
 
-import h5py
 import numpy as np
 
 

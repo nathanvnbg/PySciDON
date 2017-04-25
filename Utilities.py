@@ -1,6 +1,5 @@
 
-import time
-import datetime
+import os
 import sys
 
 import matplotlib.pyplot as plt
@@ -180,7 +179,10 @@ class Utilities:
             # Tweak spacing to prevent clipping of ylabel
             plt.subplots_adjust(left=0.15)
             #plt.show()
-            plt.savefig('Plots/' + filename + '.png')
+
+            # Save the plot
+            fp = os.path.join('Plots', filename + '.png')
+            plt.savefig(fp)
             plt.close() # This prevents displaying the polt on screen with certain IDEs
         except:
             e = sys.exc_info()[0]

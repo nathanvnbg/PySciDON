@@ -1,9 +1,6 @@
 
-import collections
-import sys
 
 import numpy as np
-import scipy as sp
 
 import HDFRoot
 #import HDFGroup
