@@ -143,7 +143,7 @@ class Utilities:
 
 
     @staticmethod
-    def plotReflectance(root, filename):
+    def plotReflectance(root, dirpath, filename):
         try:
             referenceGroup = root.getGroup("Reflectance")
             rrsData = referenceGroup.getDataset("Rrs")
@@ -180,8 +180,12 @@ class Utilities:
             plt.subplots_adjust(left=0.15)
             #plt.show()
 
+            # Create output directory
+            plotdir = os.path.join(dirpath, 'Plots')
+            os.makedirs(plotdir, exist_ok=True)
+
             # Save the plot
-            fp = os.path.join('Plots', filename + '.png')
+            fp = os.path.join(plotdir, filename + '.png')
             plt.savefig(fp)
             plt.close() # This prevents displaying the polt on screen with certain IDEs
         except:

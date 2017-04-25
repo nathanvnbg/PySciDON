@@ -4,8 +4,6 @@ import os
 
 from HDFRoot import HDFRoot
 
-from config import settings
-
 
 class CSVWriter:
     
@@ -50,7 +48,12 @@ class CSVWriter:
     @staticmethod
     def writeCSV(name, dirpath, data, sensorName, level):
         filename = name + "_" + sensorName + "_" + level
-        csvPath = os.path.join(dirpath, filename + ".csv")
+
+        # Create output directory
+        csvdir = os.path.join(dirpath, 'csv')
+        os.makedirs(csvdir, exist_ok=True)
+
+        csvPath = os.path.join(csvdir, filename + ".csv")
         #np.savetxt(csvPath, data, delimiter=',')
         with open(csvPath, 'w') as f:
             writer = csv.writer(f)
@@ -83,8 +86,6 @@ class CSVWriter:
         if root is None:
             print("outputCSV: root is None")
             return
-
-        dirpath = settings["sCSVFolder"].strip('"')
 
         #name = filename[28:43]
         name = filename[0:15]
@@ -144,8 +145,6 @@ class CSVWriter:
             print("outputCSV: root is None")
             return
 
-        dirpath = settings["sCSVFolder"].strip('"')
-
         #name = filename[28:43]
         name = filename[0:15]
 
@@ -193,7 +192,6 @@ class CSVWriter:
         if root is None:
             print("outputCSV: root is None")
             return
-        dirpath = settings["sCSVFolder"].strip('"')
 
         #name = filename[28:43]
         name = filename[0:15]

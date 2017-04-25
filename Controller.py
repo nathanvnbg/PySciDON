@@ -222,7 +222,7 @@ class Controller:
         root = ProcessL4.processL4(root, False, windSpeedData)
         root = ProcessL4a.processL4a(root)
         if root is not None:
-            Utilities.plotReflectance(root, filename)
+            Utilities.plotReflectance(root, dirpath, filename)
             root.writeHDF5(os.path.join(dirpath, filename + "_L4.hdf"))
 
         # Write to separate file if quality flags are enabled
@@ -232,7 +232,7 @@ class Controller:
             root = ProcessL4.processL4(root, True, windSpeedData)
             root = ProcessL4a.processL4a(root)
             if root is not None:
-                Utilities.plotReflectance(root, filename + "-flags")
+                Utilities.plotReflectance(root, dirpath, filename + "-flags")
                 root.writeHDF5(os.path.join(dirpath, filename + "_L4-flags.hdf"))
 
 
