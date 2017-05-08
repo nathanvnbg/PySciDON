@@ -24,6 +24,7 @@ from ProcessL4a import ProcessL4a
 
 
 class Controller:
+
     @staticmethod
     def generateContext(calibrationMap):
         for key in calibrationMap:
@@ -94,17 +95,15 @@ class Controller:
         print("calibrationMap keys:", calibrationMap.keys())
         print("config keys:", calFiles.keys())
         for key in list(calibrationMap.keys()):
-            print(key)
+            #print(key)
             if key in calFiles.keys():
                 if calFiles[key]["enabled"]:
                     calibrationMap[key].frameType = calFiles[key]["frameType"]
                 else:
                     del calibrationMap[key]
             else:
-                print("1")
                 del calibrationMap[key]
         print("calibrationMap keys 2:", calibrationMap.keys())
-        
         print("processCalibrationConfig - DONE")
         return calibrationMap
 
@@ -121,106 +120,118 @@ class Controller:
     def processWindData(fp):
         if fp is None:
             return None
-
-        #(dirpath, filename) = os.path.split(fp)
-        #filename = os.path.splitext(filename)[0]
-        #filepath = os.path.join(windDirectory, filename + ".csv")
-
-        #if not os.path.isfile(filepath):
         if not os.path.isfile(fp):
             return None
-
-        #filepath = "WindSpeed/BritishColumbiaFerries_HorseshoeBay-DepartureBay_WindMonitoringSysteWindSpeed_20160727T223014Z_20160727T232654Z-NaN_clean.csv"
-        #windSpeedData = WindSpeedReader.readWindSpeed(filepath)
         windSpeedData = WindSpeedReader.readWindSpeed(fp)
-        
         return windSpeedData
 
 
     @staticmethod
     def processL1a(fp, calibrationMap):
+        # Get input filepath
         (dirpath, filename) = os.path.split(fp)
         name = os.path.splitext(filename)[0]
-        
-        # Create "L0" file to save program start time
-        #nm = os.path.join(dirpath, name + "_L0.txt")
-        #f = open(nm, 'w')
-        
         filepath = os.path.join(dirpath, filename)
         if not os.path.isfile(filepath):
             return None
+
+        # Process the data
         print("ProcessL1a")
         root = ProcessL1a.processL1a(calibrationMap, filepath)
+
+        # Write output file
         if root is not None:
             root.writeHDF5(os.path.join(dirpath, name + "_L1a.hdf"))
 
     @staticmethod
     def processL1b(fp, calibrationMap):
+        # Get input filepath
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
         filepath = os.path.join(dirpath, filename + "_L1a.hdf")
         if not os.path.isfile(filepath):
             return None
+
+        # Process the data
         print("ProcessL1b")
         root = HDFRoot.readHDF5(filepath)
-        #print("HDFFile:")
-        #root.printd()
         root = ProcessL1b.processL1b(root, calibrationMap)
+
+        # Write output file
         if root is not None:
             root.writeHDF5(os.path.join(dirpath, filename + "_L1b.hdf"))
 
     @staticmethod
     def processL2(fp):
+        # Get input filepath
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
         filepath = os.path.join(dirpath, filename + "_L1b.hdf")
         if not os.path.isfile(filepath):
             return None
+
+        # Process the data
         print("ProcessL2")
         root = HDFRoot.readHDF5(filepath)
         root = ProcessL2.processL2(root)
+
+        # Write output file
         if root is not None:
             root.writeHDF5(os.path.join(dirpath, filename + "_L2.hdf"))
 
     @staticmethod
     def processL2s(fp):
+        # Get input filepath
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
         filepath = os.path.join(dirpath, filename + "_L2.hdf")
         if not os.path.isfile(filepath):
             return None
+
+        # Process the data
         print("ProcessL2s")
         root = HDFRoot.readHDF5(filepath)
         root = ProcessL2s.processL2s(root)
         #root.printd()
+
+        # Write output file
         if root is not None:
             root.writeHDF5(os.path.join(dirpath, filename + "_L2s.hdf"))
 
     @staticmethod
     def processL3a(fp):
+        # Get input filepath
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
         filepath = os.path.join(dirpath, filename + "_L2s.hdf")
         if not os.path.isfile(filepath):
             return None
+
+        # Process the data
         print("ProcessL3a")
         root = HDFRoot.readHDF5(filepath)
         root = ProcessL3a.processL3a(root)
+
+        # Write output file
         if root is not None:
             root.writeHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
 
     @staticmethod
     def processL4(fp, windSpeedData):
+        # Get input filepath
         (dirpath, filename) = os.path.split(fp)
         filename = os.path.splitext(filename)[0]
         filepath = os.path.join(dirpath, filename + "_L3a.hdf")
         if not os.path.isfile(filepath):
             return None
 
+        # Process the data
         print("ProcessL4")
         root = HDFRoot.readHDF5(filepath)
         root = ProcessL4.processL4(root, False, windSpeedData)
         root = ProcessL4a.processL4a(root)
+
+        # Write output file
         if root is not None:
             Utilities.plotReflectance(root, dirpath, filename)
             root.writeHDF5(os.path.join(dirpath, filename + "_L4.hdf"))
@@ -237,7 +248,7 @@ class Controller:
 
 
 
-    # Saving data to formatted csv file
+    # Saving data to a formatted csv file for testing
     @staticmethod
     def outputCSV_L4(fp):
         (dirpath, filename) = os.path.split(fp)
@@ -271,19 +282,28 @@ class Controller:
             print("Warning - outputCSV: missing dataset")
             return
 
-        dirpath = "csv"
-        name = filename[28:43]
+        #dirpath = "csv"
+        #name = filename[28:43]
+        dirpath = os.path.join(dirpath, 'csv')
+        name = filename[0:15]
 
         outList = []
         columnName = dsName.lower()
+        
+        names = list(ds.data.dtype.names)
+        names.remove("Datetag")
+        names.remove("Timetag2")
+        names.remove("Latpos")
+        names.remove("Lonpos")
+        data = ds.data[names]
 
         total = ds.data.shape[0]
         #ls = ["wl"] + [k for k,v in sorted(ds.data.dtype.fields.items(), key=lambda k: k[1])]
-        ls = ["wl"] + list(ds.data.dtype.names)
+        ls = ["wl"] + list(data.dtype.names)
         outList.append(ls)
         for i in range(total):
             n = str(i+1)
-            ls = [columnName + "_" + name + '_' + n] + ['%f' % num for num in ds.data[i]]
+            ls = [columnName + "_" + name + '_' + n] + ['%f' % num for num in data[i]]
             outList.append(ls)
 
         outList = zip(*outList)
@@ -297,6 +317,7 @@ class Controller:
             writer.writerows(outList)
 
 
+    # Process all to level 4 for testing
     @staticmethod
     def processAll(fp, calibrationMap):
         print("Processing: " + fp)
@@ -316,6 +337,7 @@ class Controller:
         #CSVWriter.outputTXT_L3a(fp)
         #CSVWriter.outputTXT_L4(fp)
         #root = HDFRoot.readHDF5(os.path.join(dirpath, filename + "_L3a.hdf"))
+
 
     @staticmethod
     def processSingleLevel(fp, calibrationMap, level, windFile=None):
