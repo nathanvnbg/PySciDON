@@ -237,18 +237,42 @@ class ProcessL4:
 
         # Add extra information to Rrs dataset
         if not ("Datetag" in newRrsData.columns):
+            newESData.columns["Datetag"] = [date]
+            newLIData.columns["Datetag"] = [date]
+            newLTData.columns["Datetag"] = [date]
             newRrsData.columns["Datetag"] = [date]
+            newESData.columns["Timetag2"] = [time]
+            newLIData.columns["Timetag2"] = [time]
+            newLTData.columns["Timetag2"] = [time]
             newRrsData.columns["Timetag2"] = [time]
             if latpos:
+                newESData.columns["Latpos"] = [lat]
+                newLIData.columns["Latpos"] = [lat]
+                newLTData.columns["Latpos"] = [lat]
                 newRrsData.columns["Latpos"] = [lat]
             if lonpos:
+                newESData.columns["Lonpos"] = [lon]
+                newLIData.columns["Lonpos"] = [lon]
+                newLTData.columns["Lonpos"] = [lon]
                 newRrsData.columns["Lonpos"] = [lon]
         else:
+            newESData.columns["Datetag"].append(date)
+            newLIData.columns["Datetag"].append(date)
+            newLTData.columns["Datetag"].append(date)
             newRrsData.columns["Datetag"].append(date)
+            newESData.columns["Timetag2"].append(time)
+            newLIData.columns["Timetag2"].append(time)
+            newLTData.columns["Timetag2"].append(time)
             newRrsData.columns["Timetag2"].append(time)
             if latpos:
+                newESData.columns["Latpos"].append(lat)
+                newLIData.columns["Latpos"].append(lat)
+                newLTData.columns["Latpos"].append(lat)
                 newRrsData.columns["Latpos"].append(lat)
             if lonpos:
+                newESData.columns["Lonpos"].append(lon)
+                newLIData.columns["Lonpos"].append(lon)
+                newLTData.columns["Lonpos"].append(lon)
                 newRrsData.columns["Lonpos"].append(lon)
 
 
