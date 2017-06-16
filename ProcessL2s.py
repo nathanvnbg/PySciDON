@@ -151,6 +151,8 @@ class ProcessL2s:
         newGPSMagVarData = newGPSGroup.addDataset("MAGVAR")
         newGPSSpeedData = newGPSGroup.addDataset("SPEED")
 
+        # Add Datetag, Timetag2 data to gps groups
+        # This matches ES data after interpolation
         newGPSCourseData.columns["Datetag"] = esData.data["Datetag"].tolist()
         newGPSCourseData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
         newGPSLatPosData.columns["Datetag"] = esData.data["Datetag"].tolist()
@@ -210,11 +212,78 @@ class ProcessL2s:
         newGPSSpeedData.columnsToDataset()
 
 
+    # interpolate SATNAV to match ES
+    @staticmethod
+    def interpolateSATNAVData(node, satnavGroup):
+        print("Interpolate SATNAV Data")
+
+        if satnavGroup is None:
+            print("WARNING, satnavGroup is None")
+            return
+
+        refGroup = node.getGroup("Reference")
+        esData = refGroup.getDataset("ES_hyperspectral")
+
+        satnavTimeData = satnavGroup.getDataset("TIMETAG2")
+        satnavAzimuthData = satnavGroup.getDataset("AZIMUTH")
+        satnavHeadingData = satnavGroup.getDataset("HEADING")
+        satnavPitchData = satnavGroup.getDataset("PITCH")
+        satnavPointingData = satnavGroup.getDataset("POINTING")
+        satnavRollData = satnavGroup.getDataset("ROLL")
+
+        newSATNAVGroup = node.getGroup("SATNAV")
+        newSATNAVAzimuthData = newSATNAVGroup.addDataset("AZIMUTH")
+        newSATNAVHeadingData = newSATNAVGroup.addDataset("HEADING")
+        newSATNAVPitchData = newSATNAVGroup.addDataset("PITCH")
+        newSATNAVPointingData = newSATNAVGroup.addDataset("POINTING")
+        newSATNAVRollData = newSATNAVGroup.addDataset("ROLL")
+
+
+        # Add Datetag, Timetag2 data to satnav groups
+        # This matches ES data after interpolation
+        newSATNAVAzimuthData.columns["Datetag"] = esData.data["Datetag"].tolist()
+        newSATNAVAzimuthData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
+        newSATNAVHeadingData.columns["Datetag"] = esData.data["Datetag"].tolist()
+        newSATNAVHeadingData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
+        newSATNAVPitchData.columns["Datetag"] = esData.data["Datetag"].tolist()
+        newSATNAVPitchData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
+        newSATNAVPointingData.columns["Datetag"] = esData.data["Datetag"].tolist()
+        newSATNAVPointingData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
+        newSATNAVRollData.columns["Datetag"] = esData.data["Datetag"].tolist()
+        newSATNAVRollData.columns["Timetag2"] = esData.data["Timetag2"].tolist()
+
+
+        # Convert GPS UTC time values to seconds to be used for interpolation
+        xTimer = []
+        for i in range(satnavTimeData.data.shape[0]):
+            xTimer.append(Utilities.timeTag2ToSec(satnavTimeData.data["NONE"][i]))
+
+        # Convert ES TimeTag2 values to seconds to be used for interpolation
+        yTimer = []
+        for i in range(esData.data.shape[0]):
+            yTimer.append(Utilities.timeTag2ToSec(esData.data["Timetag2"][i]))
+
+
+        # Interpolate by time values
+        ProcessL2s.interpolateL2s(satnavAzimuthData, xTimer, yTimer, newSATNAVAzimuthData, 'linear')
+        ProcessL2s.interpolateL2s(satnavHeadingData, xTimer, yTimer, newSATNAVHeadingData, 'linear')
+        ProcessL2s.interpolateL2s(satnavPitchData, xTimer, yTimer, newSATNAVPitchData, 'linear')
+        ProcessL2s.interpolateL2s(satnavPointingData, xTimer, yTimer, newSATNAVPointingData, 'linear')
+        ProcessL2s.interpolateL2s(satnavRollData, xTimer, yTimer, newSATNAVRollData, 'linear')
+
+
+        newSATNAVAzimuthData.columnsToDataset()
+        newSATNAVHeadingData.columnsToDataset()
+        newSATNAVPitchData.columnsToDataset()
+        newSATNAVPointingData.columnsToDataset()
+        newSATNAVRollData.columnsToDataset()
+
+
     # Interpolates datasets so they have common time coordinates
     @staticmethod
     def processL2s(node):
 
-        ProcessL2s.processGPSTime(node)
+        #ProcessL2s.processGPSTime(node)
 
         root = HDFRoot.HDFRoot()
         root.copyAttributes(node)
@@ -225,6 +294,7 @@ class ProcessL2s:
         gpsGroup = None
         liGroup = None
         ltGroup = None
+        satnavGroup = None
         for gp in node.groups:
             #if gp.id.startswith("GPS"):
             if gp.hasDataset("UTCPOS"):
@@ -239,11 +309,16 @@ class ProcessL2s:
             elif gp.hasDataset("LT") and gp.attributes["FrameType"] == "ShutterLight":
                 print("LT")
                 ltGroup = gp
+            elif gp.hasDataset("AZIMUTH"):
+                print("SATNAV")
+                satnavGroup = gp
 
         refGroup = root.addGroup("Reference")
         sasGroup = root.addGroup("SAS")
         if gpsGroup is not None:
             gpsGroup2 = root.addGroup("GPS")
+        if satnavGroup is not None:
+            satnavGroup2 = root.addGroup("SATNAV")
 
 
         #ProcessL2s.interpolateGPSData(root, esGroup, gpsGroup)
@@ -277,7 +352,7 @@ class ProcessL2s:
             interpData = ltData
 
         #interpData = liData # Testing against Prosoft
-        
+
         # Perform time interpolation
         if not ProcessL2s.interpolateData(esData, interpData):
             return None
@@ -287,5 +362,6 @@ class ProcessL2s:
             return None
 
         ProcessL2s.interpolateGPSData(root, gpsGroup)
+        ProcessL2s.interpolateSATNAVData(root, satnavGroup)
 
         return root

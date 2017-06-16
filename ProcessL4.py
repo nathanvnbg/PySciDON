@@ -1,6 +1,7 @@
 
 import collections
 import sys
+import warnings
 
 import numpy as np
 import scipy as sp
@@ -113,11 +114,18 @@ class ProcessL4:
     @staticmethod
     def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed=0.0, windSpeedColumns=None):
 
+        #print("calculateReflectance2")
+        
         datetag = esColumns["Datetag"]
         timetag = esColumns["Timetag2"]
         latpos = None
         lonpos = None
-        
+        azimuth = None
+        shipTrue = None
+        pitch = None
+        rotator = None
+        roll = None
+
 
         esColumns.pop("Datetag")
         esColumns.pop("Timetag2")
@@ -140,6 +148,34 @@ class ProcessL4:
             liColumns.pop("LONPOS")
             ltColumns.pop("LONPOS")
 
+
+        if "AZIMUTH" in esColumns:
+            azimuth = esColumns["AZIMUTH"]
+            esColumns.pop("AZIMUTH")
+            liColumns.pop("AZIMUTH")
+            ltColumns.pop("AZIMUTH")
+        if "SHIP_TRUE" in esColumns:
+            shipTrue = esColumns["SHIP_TRUE"]
+            esColumns.pop("SHIP_TRUE")
+            liColumns.pop("SHIP_TRUE")
+            ltColumns.pop("SHIP_TRUE")
+        if "PITCH" in esColumns:
+            pitch = esColumns["PITCH"]
+            esColumns.pop("PITCH")
+            liColumns.pop("PITCH")
+            ltColumns.pop("PITCH")
+        if "ROTATOR" in esColumns:
+            rotator = esColumns["ROTATOR"]
+            esColumns.pop("ROTATOR")
+            liColumns.pop("ROTATOR")
+            ltColumns.pop("ROTATOR")
+        if "ROLL" in esColumns:
+            roll = esColumns["ROLL"]
+            esColumns.pop("ROLL")
+            liColumns.pop("ROLL")
+            ltColumns.pop("ROLL")
+
+
         # Stores the middle element
         if len(datetag) > 0:
             date = datetag[int(len(datetag)/2)]
@@ -149,6 +185,17 @@ class ProcessL4:
         if lonpos:
             lon = lonpos[int(len(lonpos)/2)]
 
+        if azimuth:
+            azi = azimuth[int(len(azimuth)/2)]
+        if shipTrue:
+            ship = shipTrue[int(len(shipTrue)/2)]
+        if pitch:
+            pit = pitch[int(len(pitch)/2)]
+        if rotator:
+            rot = rotator[int(len(rotator)/2)]
+        if roll:
+            rol = roll[int(len(roll)/2)]
+
 
         #print("Test:")
         #print(date, time, lat, lon)
@@ -157,7 +204,7 @@ class ProcessL4:
         # Calculates the lowest 5% (based on Hooker & Morel 2003)
         n = len(list(ltColumns.values())[0])
         x = round(n*5/100)
-        if n <= 5:
+        if n <= 5 or x == 0:
             x = n
 
 
@@ -179,24 +226,27 @@ class ProcessL4:
 
         # Checks if the data has NaNs
         hasNan = False
-        for k in esColumns:
-            v = [esColumns[k][i] for i in y]
-            mean = np.nanmean(v)
-            es5Columns[k] = [mean]
-            if np.isnan(mean):
-                hasNan = True
-        for k in liColumns:
-            v = [liColumns[k][i] for i in y]
-            mean = np.nanmean(v)
-            li5Columns[k] = [mean]
-            if np.isnan(mean):
-                hasNan = True
-        for k in ltColumns:
-            v = [ltColumns[k][i] for i in y]
-            mean = np.nanmean(v)
-            lt5Columns[k] = [mean]
-            if np.isnan(mean):
-                hasNan = True
+        # Ignore runtime warnings when array is all NaNs
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            for k in esColumns:
+                v = [esColumns[k][i] for i in y]
+                mean = np.nanmean(v)
+                es5Columns[k] = [mean]
+                if np.isnan(mean):
+                    hasNan = True
+            for k in liColumns:
+                v = [liColumns[k][i] for i in y]
+                mean = np.nanmean(v)
+                li5Columns[k] = [mean]
+                if np.isnan(mean):
+                    hasNan = True
+            for k in ltColumns:
+                v = [ltColumns[k][i] for i in y]
+                mean = np.nanmean(v)
+                lt5Columns[k] = [mean]
+                if np.isnan(mean):
+                    hasNan = True
 
         # Mean of wind speed for data
         if windSpeedColumns is not None:
@@ -255,6 +305,31 @@ class ProcessL4:
                 newLIData.columns["Lonpos"] = [lon]
                 newLTData.columns["Lonpos"] = [lon]
                 newRrsData.columns["Lonpos"] = [lon]
+            if azimuth:
+                newESData.columns["Azimuth"] = [azi]
+                newLIData.columns["Azimuth"] = [azi]
+                newLTData.columns["Azimuth"] = [azi]
+                newRrsData.columns["Azimuth"] = [azi]
+            if shipTrue:
+                newESData.columns["ShipTrue"] = [ship]
+                newLIData.columns["ShipTrue"] = [ship]
+                newLTData.columns["ShipTrue"] = [ship]
+                newRrsData.columns["ShipTrue"] = [ship]
+            if pitch:
+                newESData.columns["Pitch"] = [pit]
+                newLIData.columns["Pitch"] = [pit]
+                newLTData.columns["Pitch"] = [pit]
+                newRrsData.columns["Pitch"] = [pit]
+            if rotator:
+                newESData.columns["Rotator"] = [rot]
+                newLIData.columns["Rotator"] = [rot]
+                newLTData.columns["Rotator"] = [rot]
+                newRrsData.columns["Rotator"] = [rot]
+            if roll:
+                newESData.columns["Roll"] = [rol]
+                newLIData.columns["Roll"] = [rol]
+                newLTData.columns["Roll"] = [rol]
+                newRrsData.columns["Roll"] = [rol]
         else:
             newESData.columns["Datetag"].append(date)
             newLIData.columns["Datetag"].append(date)
@@ -274,7 +349,31 @@ class ProcessL4:
                 newLIData.columns["Lonpos"].append(lon)
                 newLTData.columns["Lonpos"].append(lon)
                 newRrsData.columns["Lonpos"].append(lon)
-
+            if azimuth:
+                newESData.columns["Azimuth"].append(azi)
+                newLIData.columns["Azimuth"].append(azi)
+                newLTData.columns["Azimuth"].append(azi)
+                newRrsData.columns["Azimuth"].append(azi)
+            if shipTrue:
+                newESData.columns["ShipTrue"].append(ship)
+                newLIData.columns["ShipTrue"].append(ship)
+                newLTData.columns["ShipTrue"].append(ship)
+                newRrsData.columns["ShipTrue"].append(ship)
+            if pitch:
+                newESData.columns["Pitch"].append(pit)
+                newLIData.columns["Pitch"].append(pit)
+                newLTData.columns["Pitch"].append(pit)
+                newRrsData.columns["Pitch"].append(pit)
+            if rotator:
+                newESData.columns["Rotator"].append(rot)
+                newLIData.columns["Rotator"].append(rot)
+                newLTData.columns["Rotator"].append(rot)
+                newRrsData.columns["Rotator"].append(rot)
+            if roll:
+                newESData.columns["Roll"].append(rol)
+                newLIData.columns["Roll"].append(rol)
+                newLTData.columns["Roll"].append(rol)
+                newRrsData.columns["Roll"].append(rol)
 
         rrsColumns = {}
                 
@@ -329,6 +428,7 @@ class ProcessL4:
     def calculateReflectance(root, node, interval, enableQualityCheck, performNIRCorrection, defaultWindSpeed=0.0, windSpeedData=None):
     #def calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
 
+        print("calculateReflectance")
 
         referenceGroup = node.getGroup("Reference")
         sasGroup = node.getGroup("SAS")
@@ -409,20 +509,28 @@ class ProcessL4:
 
         #print("items:", esColumns.values())
         #print(ltLength,resolution)
-        start = 0
-        #end = 0
-        endTime = Utilities.timeTag2ToSec(tt2[0]) + interval
-        for i in range(0, len(tt2)):
-            time = Utilities.timeTag2ToSec(tt2[i])
-            if time > endTime:
-                end = i-1
-                esSlice = ProcessL4.columnToSlice(esColumns, start, end)
-                liSlice = ProcessL4.columnToSlice(liColumns, start, end)
-                ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
+        if interval == 0:
+            for i in range(0, len(tt2)-1):
+                esSlice = ProcessL4.columnToSlice(esColumns, i, i+1)
+                liSlice = ProcessL4.columnToSlice(liColumns, i, i+1)
+                ltSlice = ProcessL4.columnToSlice(ltColumns, i, i+1)
                 ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedColumns)
-                
-                start = i
-                endTime = time + interval
+
+        else:
+            start = 0
+            #end = 0
+            endTime = Utilities.timeTag2ToSec(tt2[0]) + interval
+            for i in range(0, len(tt2)):
+                time = Utilities.timeTag2ToSec(tt2[i])
+                if time > endTime:
+                    end = i-1
+                    esSlice = ProcessL4.columnToSlice(esColumns, start, end)
+                    liSlice = ProcessL4.columnToSlice(liColumns, start, end)
+                    ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
+                    ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedColumns)
+    
+                    start = i
+                    endTime = time + interval
 
 
 #        for i in range(0, int(esLength/resolution)):
@@ -433,7 +541,7 @@ class ProcessL4:
 #            liSlice = ProcessL4.columnToSlice(liColumns, start, end, i, resolution)
 #            ltSlice = ProcessL4.columnToSlice(ltColumns, start, end, i, resolution)
 #
-#            ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, defaultWindSpeed, windSpeedColumns)
+#            ProcessL4.calculateReflectance2(root, node, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, defaultWindSpeed, windSpeedColumns)
 
 
         newESData.columnsToDataset()

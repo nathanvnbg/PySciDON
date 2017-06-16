@@ -35,17 +35,17 @@ class ProcessL4a:
         print("Process MODIS Bands")
         rrsData.datasetToColumns()
         rrsColumns = rrsData.columns
-        
+
         date = rrsColumns["Datetag"]
         tt2 = rrsColumns["Timetag2"]
         latpos = rrsColumns["Latpos"]
         lonpos = rrsColumns["Lonpos"]
-        
+
         bandData.columns["Datetag"] = date
         bandData.columns["Timetag2"] = tt2
         bandData.columns["Latpos"] = latpos
         bandData.columns["Lonpos"] = lonpos
-        
+
         bandData.columns["Band1"] = ProcessL4a.calculateBand(rrsData, MODIS.band1)
         bandData.columns["Band3"] = ProcessL4a.calculateBand(rrsData, MODIS.band3)
         bandData.columns["Band4"] = ProcessL4a.calculateBand(rrsData, MODIS.band4)
@@ -57,7 +57,7 @@ class ProcessL4a:
         bandData.columns["Band13"] = ProcessL4a.calculateBand(rrsData, MODIS.band13)
         bandData.columns["Band14"] = ProcessL4a.calculateBand(rrsData, MODIS.band14)
         bandData.columns["Band15"] = ProcessL4a.calculateBand(rrsData, MODIS.band15)
-        
+
         bandData.columnsToDataset()
 
 
@@ -66,17 +66,17 @@ class ProcessL4a:
         print("Process Sentinel3 Bands")
         rrsData.datasetToColumns()
         rrsColumns = rrsData.columns
-        
+
         date = rrsColumns["Datetag"]
         tt2 = rrsColumns["Timetag2"]
         latpos = rrsColumns["Latpos"]
         lonpos = rrsColumns["Lonpos"]
-        
+
         bandData.columns["Datetag"] = date
         bandData.columns["Timetag2"] = tt2
         bandData.columns["Latpos"] = latpos
         bandData.columns["Lonpos"] = lonpos
-        
+
         bandData.columns["Band1"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band1)
         bandData.columns["Band2"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band2)
         bandData.columns["Band3"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band3)
@@ -90,7 +90,7 @@ class ProcessL4a:
         bandData.columns["Band11"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band11)
         bandData.columns["Band12"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band12)
         bandData.columns["Band13"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band13)
-        
+
         bandData.columnsToDataset()
 
 

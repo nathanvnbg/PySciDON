@@ -48,6 +48,12 @@ class ProcessL3a:
         # ToDo: Do this better
         newColumns["LATPOS"] = saveDatetag
         newColumns["LONPOS"] = saveDatetag
+        newColumns["AZIMUTH"] = saveDatetag
+        newColumns["SHIP_TRUE"] = saveDatetag
+        newColumns["PITCH"] = saveDatetag
+        newColumns["ROTATOR"] = saveDatetag
+        newColumns["ROLL"] = saveDatetag
+
 
         for i in range(new_x.shape[0]):
             #print(i, new_x[i])
@@ -180,7 +186,8 @@ class ProcessL3a:
             nMin = -1
             nMax = -1
             for k in ds.columns.keys():
-                if k != "Datetag" and k != "Timetag2" and k != "LATPOS" and k != "LONPOS":
+                #if k != "Datetag" and k != "Timetag2" and k != "LATPOS" and k != "LONPOS":
+                if Utilities.isFloat(k):
                     num = float(k)
                     if nMin == -1:
                         nMin = num
@@ -203,7 +210,8 @@ class ProcessL3a:
         for ds in [esData, liData, ltData]:
             l = []
             for k in ds.columns.keys():
-                if k != "Datetag" and k != "Timetag2" and k != "LATPOS" and k != "LONPOS":
+                #if k != "Datetag" and k != "Timetag2" and k != "LATPOS" and k != "LONPOS":
+                if Utilities.isFloat(k):
                     num = float(k)
                     if num < matchMin:
                         l.append(k)
@@ -235,6 +243,8 @@ class ProcessL3a:
         newSASGroup = root.addGroup("SAS")
         if node.hasGroup("GPS"):
             root.groups.append(node.getGroup("GPS"))
+        if node.hasGroup("SATNAV"):
+            root.groups.append(node.getGroup("SATNAV"))
 
         referenceGroup = node.getGroup("Reference")
         sasGroup = node.getGroup("SAS")
@@ -280,6 +290,58 @@ class ProcessL3a:
             newESData.columns["LONPOS"] = lonpos
             newLIData.columns["LONPOS"] = lonpos
             newLTData.columns["LONPOS"] = lonpos
+
+            newESData.columnsToDataset()
+            newLIData.columnsToDataset()
+            newLTData.columnsToDataset()
+        
+
+        if root.hasGroup("SATNAV"):
+            satnavGroup = node.getGroup("SATNAV")
+
+            azimuthData = satnavGroup.getDataset("AZIMUTH")
+            headingData = satnavGroup.getDataset("HEADING")
+            pitchData = satnavGroup.getDataset("PITCH")
+            pointingData = satnavGroup.getDataset("POINTING")
+            rollData = satnavGroup.getDataset("ROLL")
+
+            azimuthData.datasetToColumns()
+            headingData.datasetToColumns()
+            pitchData.datasetToColumns()
+            pointingData.datasetToColumns()
+            rollData.datasetToColumns()
+            
+
+            azimuth = azimuthData.columns["SUN"]
+            shipTrue = headingData.columns["SHIP_TRUE"]
+            pitch = pitchData.columns["SAS"]
+            rotator = pointingData.columns["ROTATOR"]
+            roll = rollData.columns["SAS"]
+
+
+            newESData.datasetToColumns()
+            newLIData.datasetToColumns()
+            newLTData.datasetToColumns()
+            
+            newESData.columns["AZIMUTH"] = azimuth
+            newLIData.columns["AZIMUTH"] = azimuth
+            newLTData.columns["AZIMUTH"] = azimuth
+
+            newESData.columns["SHIP_TRUE"] = shipTrue
+            newLIData.columns["SHIP_TRUE"] = shipTrue
+            newLTData.columns["SHIP_TRUE"] = shipTrue
+
+            newESData.columns["PITCH"] = pitch
+            newLIData.columns["PITCH"] = pitch
+            newLTData.columns["PITCH"] = pitch
+            
+            newESData.columns["ROTATOR"] = rotator
+            newLIData.columns["ROTATOR"] = rotator
+            newLTData.columns["ROTATOR"] = rotator
+            
+            newESData.columns["ROLL"] = roll
+            newLIData.columns["ROLL"] = roll
+            newLTData.columns["ROLL"] = roll
 
             newESData.columnsToDataset()
             newLIData.columnsToDataset()
