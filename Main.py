@@ -10,6 +10,8 @@ from Controller import Controller
 from ConfigFile import ConfigFile
 from ConfigWindow import ConfigWindow
 
+from PreprocessRawFile import PreprocessRawFile
+
 #from CalibrationEditWindow import CalibrationEditWindow
 
 '''
@@ -32,14 +34,14 @@ class Window(QtWidgets.QWidget):
         super().__init__(parent)
         
         # Create folders if they don't exist
-        if not os.path.exists("RawData"):
-            os.makedirs("RawData")
-        if not os.path.exists("Data"):
-            os.makedirs("Data")
-        if not os.path.exists("Plots"):
-            os.makedirs("Plots")
-        if not os.path.exists("csv"):
-            os.makedirs("csv")
+        #if not os.path.exists("RawData"):
+        #    os.makedirs("RawData")
+        #if not os.path.exists("Data"):
+        #    os.makedirs("Data")
+        #if not os.path.exists("Plots"):
+        #    os.makedirs("Plots")
+        #if not os.path.exists("csv"):
+        #    os.makedirs("csv")
         if not os.path.exists("Config"):
             os.makedirs("Config")
 
@@ -305,13 +307,19 @@ class Window(QtWidgets.QWidget):
             doCleaning = int(ConfigFile.settings["bL0PerformCleaning"])
             angleMin = float(ConfigFile.settings["fL0AngleMin"])
             angleMax = float(ConfigFile.settings["fL0AngleMax"])
-            print(startLongitude, endLongitude, direction)
+            rotatorAngleMin = float(ConfigFile.settings["fL0RotatorAngleMin"])
+            rotatorAngleMax = float(ConfigFile.settings["fL0RotatorAngleMax"])
+            rotatorHomeAngle = float(ConfigFile.settings["fL0RotatorHomeAngle"])
+            rotatorDelay = float(ConfigFile.settings["fL0RotatorDelay"])
+            #rotatorDelay = 60
+            print("Preprocess Longitude Data", startLongitude, endLongitude, direction)
             #Controller.preprocessData(preprocessDirectory, dataDirectory, calibrationMap, \
             #                          checkCoords, startLongitude, endLongitude, direction, \
             #                          doCleaning, angleMin, angleMax)
-            Controller.preprocessFiles(fileNames[0], dataDirectory, calibrationMap, \
+            PreprocessRawFile.processFiles(fileNames[0], dataDirectory, calibrationMap, \
                                       checkCoords, startLongitude, endLongitude, direction, \
-                                      doCleaning, angleMin, angleMax)
+                                      doCleaning, angleMin, angleMax, \
+                                      rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay)
         else:
             print("Process Raw Files")
             Controller.processFilesSingleLevel(fileNames[0], calibrationMap, level, windFile)
@@ -376,17 +384,23 @@ class Window(QtWidgets.QWidget):
         startLongitude = float(ConfigFile.settings["fL0LonMin"])
         endLongitude = float(ConfigFile.settings["fL0LonMax"])
         direction = ConfigFile.settings["cL0Direction"]
-        print(startLongitude, endLongitude, direction)
+        print("Preprocess Longitude Data", startLongitude, endLongitude, direction)
         doCleaning = int(ConfigFile.settings["bL0PerformCleaning"])
         angleMin = float(ConfigFile.settings["fL0AngleMin"])
         angleMax = float(ConfigFile.settings["fL0AngleMax"])
-        print(doCleaning, angleMin, angleMax)
+        print("Preprocess Angle Data", doCleaning, angleMin, angleMax)
+        rotatorAngleMin = float(ConfigFile.settings["fL0RotatorAngleMin"])
+        rotatorAngleMax = float(ConfigFile.settings["fL0RotatorAngleMax"])
+        rotatorHomeAngle = float(ConfigFile.settings["fL0RotatorHomeAngle"])
+        rotatorDelay = float(ConfigFile.settings["fL0RotatorDelay"])
+        print("Preprocess Rotator Data", rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay)
         #Controller.preprocessData(preprocessDirectory, dataDirectory, calibrationMap, \
         #                          checkCoords, startLongitude, endLongitude, direction, \
         #                          doCleaning, angleMin, angleMax)
-        Controller.preprocessFiles(fileNames[0], dataDirectory, calibrationMap, \
+        PreprocessRawFile.processFiles(fileNames[0], dataDirectory, calibrationMap, \
                                   checkCoords, startLongitude, endLongitude, direction, \
-                                  doCleaning, angleMin, angleMax)
+                                  doCleaning, angleMin, angleMax, \
+                                  rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay)
         print("Process Raw Files")
         Controller.processDirectory(dataDirectory, calibrationMap, level, windFile)
         #Controller.processFilesMultiLevel(fnames[0], calibrationMap, level)

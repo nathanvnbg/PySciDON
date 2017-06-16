@@ -200,10 +200,149 @@ class PreprocessRawFile:
         return x
 
 
+    # Clean Rotator Data
+    @staticmethod
+    def cleanRotator(filepath, calibrationMap, angleMin, angleMax, rotatorDelay=60):
+        print("Clean Raw File")
+
+        header = b""
+        message = b""
+
+        # Index of start/end message block for start/end longitude
+        iStart = 0
+        iEnd = 0
+        
+        init=False
+        saveTime=0
+        saveAngle=0
+
+        # Start reading raw binary file
+        with open(filepath, 'rb') as f:
+            while 1:
+                # Reads a block of binary data from file
+                pos = f.tell()
+                b = f.read(PreprocessRawFile.MAX_TAG_READ)
+                f.seek(pos)
+
+                if not b:
+                    break
+
+                #print b
+                # Search for frame tag string in block
+                for i in range(0, PreprocessRawFile.MAX_TAG_READ):
+                    testString = b[i:].upper()
+                    #print("test: ", testString[:6])
+
+                    # Reset file position on max read (frame tag not found)
+                    if i == PreprocessRawFile.MAX_TAG_READ-1:
+                        #f.read(PreprocessRawFile.MAX_TAG_READ)
+                        f.read(PreprocessRawFile.RESET_TAG_READ)
+                        break
+
+                    # Reads header message type from frame tag
+                    if testString.startswith(b"SATHDR"):
+                        #print("SATHDR")
+                        if i > 0:
+                            f.read(i)
+                        header += f.read(PreprocessRawFile.SATHDR_READ)
+
+                        break
+                    # Reads messages that starts with SATNAV and retrieves the CalibrationFile from map
+                    else:
+                        bytesRead = 0
+                        for key in calibrationMap:
+                            cf = calibrationMap[key]
+                            if testString.startswith(b"SATNAV") and testString.startswith(cf.id.upper().encode("utf-8")):
+                                if i > 0:
+                                    f.read(i)
+
+                                # Read block from start of message
+                                pos = f.tell()
+                                msg = f.read(PreprocessRawFile.MAX_BLOCK_READ)
+                                f.seek(pos)
+
+                                # Convert message to HDFGroup
+                                gp = HDFGroup()
+                                bytesRead = cf.convertRaw(msg, gp)
+
+                                # Read till end of message
+                                if bytesRead >= 0:
+                                    f.read(bytesRead)
+
+
+                                #gp.printd()
+
+                                if gp.hasDataset("AZIMUTH") and gp.hasDataset("HEADING") and gp.hasDataset("POINTING"):
+                                    angle = 0
+                                    
+                                    pointingData = gp.getDataset("POINTING")
+                                    angle = pointingData.columns["ROTATOR"][0]
+                                    
+                                    timetag2Data = gp.getDataset("TIMETAG2")
+                                    time = Utilities.timeTag2ToSec(timetag2Data.columns["NONE"][0])
+                                    
+                                    if not init:
+                                        saveAngle = angle
+                                        saveTime = time
+                                        init=True
+                                    else:
+                                        # Detect angle changed
+                                        if saveAngle < angle + 0.05 and saveAngle > angle - 0.05:
+                                            saveAngle = angle
+                                        else:
+                                            #print("Angle:", saveAngle, angle, "Time:", time)
+                                            saveAngle = angle
+                                            saveTime = time
+                                            # Tell program to ignore angles until rotatorDelay time
+                                            angle = angleMin - 1
+
+
+                                    #print("Angle: ", angle)
+                                    #if angle >= 90 and angle <= 135:
+                                    #if angle >= angleMin and angle <= angleMax:
+                                    if angle >= angleMin and angle <= angleMax and time > saveTime + rotatorDelay:
+                                        # iStart is -1 if previous SATNAV was bad angle
+                                        if iStart != -1:
+                                            # Append measurements from previous block to new file
+                                            iEnd = f.tell()
+    
+                                            pos = f.tell()
+                                            f.seek(iStart)
+                                            msg = f.read(iEnd-iStart)
+                                            f.seek(pos)
+    
+                                            message += msg
+                                            iStart = f.tell()
+                                        else:
+                                            # Reset iStart to start of current SATNAV
+                                            iStart = f.tell() - bytesRead
+                                        
+                                    else:
+                                        # Found bad angles, set iStart to -1 to ignore raw data
+                                        if time < saveTime + rotatorDelay:
+                                            print("Rotator Angle Changed, Time: ", time)
+                                        else:
+                                            print("Skip Rotator Angle: ", angle)
+                                        iStart = -1
+                                        
+
+                                break
+                        if bytesRead > 0:
+                            break
+            if iStart != -1:
+                f.seek(iStart)
+                message += f.read()
+
+        # Write file
+        with open(filepath, 'wb') as fout:
+            fout.write(message)
+
+
+
     # Remove data where
     # sun_azimuth - SAS_true != [90,135]
     @staticmethod
-    def cleanRawFile(filepath, calibrationMap, angleMin, angleMax):
+    def cleanRawFile(filepath, calibrationMap, angleMin, angleMax, rotatorHomeAngle=0):
         print("Clean Raw File")
 
         header = b""
@@ -268,15 +407,29 @@ class PreprocessRawFile:
 
 
                                 #gp.printd()
-                                if gp.hasDataset("AZIMUTH") and gp.hasDataset("HEADING"):
+
+                                if gp.hasDataset("AZIMUTH") and gp.hasDataset("HEADING") and gp.hasDataset("POINTING"):
+                                    angle = 0
+
                                     azimuthData = gp.getDataset("AZIMUTH")
                                     azimuth = azimuthData.columns["SUN"][0]
 
-                                    sasTrueData = gp.getDataset("HEADING")
-                                    sasTrue = sasTrueData.columns["SAS_TRUE"][0]
+                                    #headingData = gp.getDataset("HEADING")
+                                    #sasTrue = headingData.columns["SAS_TRUE"][0]
+                                    #angle = PreprocessRawFile.normalizeAngle(azimuth - sasTrue)
 
-                                    #angle = (azimuth - sasTrue) % 360
-                                    angle = PreprocessRawFile.normalizeAngle(azimuth - sasTrue)
+                                    pointingData = gp.getDataset("POINTING")
+                                    rotatorAngle = pointingData.columns["ROTATOR"][0]
+
+                                    headingData = gp.getDataset("HEADING")
+                                    shipTrue = headingData.columns["SHIP_TRUE"][0]
+
+                                    #angle = PreprocessRawFile.normalizeAngle(shipTrue + rotatorHomeAngle)
+                                    #angle = PreprocessRawFile.normalizeAngle(angle - rotatorAngle)
+                                    #angle = PreprocessRawFile.normalizeAngle(azimuth - angle)
+                                    angle = PreprocessRawFile.normalizeAngle(rotatorAngle + shipTrue - azimuth + 270)#rotatorHomeAngle)
+                                    #print("Angle: ", angle)
+
                                     #print("Angle: ", angle)
                                     #if angle >= 90 and angle <= 135:
                                     if angle >= angleMin and angle <= angleMax:
@@ -315,7 +468,9 @@ class PreprocessRawFile:
 
 
     @staticmethod
-    def processFiles(fileNames, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax):
+    def processFiles(fileNames, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, \
+                     doCleaning, angleMin, angleMax, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay):
+        #print("Preprocess Files")
         if checkCoords:
             for name in fileNames:
                 #print("infile:", name)
@@ -326,10 +481,13 @@ class PreprocessRawFile:
             for name in fileNames:
                 #print("infile:", name)
                 if os.path.splitext(name)[1].lower() == ".raw":
-                    PreprocessRawFile.cleanRawFile(name, calibrationMap, angleMin, angleMax)
+                    PreprocessRawFile.cleanRotator(name, calibrationMap, rotatorAngleMin, rotatorAngleMax, rotatorDelay)
+                    PreprocessRawFile.cleanRawFile(name, calibrationMap, angleMin, angleMax, rotatorHomeAngle)
+
 
     @staticmethod
-    def processDirectory(path, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax):
+    def processDirectory(path, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, \
+                         doCleaning, angleMin, angleMax, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay):
         if checkCoords:
             for (dirpath, dirnames, filenames) in os.walk(path):
                 for name in sorted(filenames):
@@ -343,6 +501,7 @@ class PreprocessRawFile:
                 for name in sorted(filenames):
                     #print("infile:", name)
                     if os.path.splitext(name)[1].lower() == ".raw":
-                        PreprocessRawFile.cleanRawFile(os.path.join(dirpath, name), calibrationMap, angleMin, angleMax)
+                        PreprocessRawFile.cleanRotator(os.path.join(dirpath, name), calibrationMap, rotatorAngleMin, rotatorAngleMax,rotatorDelay)
+                        PreprocessRawFile.cleanRawFile(os.path.join(dirpath, name), calibrationMap, angleMin, angleMax, rotatorHomeAngle)
                 break
 

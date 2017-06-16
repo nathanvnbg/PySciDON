@@ -105,6 +105,27 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l0AngleMaxLineEdit.setText(str(ConfigFile.settings["fL0AngleMax"]))
         self.l0AngleMaxLineEdit.setValidator(doubleValidator)
 
+        l0RotatorAngleMinLabel = QtWidgets.QLabel("Rotator Angle Min", self)
+        self.l0RotatorAngleMinLineEdit = QtWidgets.QLineEdit(self)
+        self.l0RotatorAngleMinLineEdit.setText(str(ConfigFile.settings["fL0RotatorAngleMin"]))
+        self.l0RotatorAngleMinLineEdit.setValidator(doubleValidator)
+
+        l0RotatorAngleMaxLabel = QtWidgets.QLabel("Rotator Angle Max", self)
+        self.l0RotatorAngleMaxLineEdit = QtWidgets.QLineEdit(self)
+        self.l0RotatorAngleMaxLineEdit.setText(str(ConfigFile.settings["fL0RotatorAngleMax"]))
+        self.l0RotatorAngleMaxLineEdit.setValidator(doubleValidator)
+
+        l0RotatorHomeAngleLabel = QtWidgets.QLabel("Home Angle", self)
+        self.l0RotatorHomeAngleLineEdit = QtWidgets.QLineEdit(self)
+        self.l0RotatorHomeAngleLineEdit.setText(str(ConfigFile.settings["fL0RotatorHomeAngle"]))
+        self.l0RotatorHomeAngleLineEdit.setValidator(doubleValidator)
+        
+        l0RotatorDelayLabel = QtWidgets.QLabel("Rotator Delay (Seconds)", self)
+        self.l0RotatorDelayLineEdit = QtWidgets.QLineEdit(self)
+        self.l0RotatorDelayLineEdit.setText(str(ConfigFile.settings["fL0RotatorDelay"]))
+        self.l0RotatorDelayLineEdit.setValidator(doubleValidator)
+
+
 
         l3InterpIntervalLabel = QtWidgets.QLabel("Level 3 - Interpolation Interval (nm)", self)
         self.l3InterpIntervalLineEdit = QtWidgets.QLineEdit(self)
@@ -155,69 +176,96 @@ class ConfigWindow(QtWidgets.QDialog):
         self.cancelButton.clicked.connect(self.cancelButtonPressed)
 
 
+        print("ConfigWindow - Create Layout")
+
         vBox = QtWidgets.QVBoxLayout()
         vBox.addWidget(self.nameLabel)
         vBox.addSpacing(10)
 
-        #vBox.addStretch(1)
-        vBox.addWidget(self.addCalibrationFileButton)
-        vBox.addWidget(self.calibrationFileComboBox)
-        vBox.addWidget(self.calibrationEnabledCheckBox)
-        vBox.addWidget(calibrationFrameTypeLabel)
-        vBox.addWidget(self.calibrationFrameTypeComboBox)
-        vBox.addSpacing(25)
 
+        vBox1 = QtWidgets.QVBoxLayout()
+
+        #vBox.addStretch(1)
+        vBox1.addWidget(self.addCalibrationFileButton)
+        vBox1.addWidget(self.calibrationFileComboBox)
+        vBox1.addWidget(self.calibrationEnabledCheckBox)
+        vBox1.addWidget(calibrationFrameTypeLabel)
+        vBox1.addWidget(self.calibrationFrameTypeComboBox)
+        vBox1.addSpacing(25)
+
+
+        #vBox1 = QtWidgets.QVBoxLayout()
 
         #vBox = QtWidgets.QVBoxLayout()
         #vBox.addStretch(1)
-        vBox.addWidget(l0CheckCoordsLabel)
-        vBox.addWidget(self.l0CheckCoordsCheckBox)
-        vBox.addWidget(lonMinLabel)
-        vBox.addWidget(self.lonMinLineEdit)
-        vBox.addWidget(lonMaxLabel)
-        vBox.addWidget(self.lonMaxLineEdit)
-        vBox.addWidget(directionLabel)
-        vBox.addWidget(self.directionComboBox)
+        vBox1.addWidget(l0CheckCoordsLabel)
+        vBox1.addWidget(self.l0CheckCoordsCheckBox)
+        vBox1.addWidget(lonMinLabel)
+        vBox1.addWidget(self.lonMinLineEdit)
+        vBox1.addWidget(lonMaxLabel)
+        vBox1.addWidget(self.lonMaxLineEdit)
+        vBox1.addWidget(directionLabel)
+        vBox1.addWidget(self.directionComboBox)
 
-        vBox.addWidget(l0PerformCleaningLabel)
-        vBox.addWidget(self.l0PerformCleaningCheckBox)
-        vBox.addWidget(l0AngleMinLabel)
-        vBox.addWidget(self.l0AngleMinLineEdit)
-        vBox.addWidget(l0AngleMaxLabel)
-        vBox.addWidget(self.l0AngleMaxLineEdit)
+        vBox1.addWidget(l0PerformCleaningLabel)
+        vBox1.addWidget(self.l0PerformCleaningCheckBox)
+        vBox1.addWidget(l0AngleMinLabel)
+        vBox1.addWidget(self.l0AngleMinLineEdit)
+        vBox1.addWidget(l0AngleMaxLabel)
+        vBox1.addWidget(self.l0AngleMaxLineEdit)
+        vBox1.addWidget(l0RotatorAngleMinLabel)
+        vBox1.addWidget(self.l0RotatorAngleMinLineEdit)
+        vBox1.addWidget(l0RotatorAngleMaxLabel)
+        vBox1.addWidget(self.l0RotatorAngleMaxLineEdit)
+        vBox1.addWidget(l0RotatorHomeAngleLabel)
+        vBox1.addWidget(self.l0RotatorHomeAngleLineEdit)
+        vBox1.addWidget(l0RotatorDelayLabel)
+        vBox1.addWidget(self.l0RotatorDelayLineEdit)
 
 
-        vBox.addWidget(l3InterpIntervalLabel)
-        vBox.addWidget(self.l3InterpIntervalLineEdit)
+        vBox2 = QtWidgets.QVBoxLayout()
+        vBox2.setAlignment(QtCore.Qt.AlignBottom)
+
+        vBox2.addWidget(l3InterpIntervalLabel)
+        vBox2.addWidget(self.l3InterpIntervalLineEdit)
 
 
-        vBox.addWidget(l4QualityFlagLabel)
-        vBox.addWidget(self.l4QualityFlagCheckBox)
-        vBox.addWidget(l4EsFlagLabel)
-        vBox.addWidget(self.l4EsFlagLineEdit)
-        vBox.addWidget(l4DawnDuskFlagLabel)
-        vBox.addWidget(self.l4DawnDuskFlagLineEdit)
-        vBox.addWidget(l4RainfallHumidityFlagLabel)
-        vBox.addWidget(self.l4RainfallHumidityFlagLineEdit)
+        vBox2.addWidget(l4QualityFlagLabel)
+        vBox2.addWidget(self.l4QualityFlagCheckBox)
+        vBox2.addWidget(l4EsFlagLabel)
+        vBox2.addWidget(self.l4EsFlagLineEdit)
+        vBox2.addWidget(l4DawnDuskFlagLabel)
+        vBox2.addWidget(self.l4DawnDuskFlagLineEdit)
+        vBox2.addWidget(l4RainfallHumidityFlagLabel)
+        vBox2.addWidget(self.l4RainfallHumidityFlagLineEdit)
 
-        vBox.addWidget(l4TimeIntervalLabel)
-        vBox.addWidget(self.l4TimeIntervalLineEdit)
-        vBox.addWidget(l4DefaultWindSpeedLabel)
-        vBox.addWidget(self.l4DefaultWindSpeedLineEdit)
-        #vBox.addWidget(l4NIRCorrectionLabel)
-        #vBox.addWidget(self.l4NIRCorrectionCheckBox)
+        vBox2.addWidget(l4TimeIntervalLabel)
+        vBox2.addWidget(self.l4TimeIntervalLineEdit)
+        vBox2.addWidget(l4DefaultWindSpeedLabel)
+        vBox2.addWidget(self.l4DefaultWindSpeedLineEdit)
+        #vBox2.addWidget(l4NIRCorrectionLabel)
+        #vBox2.addWidget(self.l4NIRCorrectionCheckBox)
+        vBox2.addSpacing(25)
+        
+        hBox = QtWidgets.QHBoxLayout()
+        hBox.addLayout(vBox1)
+        hBox.addSpacing(50)
+        hBox.addLayout(vBox2)        
+
 
         saveHBox = QtWidgets.QHBoxLayout()
         saveHBox.addStretch(1)
         saveHBox.addWidget(self.saveButton)
         saveHBox.addWidget(self.cancelButton)
 
+
+        vBox.addLayout(hBox)
         vBox.addLayout(saveHBox)
 
 
         self.setLayout(vBox)
 
-        self.setGeometry(300, 300, 400, 950)
+        self.setGeometry(300, 300, 400, 750)
         self.setWindowTitle('Edit Config')
         #self.show()
         print("ConfigWindow - initUI Done")
@@ -303,6 +351,10 @@ class ConfigWindow(QtWidgets.QDialog):
         ConfigFile.settings["bL0PerformCleaning"] = int(self.l0PerformCleaningCheckBox.isChecked())
         ConfigFile.settings["fL0AngleMin"] = float(self.l0AngleMinLineEdit.text())
         ConfigFile.settings["fL0AngleMax"] = float(self.l0AngleMaxLineEdit.text())
+        ConfigFile.settings["fL0RotatorAngleMin"] = float(self.l0RotatorAngleMinLineEdit.text())
+        ConfigFile.settings["fL0RotatorAngleMax"] = float(self.l0RotatorAngleMaxLineEdit.text())
+        ConfigFile.settings["fL0RotatorHomeAngle"] = float(self.l0RotatorHomeAngleLineEdit.text())
+        ConfigFile.settings["fL0RotatorDelay"] = float(self.l0RotatorDelayLineEdit.text())
 
         ConfigFile.settings["fL3aInterpInterval"] = float(self.l3InterpIntervalLineEdit.text())
 

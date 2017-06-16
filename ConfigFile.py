@@ -17,6 +17,10 @@ class ConfigFile:
         print("bL0PerformCleaning", ConfigFile.settings["bL0PerformCleaning"])
         print("fL0AngleMin", ConfigFile.settings["fL0AngleMin"])
         print("fL0AngleMax", ConfigFile.settings["fL0AngleMax"])
+        print("fL0RotatorAngleMin", ConfigFile.settings["fL0RotatorAngleMin"])
+        print("fL0RotatorAngleMax", ConfigFile.settings["fL0RotatorAngleMax"])
+        print("fL0RotatorHomeAngle", ConfigFile.settings["fL0RotatorHomeAngle"])
+        print("fL0RotatorDelay", ConfigFile.settings["fL0RotatorDelay"])
 
         print("fL3aInterpInterval", ConfigFile.settings["fL3aInterpInterval"])
 
@@ -53,6 +57,10 @@ class ConfigFile:
         ConfigFile.settings["bL0PerformCleaning"] = 0
         ConfigFile.settings["fL0AngleMin"] = 90.0
         ConfigFile.settings["fL0AngleMax"] = 135.0
+        ConfigFile.settings["fL0RotatorAngleMin"] = -40.0
+        ConfigFile.settings["fL0RotatorAngleMax"] = 40.0
+        ConfigFile.settings["fL0RotatorHomeAngle"] = 0.0
+        ConfigFile.settings["fL0RotatorDelay"] = 60.0
 
         ConfigFile.settings["fL3aInterpInterval"] = 1.0
 

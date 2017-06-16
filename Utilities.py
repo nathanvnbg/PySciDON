@@ -71,6 +71,15 @@ class Utilities:
         m = int(t[1])
         s = int(t[2])
         return ((h*60)+m)*60+s
+    
+    # Checks if a string is a floating point number
+    @staticmethod
+    def isFloat(text):
+        try:
+            float(text)
+            return True
+        except ValueError:
+            return False
 
     # Check if dataset contains NANs
     def hasNan(ds):

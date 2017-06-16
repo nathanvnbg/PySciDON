@@ -13,7 +13,6 @@ from ConfigFile import ConfigFile
 from Utilities import Utilities
 from WindSpeedReader import WindSpeedReader
 
-from PreprocessRawFile import PreprocessRawFile
 from ProcessL1a import ProcessL1a
 from ProcessL1b import ProcessL1b
 from ProcessL2 import ProcessL2
@@ -106,14 +105,6 @@ class Controller:
         print("calibrationMap keys 2:", calibrationMap.keys())
         print("processCalibrationConfig - DONE")
         return calibrationMap
-
-    @staticmethod
-    def preprocessFiles(fileNames, dataDirectory, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax):
-        PreprocessRawFile.processFiles(fileNames, dataDirectory, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax)
-
-    @staticmethod
-    def preprocessData(preprocessDirectory, dataDirectory, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax):
-        PreprocessRawFile.processDirectory(preprocessDirectory, dataDirectory, calibrationMap, checkCoords, startLongitude, endLongitude, direction, doCleaning, angleMin, angleMax)
 
     # Read wind speed file
     @staticmethod
