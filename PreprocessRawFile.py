@@ -1,5 +1,6 @@
 
 import os
+import shutil
 import time
 
 #from HDFDataset import HDFDataset
@@ -274,13 +275,13 @@ class PreprocessRawFile:
 
                                 if gp.hasDataset("AZIMUTH") and gp.hasDataset("HEADING") and gp.hasDataset("POINTING"):
                                     angle = 0
-                                    
+
                                     pointingData = gp.getDataset("POINTING")
                                     angle = pointingData.columns["ROTATOR"][0]
-                                    
+
                                     timetag2Data = gp.getDataset("TIMETAG2")
                                     time = Utilities.timeTag2ToSec(timetag2Data.columns["NONE"][0])
-                                    
+
                                     if not init:
                                         saveAngle = angle
                                         saveTime = time
@@ -468,40 +469,50 @@ class PreprocessRawFile:
 
 
     @staticmethod
-    def processFiles(fileNames, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, \
+    def processFiles(filePaths, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, \
                      doCleaning, angleMin, angleMax, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay):
-        #print("Preprocess Files")
+        print("Preprocess Files")
         if checkCoords:
-            for name in fileNames:
+            for fp in filePaths:
                 #print("infile:", name)
-                if os.path.splitext(name)[1].lower() == ".raw":
-                    PreprocessRawFile.processRawFile(name, dataDir, calibrationMap, startLongitude, endLongitude, direction)
+                if os.path.splitext(fp)[1].lower() == ".raw":
+                    PreprocessRawFile.processRawFile(fp, dataDir, calibrationMap, startLongitude, endLongitude, direction)
+        else:
+            for fp in filePaths:
+                (dirPath, fileName) = os.path.split(fp)
+                outputPath = os.path.join(dataDir, fileName)
+                shutil.copy2(fp, outputPath)
 
         if doCleaning:
-            for name in fileNames:
-                #print("infile:", name)
-                if os.path.splitext(name)[1].lower() == ".raw":
-                    PreprocessRawFile.cleanRotator(name, calibrationMap, rotatorAngleMin, rotatorAngleMax, rotatorDelay)
-                    PreprocessRawFile.cleanRawFile(name, calibrationMap, angleMin, angleMax, rotatorHomeAngle)
+            for (dirPath, dirNames, fileNames) in os.walk(dataDir):
+                for name in sorted(fileNames):
+                    #print("infile:", name)
+                    if os.path.splitext(name)[1].lower() == ".raw":
+                        PreprocessRawFile.cleanRotator(os.path.join(dirPath, name), calibrationMap, rotatorAngleMin, rotatorAngleMax,rotatorDelay)
+                        PreprocessRawFile.cleanRawFile(os.path.join(dirPath, name), calibrationMap, angleMin, angleMax, rotatorHomeAngle)
+                break
+        print("Preprocess Files - DONE")
 
 
     @staticmethod
     def processDirectory(path, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, \
                          doCleaning, angleMin, angleMax, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay):
+        #for name in fileNames:
+        #    print("infile:", name)
         if checkCoords:
-            for (dirpath, dirnames, filenames) in os.walk(path):
-                for name in sorted(filenames):
+            for (dirPath, dirNames, fileNames) in os.walk(path):
+                for name in sorted(fileNames):
                     #print("infile:", name)
                     if os.path.splitext(name)[1].lower() == ".raw":
-                        PreprocessRawFile.processRawFile(os.path.join(dirpath, name), dataDir, calibrationMap, startLongitude, endLongitude, direction)
+                        PreprocessRawFile.processRawFile(os.path.join(dirPath, name), dataDir, calibrationMap, startLongitude, endLongitude, direction)
                 break
 
         if doCleaning:
-            for (dirpath, dirnames, filenames) in os.walk(dataDir):
-                for name in sorted(filenames):
+            for (dirPath, dirNames, fileNames) in os.walk(dataDir):
+                for name in sorted(fileNames):
                     #print("infile:", name)
                     if os.path.splitext(name)[1].lower() == ".raw":
-                        PreprocessRawFile.cleanRotator(os.path.join(dirpath, name), calibrationMap, rotatorAngleMin, rotatorAngleMax,rotatorDelay)
-                        PreprocessRawFile.cleanRawFile(os.path.join(dirpath, name), calibrationMap, angleMin, angleMax, rotatorHomeAngle)
+                        PreprocessRawFile.cleanRotator(os.path.join(dirPath, name), calibrationMap, rotatorAngleMin, rotatorAngleMax,rotatorDelay)
+                        PreprocessRawFile.cleanRawFile(os.path.join(dirPath, name), calibrationMap, angleMin, angleMax, rotatorHomeAngle)
                 break
 

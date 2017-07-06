@@ -1,7 +1,7 @@
 
 import os
+import shutil
 import sys
-#import shutil
 #from PyQt4 import QtCore, QtGui
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -264,6 +264,25 @@ class Window(QtWidgets.QWidget):
         self.windFileLineEdit.setText("")
 
 
+    # Backup files before preprocessing if source files same as output directory
+    def createBackupFiles(self, fileNames, dataDirectory):
+        if len(fileNames) > 0:
+            path = fileNames[0]
+            (dirPath, fileName) = os.path.split(path)
+            if dirPath == dataDirectory:
+                newFileNames = []
+                backupDir = os.path.join(dataDirectory, "Backup")
+                if not os.path.exists(backupDir):
+                    os.makedirs(backupDir)
+                for path in fileNames:
+                    (dirPath, fileName) = os.path.split(path)
+                    backupPath = os.path.join(backupDir, fileName)
+                    if not os.path.exists(backupPath):
+                        shutil.move(path, backupPath)
+                    newFileNames.append(backupPath)
+                fileNames = newFileNames
+        return fileNames
+
     def processSingle(self, level):
         print("Process Single-Level")
 
@@ -277,10 +296,11 @@ class Window(QtWidgets.QWidget):
         ConfigFile.loadConfig(configFileName)
 
         # Select data files
-        fileNames = QtWidgets.QFileDialog.getOpenFileNames(self, "Open File")
-        print("Files:", fileNames)
-        if not fileNames[0]:
+        openFileNames = QtWidgets.QFileDialog.getOpenFileNames(self, "Open File")
+        print("Files:", openFileNames)
+        if not openFileNames[0]:
             return
+        fileNames = openFileNames[0]
         #calibrationDirectory = settings["sCalibrationFolder"].strip('"')
         #preprocessDirectory = settings["sPreprocessFolder"].strip('"')
 
@@ -298,7 +318,11 @@ class Window(QtWidgets.QWidget):
             print("Output Directory:", dataDirectory)
             if not dataDirectory[0]:
                 return
-        
+
+            # Copy to backup folder if same directory
+            fileNames = self.createBackupFiles(fileNames, dataDirectory)
+
+
             print("Preprocess Raw Files")
             checkCoords = int(ConfigFile.settings["bL0CheckCoords"])
             startLongitude = float(ConfigFile.settings["fL0LonMin"])
@@ -316,13 +340,13 @@ class Window(QtWidgets.QWidget):
             #Controller.preprocessData(preprocessDirectory, dataDirectory, calibrationMap, \
             #                          checkCoords, startLongitude, endLongitude, direction, \
             #                          doCleaning, angleMin, angleMax)
-            PreprocessRawFile.processFiles(fileNames[0], dataDirectory, calibrationMap, \
+            PreprocessRawFile.processFiles(fileNames, dataDirectory, calibrationMap, \
                                       checkCoords, startLongitude, endLongitude, direction, \
                                       doCleaning, angleMin, angleMax, \
                                       rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay)
         else:
             print("Process Raw Files")
-            Controller.processFilesSingleLevel(fileNames[0], calibrationMap, level, windFile)
+            Controller.processFilesSingleLevel(fileNames, calibrationMap, level, windFile)
 
     def singleL0Clicked(self):
         self.processSingle("0")
@@ -359,18 +383,25 @@ class Window(QtWidgets.QWidget):
         ConfigFile.loadConfig(configFileName)
 
         # Select data files
-        fileNames = QtWidgets.QFileDialog.getOpenFileNames(self, "Open File")
-        print("Files:", fileNames)
-        if not fileNames[0]:
+        openFileNames = QtWidgets.QFileDialog.getOpenFileNames(self, "Open File")
+        print("Files:", openFileNames)
+        if not openFileNames[0]:
             return
+        fileNames = openFileNames[0]
         #calibrationDirectory = settings["sCalibrationFolder"].strip('"')
         #preprocessDirectory = settings["sPreprocessFolder"].strip('"')
+
 
         # Select Output Directory
         dataDirectory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Output Directory")
         print("Output Directory:", dataDirectory)
-        if not dataDirectory[0]:
+        if not dataDirectory:
             return
+
+
+        # Copy to backup folder if same directory
+        fileNames = self.createBackupFiles(fileNames, dataDirectory)
+
 
         windFile = self.windFileLineEdit.text()
 
@@ -397,7 +428,7 @@ class Window(QtWidgets.QWidget):
         #Controller.preprocessData(preprocessDirectory, dataDirectory, calibrationMap, \
         #                          checkCoords, startLongitude, endLongitude, direction, \
         #                          doCleaning, angleMin, angleMax)
-        PreprocessRawFile.processFiles(fileNames[0], dataDirectory, calibrationMap, \
+        PreprocessRawFile.processFiles(fileNames, dataDirectory, calibrationMap, \
                                   checkCoords, startLongitude, endLongitude, direction, \
                                   doCleaning, angleMin, angleMax, \
                                   rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay)
