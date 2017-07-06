@@ -103,7 +103,10 @@ class CalibrationData:
             v = int(b)
             #print("au", v)
         elif dataType == "AF":
-            v = float(b)
+            if len(b) == 0:
+                v = float('nan')
+            else:
+                v = float(b)
             #print("af", v)
         elif dataType == "AS":
             #v = b.decode("utf-8")

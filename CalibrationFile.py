@@ -154,12 +154,9 @@ class CalibrationFile:
                 #print("delimiter:", delimiter)
 
                 end = msg[nRead:].find(delimiter)
-                if end == 0:
-                    v = 0.0
-                else:
-                    #print("read:", nRead, end)
-                    b = msg[nRead:nRead+end]
-                    v = cd.convertRaw(b)
+                #print("read:", nRead, end)
+                b = msg[nRead:nRead+end]
+                v = cd.convertRaw(b)
                 nRead += end
 
             # Read fixed length message frames
