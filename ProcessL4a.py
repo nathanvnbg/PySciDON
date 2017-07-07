@@ -33,6 +33,9 @@ class ProcessL4a:
     @staticmethod
     def processMODISBands(rrsData, bandData):
         print("Process MODIS Bands")
+        if rrsData.data is None:
+            return
+
         rrsData.datasetToColumns()
         rrsColumns = rrsData.columns
 
@@ -64,6 +67,9 @@ class ProcessL4a:
     @staticmethod
     def processSentinel3Bands(rrsData, bandData):
         print("Process Sentinel3 Bands")
+        if rrsData.data is None:
+            return
+
         rrsData.datasetToColumns()
         rrsColumns = rrsData.columns
 
@@ -108,11 +114,12 @@ class ProcessL4a:
         #bandData = satelliteGroup.addDataset("Bands")
         modisData = satelliteGroup.addDataset("MODIS")
         sentinel3Data = satelliteGroup.addDataset("Sentinel3")
-        
-        reflectanceGroup = node.getGroup("Reflectance")
-        rrsData = reflectanceGroup.getDataset("Rrs")
 
-        ProcessL4a.processMODISBands(rrsData, modisData)
-        ProcessL4a.processSentinel3Bands(rrsData, sentinel3Data)
+        reflectanceGroup = node.getGroup("Reflectance")
+        if reflectanceGroup:
+            rrsData = reflectanceGroup.getDataset("Rrs")
+            if rrsData:
+                ProcessL4a.processMODISBands(rrsData, modisData)
+                ProcessL4a.processSentinel3Bands(rrsData, sentinel3Data)
 
         return root

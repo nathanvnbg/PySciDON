@@ -43,17 +43,15 @@ class HDFGroup:
             print("Name is 0")
             exit(1)
         ds = None
-        if not self.hasDataset(name):
+        if not self.getDataset(name):
             ds = HDFDataset()
             ds.id = name
             self.datasets[name] = ds
         return ds
 
-    def hasDataset(self, name):
-        return (name in self.datasets)
 
     def getDataset(self, name):
-        if self.hasDataset(name):
+        if name in self.datasets:
             return self.datasets[name]
         return None
 

@@ -83,13 +83,13 @@ class CSVWriter:
         # Find the light data
         for gp in root.groups:
             if gp.attributes["FrameType"] == "ShutterLight":
-                if gp.hasDataset("ES"):
+                if gp.getDataset("ES"):
                     esData = gp.getDataset("ES")
                     esTimer = gp.getDataset("TIMETAG2")
-                elif gp.hasDataset("LI"):
+                elif gp.getDataset("LI"):
                     liData = gp.getDataset("LI")
                     liTimer = gp.getDataset("TIMETAG2")
-                elif gp.hasDataset("LT"):
+                elif gp.getDataset("LT"):
                     ltData = gp.getDataset("LT")
                     ltTimer = gp.getDataset("TIMETAG2")
 

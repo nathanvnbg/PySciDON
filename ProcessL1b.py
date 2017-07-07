@@ -156,7 +156,7 @@ class ProcessL1b:
                 inttime = ds
 
         for cd in cf.data:
-            if gp.hasDataset(cd.type) and cd.type != "INTTIME":
+            if gp.getDataset(cd.type) and cd.type != "INTTIME":
                 #print("Dataset:", cd.type)
                 ds = gp.getDataset(cd.type)
                 ProcessL1b.processDataset(ds, cd, inttime)

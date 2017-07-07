@@ -297,19 +297,19 @@ class ProcessL2s:
         satnavGroup = None
         for gp in node.groups:
             #if gp.id.startswith("GPS"):
-            if gp.hasDataset("UTCPOS"):
+            if gp.getDataset("UTCPOS"):
                 print("GPS")
                 gpsGroup = gp
-            elif gp.hasDataset("ES") and gp.attributes["FrameType"] == "ShutterLight":
+            elif gp.getDataset("ES") and gp.attributes["FrameType"] == "ShutterLight":
                 print("ES")
                 esGroup = gp
-            elif gp.hasDataset("LI") and gp.attributes["FrameType"] == "ShutterLight":
+            elif gp.getDataset("LI") and gp.attributes["FrameType"] == "ShutterLight":
                 print("LI")
                 liGroup = gp
-            elif gp.hasDataset("LT") and gp.attributes["FrameType"] == "ShutterLight":
+            elif gp.getDataset("LT") and gp.attributes["FrameType"] == "ShutterLight":
                 print("LT")
                 ltGroup = gp
-            elif gp.hasDataset("AZIMUTH"):
+            elif gp.getDataset("AZIMUTH"):
                 print("SATNAV")
                 satnavGroup = gp
 

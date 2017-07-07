@@ -210,13 +210,13 @@ class ProcessL2:
         lightTimer = None
 
         for gp in node.groups:
-            if gp.attributes["FrameType"] == "ShutterDark" and gp.hasDataset(sensorType):
+            if gp.attributes["FrameType"] == "ShutterDark" and gp.getDataset(sensorType):
                 darkGroup = gp
                 darkData = gp.getDataset(sensorType)
                 darkTimer = gp.getDataset("TIMER")
                 darkTT2 = gp.getDataset("TIMETAG2")
 
-            if gp.attributes["FrameType"] == "ShutterLight" and gp.hasDataset(sensorType):
+            if gp.attributes["FrameType"] == "ShutterLight" and gp.getDataset(sensorType):
                 lightGroup = gp
                 lightData = gp.getDataset(sensorType)
                 lightTimer = gp.getDataset("TIMER")

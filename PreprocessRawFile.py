@@ -160,7 +160,7 @@ class PreprocessRawFile:
 
 
                                 #gp.printd()
-                                if gp.hasDataset("LONPOS"):
+                                if gp.getDataset("LONPOS"):
                                     #print("has gps")
                                     lonData = gp.getDataset("LONPOS")
                                     lonHemiData = gp.getDataset("LONHEMI")
@@ -273,7 +273,7 @@ class PreprocessRawFile:
 
                                 #gp.printd()
 
-                                if gp.hasDataset("AZIMUTH") and gp.hasDataset("HEADING") and gp.hasDataset("POINTING"):
+                                if gp.getDataset("AZIMUTH") and gp.getDataset("HEADING") and gp.getDataset("POINTING"):
                                     angle = 0
 
                                     pointingData = gp.getDataset("POINTING")
@@ -409,7 +409,7 @@ class PreprocessRawFile:
 
                                 #gp.printd()
 
-                                if gp.hasDataset("AZIMUTH") and gp.hasDataset("HEADING") and gp.hasDataset("POINTING"):
+                                if gp.getDataset("AZIMUTH") and gp.getDataset("HEADING") and gp.getDataset("POINTING"):
                                     angle = 0
 
                                     azimuthData = gp.getDataset("AZIMUTH")

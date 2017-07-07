@@ -36,27 +36,19 @@ class HDFRoot:
 
 
     def addGroup(self, name):
-        gp = None
-        if not self.hasGroup(name):
+        gp = self.getGroup(name)
+        if not gp:
             gp = HDFGroup()
             gp.id = name
             self.groups.append(gp)
         return gp
 
-    def hasGroup(self, name):
-        for gp in self.groups:
-            if gp.id == name:
-                return True
-        return False
 
     def getGroup(self, name):
         for gp in self.groups:
             if gp.id == name:
                 return gp
-        gp = HDFDataset()
-        gp.id = name
-        self.groups.append(gp)
-        return gp
+        return None
 
 
     def printd(self):

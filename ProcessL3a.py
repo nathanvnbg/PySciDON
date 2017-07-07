@@ -241,9 +241,9 @@ class ProcessL3a:
 
         newReferenceGroup = root.addGroup("Reference")
         newSASGroup = root.addGroup("SAS")
-        if node.hasGroup("GPS"):
+        if node.getGroup("GPS"):
             root.groups.append(node.getGroup("GPS"))
-        if node.hasGroup("SATNAV"):
+        if node.getGroup("SATNAV"):
             root.groups.append(node.getGroup("SATNAV"))
 
         referenceGroup = node.getGroup("Reference")
@@ -266,7 +266,7 @@ class ProcessL3a:
 
 
         # Append latpos/lonpos to datasets
-        if root.hasGroup("GPS"):
+        if root.getGroup("GPS"):
             gpsGroup = node.getGroup("GPS")
             latposData = gpsGroup.getDataset("LATPOS")
             lonposData = gpsGroup.getDataset("LONPOS")
@@ -296,7 +296,7 @@ class ProcessL3a:
             newLTData.columnsToDataset()
         
 
-        if root.hasGroup("SATNAV"):
+        if root.getGroup("SATNAV"):
             satnavGroup = node.getGroup("SATNAV")
 
             azimuthData = satnavGroup.getDataset("AZIMUTH")
