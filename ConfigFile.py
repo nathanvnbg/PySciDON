@@ -14,9 +14,10 @@ class ConfigFile:
         print("fL0LonMin", ConfigFile.settings["fL0LonMin"])
         print("fL0LonMax", ConfigFile.settings["fL0LonMax"])
         print("cL0Direction", ConfigFile.settings["cL0Direction"])
-        print("bL0PerformCleaning", ConfigFile.settings["bL0PerformCleaning"])
-        print("fL0AngleMin", ConfigFile.settings["fL0AngleMin"])
-        print("fL0AngleMax", ConfigFile.settings["fL0AngleMax"])
+        print("bL0CleanSunAngle", ConfigFile.settings["bL0CleanSunAngle"])
+        print("bL0CleanRotatorAngle", ConfigFile.settings["bL0CleanRotatorAngle"])
+        print("fL0SunAngleMin", ConfigFile.settings["fL0SunAngleMin"])
+        print("fL0SunAngleMax", ConfigFile.settings["fL0SunAngleMax"])
         print("fL0RotatorAngleMin", ConfigFile.settings["fL0RotatorAngleMin"])
         print("fL0RotatorAngleMax", ConfigFile.settings["fL0RotatorAngleMax"])
         print("fL0RotatorHomeAngle", ConfigFile.settings["fL0RotatorHomeAngle"])
@@ -54,9 +55,10 @@ class ConfigFile:
         ConfigFile.settings["fL0LonMin"] = 0.0
         ConfigFile.settings["fL0LonMax"] = 0.0
         ConfigFile.settings["cL0Direction"] = 'E'
-        ConfigFile.settings["bL0PerformCleaning"] = 0
-        ConfigFile.settings["fL0AngleMin"] = 90.0
-        ConfigFile.settings["fL0AngleMax"] = 135.0
+        ConfigFile.settings["bL0CleanSunAngle"] = 0
+        ConfigFile.settings["bL0CleanRotatorAngle"] = 0
+        ConfigFile.settings["fL0SunAngleMin"] = 90.0
+        ConfigFile.settings["fL0SunAngleMax"] = 135.0
         ConfigFile.settings["fL0RotatorAngleMin"] = -40.0
         ConfigFile.settings["fL0RotatorAngleMax"] = 40.0
         ConfigFile.settings["fL0RotatorHomeAngle"] = 0.0

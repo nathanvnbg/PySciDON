@@ -195,15 +195,12 @@ class PreprocessRawFile:
 
     @staticmethod
     def normalizeAngle(angle):
-        x = angle % 360
-        if x > 180:
-            x =  abs(x - 360)
-        return x
+        return angle % 360
 
 
     # Clean Rotator Data
     @staticmethod
-    def cleanRotator(filepath, calibrationMap, angleMin, angleMax, rotatorDelay=60):
+    def cleanRotator(filepath, calibrationMap, angleMin, angleMax, rotatorHomeAngle=0, rotatorDelay=60):
         print("Clean Raw File")
 
         header = b""
@@ -274,10 +271,9 @@ class PreprocessRawFile:
                                 #gp.printd()
 
                                 if gp.getDataset("AZIMUTH") and gp.getDataset("HEADING") and gp.getDataset("POINTING"):
-                                    angle = 0
 
                                     pointingData = gp.getDataset("POINTING")
-                                    angle = pointingData.columns["ROTATOR"][0]
+                                    angle = pointingData.columns["ROTATOR"][0] - rotatorHomeAngle
 
                                     timetag2Data = gp.getDataset("TIMETAG2")
                                     time = Utilities.timeTag2ToSec(timetag2Data.columns["NONE"][0])
@@ -428,7 +424,7 @@ class PreprocessRawFile:
                                     #angle = PreprocessRawFile.normalizeAngle(shipTrue + rotatorHomeAngle)
                                     #angle = PreprocessRawFile.normalizeAngle(angle - rotatorAngle)
                                     #angle = PreprocessRawFile.normalizeAngle(azimuth - angle)
-                                    angle = PreprocessRawFile.normalizeAngle(rotatorAngle + shipTrue - azimuth + 270)#rotatorHomeAngle)
+                                    angle = PreprocessRawFile.normalizeAngle(rotatorAngle + shipTrue - azimuth + 270 - rotatorHomeAngle)
                                     #print("Angle: ", angle)
 
                                     #print("Angle: ", angle)
@@ -470,7 +466,7 @@ class PreprocessRawFile:
 
     @staticmethod
     def processFiles(filePaths, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, \
-                     doCleaning, angleMin, angleMax, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay):
+                     cleanRotatorAngle, cleanSunAngle, angleMin, angleMax, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay):
         print("Preprocess Files")
         if checkCoords:
             for fp in filePaths:
@@ -483,12 +479,18 @@ class PreprocessRawFile:
                 outputPath = os.path.join(dataDir, fileName)
                 shutil.copy2(fp, outputPath)
 
-        if doCleaning:
+        if cleanRotatorAngle:
             for (dirPath, dirNames, fileNames) in os.walk(dataDir):
                 for name in sorted(fileNames):
                     #print("infile:", name)
                     if os.path.splitext(name)[1].lower() == ".raw":
-                        PreprocessRawFile.cleanRotator(os.path.join(dirPath, name), calibrationMap, rotatorAngleMin, rotatorAngleMax,rotatorDelay)
+                        PreprocessRawFile.cleanRotator(os.path.join(dirPath, name), calibrationMap, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay)
+                break
+        if cleanSunAngle:
+            for (dirPath, dirNames, fileNames) in os.walk(dataDir):
+                for name in sorted(fileNames):
+                    #print("infile:", name)
+                    if os.path.splitext(name)[1].lower() == ".raw":
                         PreprocessRawFile.cleanRawFile(os.path.join(dirPath, name), calibrationMap, angleMin, angleMax, rotatorHomeAngle)
                 break
         print("Preprocess Files - DONE")
@@ -496,7 +498,7 @@ class PreprocessRawFile:
 
     @staticmethod
     def processDirectory(path, dataDir, calibrationMap, checkCoords, startLongitude, endLongitude, direction, \
-                         doCleaning, angleMin, angleMax, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay):
+                         cleanSunAngle, cleanRotatorAngle, angleMin, angleMax, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay):
         #for name in fileNames:
         #    print("infile:", name)
         if checkCoords:
@@ -507,12 +509,18 @@ class PreprocessRawFile:
                         PreprocessRawFile.processRawFile(os.path.join(dirPath, name), dataDir, calibrationMap, startLongitude, endLongitude, direction)
                 break
 
-        if doCleaning:
+        if cleanSunAngle:
             for (dirPath, dirNames, fileNames) in os.walk(dataDir):
                 for name in sorted(fileNames):
                     #print("infile:", name)
                     if os.path.splitext(name)[1].lower() == ".raw":
-                        PreprocessRawFile.cleanRotator(os.path.join(dirPath, name), calibrationMap, rotatorAngleMin, rotatorAngleMax,rotatorDelay)
+                        PreprocessRawFile.cleanRotator(os.path.join(dirPath, name), calibrationMap, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay)
+                break
+        if cleanRotatorAngle:
+            for (dirPath, dirNames, fileNames) in os.walk(dataDir):
+                for name in sorted(fileNames):
+                    #print("infile:", name)
+                    if os.path.splitext(name)[1].lower() == ".raw":
                         PreprocessRawFile.cleanRawFile(os.path.join(dirPath, name), calibrationMap, angleMin, angleMax, rotatorHomeAngle)
                 break
 

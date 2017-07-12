@@ -90,20 +90,16 @@ class ConfigWindow(QtWidgets.QDialog):
         index = self.directionComboBox.findText(str(ConfigFile.settings["cL0Direction"]))
         self.directionComboBox.setCurrentIndex(index)
 
-        l0PerformCleaningLabel = QtWidgets.QLabel("SAS Solar Tracker - Angle Detection/Cleaning", self)
-        self.l0PerformCleaningCheckBox = QtWidgets.QCheckBox("", self)
-        if int(ConfigFile.settings["bL0PerformCleaning"]) == 1:
-            self.l0PerformCleaningCheckBox.setChecked(True)
+            
+        l0CleanRotatorAngleLabel = QtWidgets.QLabel("SAS Solar Tracker - Rotator Angle Cleaning", self)
+        self.l0CleanRotatorAngleCheckBox = QtWidgets.QCheckBox("", self)
+        if int(ConfigFile.settings["bL0CleanRotatorAngle"]) == 1:
+            self.l0CleanRotatorAngleCheckBox.setChecked(True)
 
-        l0AngleMinLabel = QtWidgets.QLabel("Angle Min", self)
-        self.l0AngleMinLineEdit = QtWidgets.QLineEdit(self)
-        self.l0AngleMinLineEdit.setText(str(ConfigFile.settings["fL0AngleMin"]))
-        self.l0AngleMinLineEdit.setValidator(doubleValidator)
-
-        l0AngleMaxLabel = QtWidgets.QLabel("Angle Max", self)
-        self.l0AngleMaxLineEdit = QtWidgets.QLineEdit(self)
-        self.l0AngleMaxLineEdit.setText(str(ConfigFile.settings["fL0AngleMax"]))
-        self.l0AngleMaxLineEdit.setValidator(doubleValidator)
+        l0CleanSunAngleLabel = QtWidgets.QLabel("SAS Solar Tracker - Sun Angle Cleaning", self)
+        self.l0CleanSunAngleCheckBox = QtWidgets.QCheckBox("", self)
+        if int(ConfigFile.settings["bL0CleanSunAngle"]) == 1:
+            self.l0CleanSunAngleCheckBox.setChecked(True)
 
         l0RotatorAngleMinLabel = QtWidgets.QLabel("Rotator Angle Min", self)
         self.l0RotatorAngleMinLineEdit = QtWidgets.QLineEdit(self)
@@ -125,6 +121,15 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l0RotatorDelayLineEdit.setText(str(ConfigFile.settings["fL0RotatorDelay"]))
         self.l0RotatorDelayLineEdit.setValidator(doubleValidator)
 
+        l0SunAngleMinLabel = QtWidgets.QLabel("Sun Angle Min", self)
+        self.l0SunAngleMinLineEdit = QtWidgets.QLineEdit(self)
+        self.l0SunAngleMinLineEdit.setText(str(ConfigFile.settings["fL0SunAngleMin"]))
+        self.l0SunAngleMinLineEdit.setValidator(doubleValidator)
+
+        l0SunAngleMaxLabel = QtWidgets.QLabel("Sun Angle Max", self)
+        self.l0SunAngleMaxLineEdit = QtWidgets.QLineEdit(self)
+        self.l0SunAngleMaxLineEdit.setText(str(ConfigFile.settings["fL0SunAngleMax"]))
+        self.l0SunAngleMaxLineEdit.setValidator(doubleValidator)
 
 
         l3InterpIntervalLabel = QtWidgets.QLabel("Level 3 - Interpolation Interval (nm)", self)
@@ -207,12 +212,10 @@ class ConfigWindow(QtWidgets.QDialog):
         vBox1.addWidget(directionLabel)
         vBox1.addWidget(self.directionComboBox)
 
-        vBox1.addWidget(l0PerformCleaningLabel)
-        vBox1.addWidget(self.l0PerformCleaningCheckBox)
-        vBox1.addWidget(l0AngleMinLabel)
-        vBox1.addWidget(self.l0AngleMinLineEdit)
-        vBox1.addWidget(l0AngleMaxLabel)
-        vBox1.addWidget(self.l0AngleMaxLineEdit)
+        vBox1.addWidget(l0CleanRotatorAngleLabel)
+        vBox1.addWidget(self.l0CleanRotatorAngleCheckBox)
+        vBox1.addWidget(l0CleanSunAngleLabel)
+        vBox1.addWidget(self.l0CleanSunAngleCheckBox)
         vBox1.addWidget(l0RotatorAngleMinLabel)
         vBox1.addWidget(self.l0RotatorAngleMinLineEdit)
         vBox1.addWidget(l0RotatorAngleMaxLabel)
@@ -221,6 +224,10 @@ class ConfigWindow(QtWidgets.QDialog):
         vBox1.addWidget(self.l0RotatorHomeAngleLineEdit)
         vBox1.addWidget(l0RotatorDelayLabel)
         vBox1.addWidget(self.l0RotatorDelayLineEdit)
+        vBox1.addWidget(l0SunAngleMinLabel)
+        vBox1.addWidget(self.l0SunAngleMinLineEdit)
+        vBox1.addWidget(l0SunAngleMaxLabel)
+        vBox1.addWidget(self.l0SunAngleMaxLineEdit)
 
 
         vBox2 = QtWidgets.QVBoxLayout()
@@ -348,9 +355,10 @@ class ConfigWindow(QtWidgets.QDialog):
         ConfigFile.settings["fL0LonMin"] = float(self.lonMinLineEdit.text())
         ConfigFile.settings["fL0LonMax"] = float(self.lonMaxLineEdit.text())
         ConfigFile.settings["cL0Direction"] = self.directionComboBox.currentText()
-        ConfigFile.settings["bL0PerformCleaning"] = int(self.l0PerformCleaningCheckBox.isChecked())
-        ConfigFile.settings["fL0AngleMin"] = float(self.l0AngleMinLineEdit.text())
-        ConfigFile.settings["fL0AngleMax"] = float(self.l0AngleMaxLineEdit.text())
+        ConfigFile.settings["bL0CleanSunAngle"] = int(self.l0CleanSunAngleCheckBox.isChecked())
+        ConfigFile.settings["bL0CleanRotatorAngle"] = int(self.l0CleanRotatorAngleCheckBox.isChecked())
+        ConfigFile.settings["fL0SunAngleMin"] = float(self.l0SunAngleMinLineEdit.text())
+        ConfigFile.settings["fL0SunAngleMax"] = float(self.l0SunAngleMaxLineEdit.text())
         ConfigFile.settings["fL0RotatorAngleMin"] = float(self.l0RotatorAngleMinLineEdit.text())
         ConfigFile.settings["fL0RotatorAngleMax"] = float(self.l0RotatorAngleMaxLineEdit.text())
         ConfigFile.settings["fL0RotatorHomeAngle"] = float(self.l0RotatorHomeAngleLineEdit.text())

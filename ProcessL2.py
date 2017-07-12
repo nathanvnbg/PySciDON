@@ -94,11 +94,15 @@ class ProcessL2:
 
         # Interpolate Dark Dataset to match number of elements as Light Dataset
         newDarkData = np.copy(lightData.data)
+        print(darkTimer.data["NONE"])
         for k in darkData.data.dtype.fields.keys():
             x = np.copy(darkTimer.data["NONE"]).tolist()
             y = np.copy(darkData.data[k]).tolist()
             new_x = lightTimer.data["NONE"]
 
+            if len(x) < 3 or len(y) < 3 or len(new_x) < 3:
+                print("Cannot do cubic spline interpolation, length of datasets < 3")
+                return False
 
             if not Utilities.isIncreasing(x):
                 print("darkTimer does not contain strictly increasing values")
