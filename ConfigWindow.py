@@ -175,6 +175,11 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l4DefaultWindSpeedLineEdit.setText(str(ConfigFile.settings["fL4DefaultWindSpeed"]))
         self.l4DefaultWindSpeedLineEdit.setValidator(doubleValidator)
 
+        l4RhoSkyLabel = QtWidgets.QLabel("Level 4 - Rho Sky", self)
+        self.l4RhoSkyLineEdit = QtWidgets.QLineEdit(self)
+        self.l4RhoSkyLineEdit.setText(str(ConfigFile.settings["fL4RhoSky"]))
+        self.l4RhoSkyLineEdit.setValidator(doubleValidator)
+
         #l4NIRCorrectionLabel = QtWidgets.QLabel("Level 4 - Enable Near-infrared Correction", self)
         #self.l4NIRCorrectionCheckBox = QtWidgets.QCheckBox("", self)
         #if int(ConfigFile.settings["bL4PerformNIRCorrection"]) == 1:
@@ -261,6 +266,8 @@ class ConfigWindow(QtWidgets.QDialog):
         vBox2.addWidget(self.l4TimeIntervalLineEdit)
         vBox2.addWidget(l4DefaultWindSpeedLabel)
         vBox2.addWidget(self.l4DefaultWindSpeedLineEdit)
+        vBox2.addWidget(l4RhoSkyLabel)
+        vBox2.addWidget(self.l4RhoSkyLineEdit)
         #vBox2.addWidget(l4NIRCorrectionLabel)
         #vBox2.addWidget(self.l4NIRCorrectionCheckBox)
         vBox2.addSpacing(25)
@@ -384,6 +391,7 @@ class ConfigWindow(QtWidgets.QDialog):
         ConfigFile.settings["fL4RainfallHumidityFlag"] = float(self.l4RainfallHumidityFlagLineEdit.text())
         ConfigFile.settings["fL4TimeInterval"] = int(self.l4TimeIntervalLineEdit.text())
         ConfigFile.settings["fL4DefaultWindSpeed"] = float(self.l4DefaultWindSpeedLineEdit.text())
+        ConfigFile.settings["fL4RhoSky"] = float(self.l4RhoSkyLineEdit.text())
         #ConfigFile.settings["bL4PerformNIRCorrection"] = int(self.l4NIRCorrectionCheckBox.isChecked())
 
         ConfigFile.saveConfig(self.name)

@@ -32,6 +32,7 @@ class ConfigFile:
         print("fL4DawnDuskFlag", ConfigFile.settings["fL4DawnDuskFlag"])
         print("fL4RainfallHumidityFlag", ConfigFile.settings["fL4RainfallHumidityFlag"])
         print("fL4DefaultWindSpeed", ConfigFile.settings["fL4DefaultWindSpeed"])
+        print("fL4RhoSky", ConfigFile.settings["fL4RhoSky"])
         print("bL4PerformNIRCorrection", ConfigFile.settings["bL4PerformNIRCorrection"])
 
     # Creates the calibration file folder if not exist
@@ -74,6 +75,7 @@ class ConfigFile:
         ConfigFile.settings["fL4DawnDuskFlag"] = 1.0
         ConfigFile.settings["fL4RainfallHumidityFlag"] = 1.095
         ConfigFile.settings["fL4DefaultWindSpeed"] = 0.0
+        ConfigFile.settings["fL4RhoSky"] = 0.0
         ConfigFile.settings["bL4PerformNIRCorrection"] = 0
 
         if not name.endswith(".cfg"):

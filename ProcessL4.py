@@ -112,7 +112,7 @@ class ProcessL4:
 
 
     @staticmethod
-    def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed=0.0, windSpeedColumns=None):
+    def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed=0.0, windSpeedColumns=None, rhoSky=0.0256):
 
         #print("calculateReflectance2")
         
@@ -276,7 +276,9 @@ class ProcessL4:
 
 
         # ToDo: sunny/wind calculations
-        if sky750 > 0.05:
+        if rhoSky != 0:
+            p_sky = rhoSky
+        elif sky750 > 0.05:
             p_sky = 0.0256
         else:
             # Set wind speed here
@@ -425,7 +427,7 @@ class ProcessL4:
 
 
     @staticmethod
-    def calculateReflectance(root, node, interval, enableQualityCheck, performNIRCorrection, defaultWindSpeed=0.0, windSpeedData=None):
+    def calculateReflectance(root, node, interval, enableQualityCheck, performNIRCorrection, defaultWindSpeed=0.0, windSpeedData=None, rhoSky=0.0256):
     #def calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
 
         print("calculateReflectance")
@@ -473,17 +475,17 @@ class ProcessL4:
         #    ltColumns.pop("LONPOS")
 
 
-        if Utilities.hasNan(esData):
-            print("Found NAN 1") 
-            sys.exit(1)
+        #if Utilities.hasNan(esData):
+        #    print("Found NAN 1") 
+        #    sys.exit(1)
 
-        if Utilities.hasNan(liData):
-            print("Found NAN 2") 
-            sys.exit(1)
+        #if Utilities.hasNan(liData):
+        #    print("Found NAN 2") 
+        #    sys.exit(1)
 
-        if Utilities.hasNan(ltData):
-            print("Found NAN 3") 
-            sys.exit(1)
+        #if Utilities.hasNan(ltData):
+        #    print("Found NAN 3") 
+        #    sys.exit(1)
 
         esLength = len(list(esColumns.values())[0])
         ltLength = len(list(ltColumns.values())[0])
@@ -514,7 +516,7 @@ class ProcessL4:
                 esSlice = ProcessL4.columnToSlice(esColumns, i, i+1)
                 liSlice = ProcessL4.columnToSlice(liColumns, i, i+1)
                 ltSlice = ProcessL4.columnToSlice(ltColumns, i, i+1)
-                ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedColumns)
+                ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedColumns, rhoSky)
 
         else:
             start = 0
@@ -527,10 +529,20 @@ class ProcessL4:
                     esSlice = ProcessL4.columnToSlice(esColumns, start, end)
                     liSlice = ProcessL4.columnToSlice(liColumns, start, end)
                     ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
-                    ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedColumns)
+                    ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedColumns, rhoSky)
     
                     start = i
                     endTime = time + interval
+
+            # Try converting any remaining
+            end = len(tt2)-1
+            time = Utilities.timeTag2ToSec(tt2[end])
+            if time < endTime:
+                esSlice = ProcessL4.columnToSlice(esColumns, start, end)
+                liSlice = ProcessL4.columnToSlice(liColumns, start, end)
+                ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
+                ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedColumns, rhoSky)
+
 
 
 #        for i in range(0, int(esLength/resolution)):
@@ -566,9 +578,10 @@ class ProcessL4:
         interval = float(ConfigFile.settings["fL4TimeInterval"])
         performNIRCorrection = int(ConfigFile.settings["bL4PerformNIRCorrection"])
         defaultWindSpeed = float(ConfigFile.settings["fL4DefaultWindSpeed"])
+        rhoSky = float(ConfigFile.settings["fL4RhoSky"])
 
         # Can change time resolution here
-        if not ProcessL4.calculateReflectance(root, node, interval, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedData):
+        if not ProcessL4.calculateReflectance(root, node, interval, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedData, rhoSky):
             return None
 
         return root
