@@ -165,7 +165,7 @@ class Utilities:
 
             x = []
             for k in rrsData.data.dtype.names:
-                if k != "Datetag" and k != "Timetag2" and k != "Latpos" and k != "Lonpos":
+                if Utilities.isFloat(k):
                     x.append(k)
 
             total = rrsData.data.shape[0]
