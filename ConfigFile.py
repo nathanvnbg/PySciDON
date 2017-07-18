@@ -22,6 +22,7 @@ class ConfigFile:
         print("fL0RotatorAngleMax", ConfigFile.settings["fL0RotatorAngleMax"])
         print("fL0RotatorHomeAngle", ConfigFile.settings["fL0RotatorHomeAngle"])
         print("fL0RotatorDelay", ConfigFile.settings["fL0RotatorDelay"])
+        print("bL0SplitRawFile", ConfigFile.settings["bL0SplitRawFile"])
 
         print("fL3aInterpInterval", ConfigFile.settings["fL3aInterpInterval"])
 
@@ -63,6 +64,7 @@ class ConfigFile:
         ConfigFile.settings["fL0RotatorAngleMax"] = 40.0
         ConfigFile.settings["fL0RotatorHomeAngle"] = 0.0
         ConfigFile.settings["fL0RotatorDelay"] = 60.0
+        ConfigFile.settings["bL0SplitRawFile"] = 0
 
         ConfigFile.settings["fL3aInterpInterval"] = 1.0
 

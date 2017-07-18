@@ -90,16 +90,12 @@ class ConfigWindow(QtWidgets.QDialog):
         index = self.directionComboBox.findText(str(ConfigFile.settings["cL0Direction"]))
         self.directionComboBox.setCurrentIndex(index)
 
-            
+
+
         l0CleanRotatorAngleLabel = QtWidgets.QLabel("SAS Solar Tracker - Rotator Angle Cleaning", self)
         self.l0CleanRotatorAngleCheckBox = QtWidgets.QCheckBox("", self)
         if int(ConfigFile.settings["bL0CleanRotatorAngle"]) == 1:
             self.l0CleanRotatorAngleCheckBox.setChecked(True)
-
-        l0CleanSunAngleLabel = QtWidgets.QLabel("SAS Solar Tracker - Sun Angle Cleaning", self)
-        self.l0CleanSunAngleCheckBox = QtWidgets.QCheckBox("", self)
-        if int(ConfigFile.settings["bL0CleanSunAngle"]) == 1:
-            self.l0CleanSunAngleCheckBox.setChecked(True)
 
         l0RotatorAngleMinLabel = QtWidgets.QLabel("Rotator Angle Min", self)
         self.l0RotatorAngleMinLineEdit = QtWidgets.QLineEdit(self)
@@ -111,15 +107,15 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l0RotatorAngleMaxLineEdit.setText(str(ConfigFile.settings["fL0RotatorAngleMax"]))
         self.l0RotatorAngleMaxLineEdit.setValidator(doubleValidator)
 
-        l0RotatorHomeAngleLabel = QtWidgets.QLabel("Home Angle", self)
-        self.l0RotatorHomeAngleLineEdit = QtWidgets.QLineEdit(self)
-        self.l0RotatorHomeAngleLineEdit.setText(str(ConfigFile.settings["fL0RotatorHomeAngle"]))
-        self.l0RotatorHomeAngleLineEdit.setValidator(doubleValidator)
-        
         l0RotatorDelayLabel = QtWidgets.QLabel("Rotator Delay (Seconds)", self)
         self.l0RotatorDelayLineEdit = QtWidgets.QLineEdit(self)
         self.l0RotatorDelayLineEdit.setText(str(ConfigFile.settings["fL0RotatorDelay"]))
         self.l0RotatorDelayLineEdit.setValidator(doubleValidator)
+
+        l0CleanSunAngleLabel = QtWidgets.QLabel("SAS Solar Tracker - Sun Angle Cleaning", self)
+        self.l0CleanSunAngleCheckBox = QtWidgets.QCheckBox("", self)
+        if int(ConfigFile.settings["bL0CleanSunAngle"]) == 1:
+            self.l0CleanSunAngleCheckBox.setChecked(True)
 
         l0SunAngleMinLabel = QtWidgets.QLabel("Sun Angle Min", self)
         self.l0SunAngleMinLineEdit = QtWidgets.QLineEdit(self)
@@ -130,6 +126,17 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l0SunAngleMaxLineEdit = QtWidgets.QLineEdit(self)
         self.l0SunAngleMaxLineEdit.setText(str(ConfigFile.settings["fL0SunAngleMax"]))
         self.l0SunAngleMaxLineEdit.setValidator(doubleValidator)
+
+        l0RotatorHomeAngleLabel = QtWidgets.QLabel("Rotator Home Angle", self)
+        self.l0RotatorHomeAngleLineEdit = QtWidgets.QLineEdit(self)
+        self.l0RotatorHomeAngleLineEdit.setText(str(ConfigFile.settings["fL0RotatorHomeAngle"]))
+        self.l0RotatorHomeAngleLineEdit.setValidator(doubleValidator)
+
+        l0SplitRawFileLabel = QtWidgets.QLabel("SAS Solar Tracker - Split Raw File", self)
+        self.l0SplitRawFileCheckBox = QtWidgets.QCheckBox("", self)
+        if int(ConfigFile.settings["bL0SplitRawFile"]) == 1:
+            self.l0SplitRawFileCheckBox.setChecked(True)
+
 
 
         l3InterpIntervalLabel = QtWidgets.QLabel("Level 3 - Interpolation Interval (nm)", self)
@@ -212,22 +219,26 @@ class ConfigWindow(QtWidgets.QDialog):
         vBox1.addWidget(directionLabel)
         vBox1.addWidget(self.directionComboBox)
 
+
         vBox1.addWidget(l0CleanRotatorAngleLabel)
         vBox1.addWidget(self.l0CleanRotatorAngleCheckBox)
-        vBox1.addWidget(l0CleanSunAngleLabel)
-        vBox1.addWidget(self.l0CleanSunAngleCheckBox)
         vBox1.addWidget(l0RotatorAngleMinLabel)
         vBox1.addWidget(self.l0RotatorAngleMinLineEdit)
         vBox1.addWidget(l0RotatorAngleMaxLabel)
         vBox1.addWidget(self.l0RotatorAngleMaxLineEdit)
-        vBox1.addWidget(l0RotatorHomeAngleLabel)
-        vBox1.addWidget(self.l0RotatorHomeAngleLineEdit)
         vBox1.addWidget(l0RotatorDelayLabel)
         vBox1.addWidget(self.l0RotatorDelayLineEdit)
+
+        vBox1.addWidget(l0CleanSunAngleLabel)
+        vBox1.addWidget(self.l0CleanSunAngleCheckBox)
         vBox1.addWidget(l0SunAngleMinLabel)
         vBox1.addWidget(self.l0SunAngleMinLineEdit)
         vBox1.addWidget(l0SunAngleMaxLabel)
         vBox1.addWidget(self.l0SunAngleMaxLineEdit)
+        vBox1.addWidget(l0RotatorHomeAngleLabel)
+        vBox1.addWidget(self.l0RotatorHomeAngleLineEdit)
+        vBox1.addWidget(l0SplitRawFileLabel)
+        vBox1.addWidget(self.l0SplitRawFileCheckBox)
 
 
         vBox2 = QtWidgets.QVBoxLayout()
@@ -363,6 +374,7 @@ class ConfigWindow(QtWidgets.QDialog):
         ConfigFile.settings["fL0RotatorAngleMax"] = float(self.l0RotatorAngleMaxLineEdit.text())
         ConfigFile.settings["fL0RotatorHomeAngle"] = float(self.l0RotatorHomeAngleLineEdit.text())
         ConfigFile.settings["fL0RotatorDelay"] = float(self.l0RotatorDelayLineEdit.text())
+        ConfigFile.settings["bL0SplitRawFile"] = int(self.l0SplitRawFileCheckBox.isChecked())
 
         ConfigFile.settings["fL3aInterpInterval"] = float(self.l3InterpIntervalLineEdit.text())
 
