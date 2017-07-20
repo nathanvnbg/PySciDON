@@ -336,6 +336,7 @@ class Window(QtWidgets.QWidget):
             rotatorAngleMax = float(ConfigFile.settings["fL0RotatorAngleMax"])
             rotatorHomeAngle = float(ConfigFile.settings["fL0RotatorHomeAngle"])
             rotatorDelay = float(ConfigFile.settings["fL0RotatorDelay"])
+            splitRawFile = int(ConfigFile.settings["bL0SplitRawFile"])
             #rotatorDelay = 60
             print("Preprocess Longitude Data", startLongitude, endLongitude, direction)
             #Controller.preprocessData(preprocessDirectory, dataDirectory, calibrationMap, \
@@ -344,7 +345,8 @@ class Window(QtWidgets.QWidget):
             PreprocessRawFile.processFiles(fileNames, dataDirectory, calibrationMap, \
                                       checkCoords, startLongitude, endLongitude, direction, \
                                       cleanRotatorAngle, cleanSunAngle, angleMin, angleMax, \
-                                      rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay)
+                                      rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay,
+                                      splitRawFile)
         else:
             print("Process Raw Files")
             Controller.processFilesSingleLevel(fileNames, calibrationMap, level, windFile)
