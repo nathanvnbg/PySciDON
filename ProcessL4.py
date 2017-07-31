@@ -112,7 +112,9 @@ class ProcessL4:
 
 
     @staticmethod
-    def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed=0.0, windSpeedColumns=None, rhoSky=0.0256):
+    def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, \
+                              percentLt, enableQualityCheck, performNIRCorrection, \
+                              defaultWindSpeed=0.0, windSpeedColumns=None, rhoSky=0.0256):
 
         #print("calculateReflectance2")
         
@@ -203,7 +205,7 @@ class ProcessL4:
 
         # Calculates the lowest 5% (based on Hooker & Morel 2003)
         n = len(list(ltColumns.values())[0])
-        x = round(n*5/100)
+        x = round(n*percentLt/100)
         if n <= 5 or x == 0:
             x = n
 
@@ -427,7 +429,8 @@ class ProcessL4:
 
 
     @staticmethod
-    def calculateReflectance(root, node, interval, enableQualityCheck, performNIRCorrection, defaultWindSpeed=0.0, windSpeedData=None, rhoSky=0.0256):
+    def calculateReflectance(root, node, interval, enableQualityCheck, percentLt, performNIRCorrection, \
+                             defaultWindSpeed=0.0, windSpeedData=None, rhoSky=0.0256):
     #def calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
 
         print("calculateReflectance")
@@ -509,6 +512,7 @@ class ProcessL4:
             windSpeedData.columnsToDataset()
             windSpeedColumns = new_y
 
+
         #print("items:", esColumns.values())
         #print(ltLength,resolution)
         if interval == 0:
@@ -516,7 +520,9 @@ class ProcessL4:
                 esSlice = ProcessL4.columnToSlice(esColumns, i, i+1)
                 liSlice = ProcessL4.columnToSlice(liColumns, i, i+1)
                 ltSlice = ProcessL4.columnToSlice(ltColumns, i, i+1)
-                ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedColumns, rhoSky)
+                ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
+                                                percentLt, enableQualityCheck, performNIRCorrection, \
+                                                defaultWindSpeed, windSpeedColumns, rhoSky)
 
         else:
             start = 0
@@ -529,7 +535,9 @@ class ProcessL4:
                     esSlice = ProcessL4.columnToSlice(esColumns, start, end)
                     liSlice = ProcessL4.columnToSlice(liColumns, start, end)
                     ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
-                    ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedColumns, rhoSky)
+                    ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
+                                                    percentLt, enableQualityCheck, performNIRCorrection, \
+                                                    defaultWindSpeed, windSpeedColumns, rhoSky)
     
                     start = i
                     endTime = time + interval
@@ -541,7 +549,9 @@ class ProcessL4:
                 esSlice = ProcessL4.columnToSlice(esColumns, start, end)
                 liSlice = ProcessL4.columnToSlice(liColumns, start, end)
                 ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
-                ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedColumns, rhoSky)
+                ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
+                                                percentLt, enableQualityCheck, performNIRCorrection, \
+                                                defaultWindSpeed, windSpeedColumns, rhoSky)
 
 
 
@@ -579,9 +589,11 @@ class ProcessL4:
         performNIRCorrection = int(ConfigFile.settings["bL4PerformNIRCorrection"])
         defaultWindSpeed = float(ConfigFile.settings["fL4DefaultWindSpeed"])
         rhoSky = float(ConfigFile.settings["fL4RhoSky"])
+        percentLt = float(ConfigFile.settings["fL4PercentLt"])
 
         # Can change time resolution here
-        if not ProcessL4.calculateReflectance(root, node, interval, enableQualityCheck, performNIRCorrection, defaultWindSpeed, windSpeedData, rhoSky):
+        if not ProcessL4.calculateReflectance(root, node, interval, enableQualityCheck, percentLt, performNIRCorrection, \
+                                              defaultWindSpeed, windSpeedData, rhoSky):
             return None
 
         return root

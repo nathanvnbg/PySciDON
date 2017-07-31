@@ -34,6 +34,8 @@ class ConfigFile:
         print("fL4DefaultWindSpeed", ConfigFile.settings["fL4DefaultWindSpeed"])
         print("fL4RhoSky", ConfigFile.settings["fL4RhoSky"])
         print("bL4PerformNIRCorrection", ConfigFile.settings["bL4PerformNIRCorrection"])
+        print("fL4PercentLt", ConfigFile.settings["fL4PercentLt"])
+
 
     # Creates the calibration file folder if not exist
     @staticmethod
@@ -77,6 +79,7 @@ class ConfigFile:
         ConfigFile.settings["fL4DefaultWindSpeed"] = 0.0
         ConfigFile.settings["fL4RhoSky"] = 0.0
         ConfigFile.settings["bL4PerformNIRCorrection"] = 0
+        ConfigFile.settings["fL4PercentLt"] = 5
 
         if not name.endswith(".cfg"):
             name = name + ".cfg"
