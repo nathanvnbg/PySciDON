@@ -1,4 +1,5 @@
 
+import datetime
 import os
 import sys
 
@@ -27,6 +28,13 @@ class Utilities:
         return dm
 
 
+    # Converts seconds to UTC
+    @staticmethod
+    def secToUtc(sec):
+        m, s = divmod(sec, 60)
+        h, m = divmod(m, 60)
+        return float("%d%02d%02d" % (h, m, s))
+
     # Converts GPS UTC time to seconds
     # Note: Does not support multiple days
     @staticmethod
@@ -40,6 +48,11 @@ class Utilities:
         s = int(t[4:])
         return ((h*60)+m)*60+s
 
+    # Converts datetag to date string
+    @staticmethod
+    def dateTagToDate(dateTag):
+        dt = datetime.datetime.strptime(str(int(dateTag)), '%Y%j')
+        return dt.strftime('%Y%m%d')
 
     # Converts seconds to TimeTag2
     @staticmethod

@@ -605,12 +605,16 @@ class PreprocessRawFile:
     @staticmethod
     def createRawFileTimer(dataDir, timerStart, timerEnd, f, header, iStart, iEnd):
         # Determine filename from date/time
-        #startDate = str(int(gpGPSStart.getDataset("DATE").columns["NONE"][0]))
-        #endDate = str(int(gpGPSEnd.getDataset("DATE").columns["NONE"][0]))
-        #startTime = str(int(gpGPSStart.getDataset("UTCPOS").columns["NONE"][0])).zfill(6)
-        #endTime = str(int(gpGPSEnd.getDataset("UTCPOS").columns["NONE"][0])).zfill(6)
-        startTime = str(int(timerStart.getDataset("TIMETAG2").columns["NONE"][0]))
-        endTime = str(int(timerEnd.getDataset("TIMETAG2").columns["NONE"][0]))
+        startTime = int(timerStart.getDataset("TIMETAG2").columns["NONE"][0])
+        endTime = int(timerEnd.getDataset("TIMETAG2").columns["NONE"][0])
+
+        # Convert to UTC
+        startTime = str(int(Utilities.secToUtc(startTime/1000)))
+        endTime = str(int(Utilities.secToUtc(endTime/1000)))
+
+        # Get the date
+        date = int(timerStart.getDataset("DATETAG").columns["NONE"][0])
+        date = Utilities.dateTagToDate(date)
 
         # Copy block of messages between start and end
         pos = f.tell()
@@ -618,15 +622,14 @@ class PreprocessRawFile:
         message = f.read(iEnd-iStart)
         f.seek(pos)
 
-        #filename = startDate + "T" + startTime + "_" + endDate + "T" + endTime + ".raw"
-        filename = startTime + "_" + endTime + ".raw"
+        filename = date + "T" + startTime + "_" + date + "T" + endTime + ".raw"
+        #filename = startTime + "_" + endTime + ".raw"
         print("Write:" + filename)
 
         # Write file
         data = header + message
         with open(os.path.join(dataDir, filename), 'wb') as fout:
             fout.write(data)
-        #message = ""
 
 
     @staticmethod
