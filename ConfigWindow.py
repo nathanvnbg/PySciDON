@@ -67,28 +67,35 @@ class ConfigWindow(QtWidgets.QDialog):
         intValidator = QtGui.QIntValidator()
         doubleValidator = QtGui.QDoubleValidator()
 
+        l0Label = QtWidgets.QLabel("Level 0 - Preprocessing", self)
+        l3Label = QtWidgets.QLabel("Level 3a - Wavelength Interpolation", self)
+        l4Label = QtWidgets.QLabel("Level 4 - Rrs Calculation", self)
+
+
         l0CheckCoordsLabel = QtWidgets.QLabel("Enable Longitude/Direction Checking", self)
         self.l0CheckCoordsCheckBox = QtWidgets.QCheckBox("", self)
         if int(ConfigFile.settings["bL0CheckCoords"]) == 1:
             self.l0CheckCoordsCheckBox.setChecked(True)
 
-        lonMinLabel = QtWidgets.QLabel("Longitude Min", self)
+        self.lonMinLabel = QtWidgets.QLabel("Longitude Min", self)
         self.lonMinLineEdit = QtWidgets.QLineEdit(self)
         self.lonMinLineEdit.setText(str(ConfigFile.settings["fL0LonMin"]))
         self.lonMinLineEdit.setValidator(doubleValidator)
 
-        lonMaxLabel = QtWidgets.QLabel("Longitude Max", self)
+        self.lonMaxLabel = QtWidgets.QLabel("Longitude Max", self)
         self.lonMaxLineEdit = QtWidgets.QLineEdit(self)
         self.lonMaxLineEdit.setText(str(ConfigFile.settings["fL0LonMax"]))
         self.lonMaxLineEdit.setValidator(doubleValidator)
 
-        directionLabel = QtWidgets.QLabel("Ferry Direction", self)
+        self.directionLabel = QtWidgets.QLabel("Ferry Direction", self)
         self.directionComboBox = QtWidgets.QComboBox(self)
         self.directionComboBox.addItem("")
         self.directionComboBox.addItem("E")
         self.directionComboBox.addItem("W")
         index = self.directionComboBox.findText(str(ConfigFile.settings["cL0Direction"]))
         self.directionComboBox.setCurrentIndex(index)
+
+        self.l0CheckCoordsCheckBoxUpdate()
 
 
 
@@ -97,40 +104,46 @@ class ConfigWindow(QtWidgets.QDialog):
         if int(ConfigFile.settings["bL0CleanRotatorAngle"]) == 1:
             self.l0CleanRotatorAngleCheckBox.setChecked(True)
 
-        l0RotatorAngleMinLabel = QtWidgets.QLabel("Rotator Angle Min", self)
+        self.l0RotatorAngleMinLabel = QtWidgets.QLabel("Rotator Angle Min", self)
         self.l0RotatorAngleMinLineEdit = QtWidgets.QLineEdit(self)
         self.l0RotatorAngleMinLineEdit.setText(str(ConfigFile.settings["fL0RotatorAngleMin"]))
         self.l0RotatorAngleMinLineEdit.setValidator(doubleValidator)
 
-        l0RotatorAngleMaxLabel = QtWidgets.QLabel("Rotator Angle Max", self)
+        self.l0RotatorAngleMaxLabel = QtWidgets.QLabel("Rotator Angle Max", self)
         self.l0RotatorAngleMaxLineEdit = QtWidgets.QLineEdit(self)
         self.l0RotatorAngleMaxLineEdit.setText(str(ConfigFile.settings["fL0RotatorAngleMax"]))
         self.l0RotatorAngleMaxLineEdit.setValidator(doubleValidator)
 
-        l0RotatorDelayLabel = QtWidgets.QLabel("Rotator Delay (Seconds)", self)
+        self.l0RotatorDelayLabel = QtWidgets.QLabel("Rotator Delay (Seconds)", self)
         self.l0RotatorDelayLineEdit = QtWidgets.QLineEdit(self)
         self.l0RotatorDelayLineEdit.setText(str(ConfigFile.settings["fL0RotatorDelay"]))
         self.l0RotatorDelayLineEdit.setValidator(doubleValidator)
+
+        self.l0CleanRotatorAngleCheckBoxUpdate()
+
 
         l0CleanSunAngleLabel = QtWidgets.QLabel("SAS Solar Tracker - Sun Angle Cleaning", self)
         self.l0CleanSunAngleCheckBox = QtWidgets.QCheckBox("", self)
         if int(ConfigFile.settings["bL0CleanSunAngle"]) == 1:
             self.l0CleanSunAngleCheckBox.setChecked(True)
 
-        l0SunAngleMinLabel = QtWidgets.QLabel("Sun Angle Min", self)
+        self.l0SunAngleMinLabel = QtWidgets.QLabel("Sun Angle Min", self)
         self.l0SunAngleMinLineEdit = QtWidgets.QLineEdit(self)
         self.l0SunAngleMinLineEdit.setText(str(ConfigFile.settings["fL0SunAngleMin"]))
         self.l0SunAngleMinLineEdit.setValidator(doubleValidator)
 
-        l0SunAngleMaxLabel = QtWidgets.QLabel("Sun Angle Max", self)
+        self.l0SunAngleMaxLabel = QtWidgets.QLabel("Sun Angle Max", self)
         self.l0SunAngleMaxLineEdit = QtWidgets.QLineEdit(self)
         self.l0SunAngleMaxLineEdit.setText(str(ConfigFile.settings["fL0SunAngleMax"]))
         self.l0SunAngleMaxLineEdit.setValidator(doubleValidator)
 
-        l0RotatorHomeAngleLabel = QtWidgets.QLabel("Rotator Home Angle", self)
+        self.l0RotatorHomeAngleLabel = QtWidgets.QLabel("Rotator Home Angle", self)
         self.l0RotatorHomeAngleLineEdit = QtWidgets.QLineEdit(self)
         self.l0RotatorHomeAngleLineEdit.setText(str(ConfigFile.settings["fL0RotatorHomeAngle"]))
         self.l0RotatorHomeAngleLineEdit.setValidator(doubleValidator)
+
+        self.l0CleanSunAngleCheckBoxUpdate()
+
 
         l0SplitRawFileLabel = QtWidgets.QLabel("SAS Solar Tracker - Split Raw File", self)
         self.l0SplitRawFileCheckBox = QtWidgets.QCheckBox("", self)
@@ -139,54 +152,62 @@ class ConfigWindow(QtWidgets.QDialog):
 
 
 
-        l3InterpIntervalLabel = QtWidgets.QLabel("Level 3 - Interpolation Interval (nm)", self)
+        l3InterpIntervalLabel = QtWidgets.QLabel("Interpolation Interval (nm)", self)
         self.l3InterpIntervalLineEdit = QtWidgets.QLineEdit(self)
         self.l3InterpIntervalLineEdit.setText(str(ConfigFile.settings["fL3aInterpInterval"]))
         self.l3InterpIntervalLineEdit.setValidator(doubleValidator)
 
 
-        l4QualityFlagLabel = QtWidgets.QLabel("Level 4 - Enable Meteorological Flags", self)
+        l4QualityFlagLabel = QtWidgets.QLabel("Enable Meteorological Flags", self)
         self.l4QualityFlagCheckBox = QtWidgets.QCheckBox("", self)
         if int(ConfigFile.settings["bL4EnableQualityFlags"]) == 1:
             self.l4QualityFlagCheckBox.setChecked(True)
 
-        l4EsFlagLabel = QtWidgets.QLabel("Es Flag", self)
+        self.l4EsFlagLabel = QtWidgets.QLabel("Es Flag", self)
         self.l4EsFlagLineEdit = QtWidgets.QLineEdit("", self)
         self.l4EsFlagLineEdit.setText(str(ConfigFile.settings["fL4SignificantEsFlag"]))
         self.l4EsFlagLineEdit.setValidator(doubleValidator)
 
-        l4DawnDuskFlagLabel = QtWidgets.QLabel("Dawn/Dusk Flag", self)
+        self.l4DawnDuskFlagLabel = QtWidgets.QLabel("Dawn/Dusk Flag", self)
         self.l4DawnDuskFlagLineEdit = QtWidgets.QLineEdit("", self)
         self.l4DawnDuskFlagLineEdit.setText(str(ConfigFile.settings["fL4DawnDuskFlag"]))
         self.l4DawnDuskFlagLineEdit.setValidator(doubleValidator)
 
-        l4RainfallHumidityFlagLabel = QtWidgets.QLabel("Rainfall/Humidity Flag", self)
+        self.l4RainfallHumidityFlagLabel = QtWidgets.QLabel("Rainfall/Humidity Flag", self)
         self.l4RainfallHumidityFlagLineEdit = QtWidgets.QLineEdit("", self)
         self.l4RainfallHumidityFlagLineEdit.setText(str(ConfigFile.settings["fL4RainfallHumidityFlag"]))
         self.l4RainfallHumidityFlagLineEdit.setValidator(doubleValidator)
 
-        l4TimeIntervalLabel = QtWidgets.QLabel("Level 4 - Rrs Time Interval (seconds)", self)
+        self.l4QualityFlagCheckBoxUpdate()
+
+
+        l4TimeIntervalLabel = QtWidgets.QLabel("Rrs Time Interval (seconds)", self)
         self.l4TimeIntervalLineEdit = QtWidgets.QLineEdit(self)
         self.l4TimeIntervalLineEdit.setText(str(ConfigFile.settings["fL4TimeInterval"]))
         self.l4TimeIntervalLineEdit.setValidator(intValidator)
 
-        l4DefaultWindSpeedLabel = QtWidgets.QLabel("Level 4 - Default Wind Speed (m/s)", self)
+        l4DefaultWindSpeedLabel = QtWidgets.QLabel("Default Wind Speed (m/s)", self)
         self.l4DefaultWindSpeedLineEdit = QtWidgets.QLineEdit(self)
         self.l4DefaultWindSpeedLineEdit.setText(str(ConfigFile.settings["fL4DefaultWindSpeed"]))
         self.l4DefaultWindSpeedLineEdit.setValidator(doubleValidator)
 
-        l4RhoSkyLabel = QtWidgets.QLabel("Level 4 - Rho Sky", self)
+        l4RhoSkyLabel = QtWidgets.QLabel("Rho Sky", self)
         self.l4RhoSkyLineEdit = QtWidgets.QLineEdit(self)
         self.l4RhoSkyLineEdit.setText(str(ConfigFile.settings["fL4RhoSky"]))
         self.l4RhoSkyLineEdit.setValidator(doubleValidator)
 
-        l4NIRCorrectionLabel = QtWidgets.QLabel("Level 4 - Enable Near-infrared Correction", self)
+        l4NIRCorrectionLabel = QtWidgets.QLabel("Enable Near-infrared Correction", self)
         self.l4NIRCorrectionCheckBox = QtWidgets.QCheckBox("", self)
         if int(ConfigFile.settings["bL4PerformNIRCorrection"]) == 1:
             self.l4NIRCorrectionCheckBox.setChecked(True)
-        
+
+        #l4EnablePercentLtLabel = QtWidgets.QLabel("Level 4 - Enable Percent Lt Calculation", self)
+        #self.l4EnablePercentLtCheckBox = QtWidgets.QCheckBox("", self)
+        #if int(ConfigFile.settings["bL4EnablePercentLtCorrection"]) == 1:
+        #    self.l4EnablePercentLtCheckBox.setChecked(True)
+
         # Set percentage for Rrs calculation
-        l4PercentLtLabel = QtWidgets.QLabel("Level 4 - Percent Lt", self)
+        l4PercentLtLabel = QtWidgets.QLabel("Percent Lt", self)
         self.l4PercentLtLineEdit = QtWidgets.QLineEdit(self)
         self.l4PercentLtLineEdit.setText(str(ConfigFile.settings["fL4PercentLt"]))
         self.l4PercentLtLineEdit.setValidator(doubleValidator)
@@ -195,6 +216,12 @@ class ConfigWindow(QtWidgets.QDialog):
         self.saveButton = QtWidgets.QPushButton("Save")
         self.cancelButton = QtWidgets.QPushButton("Cancel")
 
+
+        self.l0CheckCoordsCheckBox.clicked.connect(self.l0CheckCoordsCheckBoxUpdate)
+        self.l0CleanRotatorAngleCheckBox.clicked.connect(self.l0CleanRotatorAngleCheckBoxUpdate)
+        self.l0CleanSunAngleCheckBox.clicked.connect(self.l0CleanSunAngleCheckBoxUpdate)
+        self.l4QualityFlagCheckBox.clicked.connect(self.l4QualityFlagCheckBoxUpdate)
+            
         self.saveButton.clicked.connect(self.saveButtonPressed)
         self.cancelButton.clicked.connect(self.cancelButtonPressed)
 
@@ -221,33 +248,35 @@ class ConfigWindow(QtWidgets.QDialog):
 
         #vBox = QtWidgets.QVBoxLayout()
         #vBox.addStretch(1)
+        vBox1.addWidget(l0Label)
         vBox1.addWidget(l0CheckCoordsLabel)
         vBox1.addWidget(self.l0CheckCoordsCheckBox)
-        vBox1.addWidget(lonMinLabel)
+        vBox1.addWidget(self.lonMinLabel)
         vBox1.addWidget(self.lonMinLineEdit)
-        vBox1.addWidget(lonMaxLabel)
+        vBox1.addWidget(self.lonMaxLabel)
         vBox1.addWidget(self.lonMaxLineEdit)
-        vBox1.addWidget(directionLabel)
+        vBox1.addWidget(self.directionLabel)
         vBox1.addWidget(self.directionComboBox)
 
 
         vBox1.addWidget(l0CleanRotatorAngleLabel)
         vBox1.addWidget(self.l0CleanRotatorAngleCheckBox)
-        vBox1.addWidget(l0RotatorAngleMinLabel)
+        vBox1.addWidget(self.l0RotatorAngleMinLabel)
         vBox1.addWidget(self.l0RotatorAngleMinLineEdit)
-        vBox1.addWidget(l0RotatorAngleMaxLabel)
+        vBox1.addWidget(self.l0RotatorAngleMaxLabel)
         vBox1.addWidget(self.l0RotatorAngleMaxLineEdit)
-        vBox1.addWidget(l0RotatorDelayLabel)
+        vBox1.addWidget(self.l0RotatorDelayLabel)
         vBox1.addWidget(self.l0RotatorDelayLineEdit)
 
         vBox1.addWidget(l0CleanSunAngleLabel)
         vBox1.addWidget(self.l0CleanSunAngleCheckBox)
-        vBox1.addWidget(l0SunAngleMinLabel)
+        vBox1.addWidget(self.l0SunAngleMinLabel)
         vBox1.addWidget(self.l0SunAngleMinLineEdit)
-        vBox1.addWidget(l0SunAngleMaxLabel)
+        vBox1.addWidget(self.l0SunAngleMaxLabel)
         vBox1.addWidget(self.l0SunAngleMaxLineEdit)
-        vBox1.addWidget(l0RotatorHomeAngleLabel)
+        vBox1.addWidget(self.l0RotatorHomeAngleLabel)
         vBox1.addWidget(self.l0RotatorHomeAngleLineEdit)
+
         vBox1.addWidget(l0SplitRawFileLabel)
         vBox1.addWidget(self.l0SplitRawFileCheckBox)
 
@@ -255,18 +284,24 @@ class ConfigWindow(QtWidgets.QDialog):
         vBox2 = QtWidgets.QVBoxLayout()
         vBox2.setAlignment(QtCore.Qt.AlignBottom)
 
+        vBox2.addWidget(l3Label)
         vBox2.addWidget(l3InterpIntervalLabel)
         vBox2.addWidget(self.l3InterpIntervalLineEdit)
 
+        vBox2.addSpacing(25)
 
+
+        vBox2.addWidget(l4Label)
         vBox2.addWidget(l4QualityFlagLabel)
         vBox2.addWidget(self.l4QualityFlagCheckBox)
-        vBox2.addWidget(l4EsFlagLabel)
+        vBox2.addWidget(self.l4EsFlagLabel)
         vBox2.addWidget(self.l4EsFlagLineEdit)
-        vBox2.addWidget(l4DawnDuskFlagLabel)
+        vBox2.addWidget(self.l4DawnDuskFlagLabel)
         vBox2.addWidget(self.l4DawnDuskFlagLineEdit)
-        vBox2.addWidget(l4RainfallHumidityFlagLabel)
+        vBox2.addWidget(self.l4RainfallHumidityFlagLabel)
         vBox2.addWidget(self.l4RainfallHumidityFlagLineEdit)
+
+        vBox2.addSpacing(25)
 
         vBox2.addWidget(l4TimeIntervalLabel)
         vBox2.addWidget(self.l4TimeIntervalLineEdit)
@@ -276,6 +311,8 @@ class ConfigWindow(QtWidgets.QDialog):
         vBox2.addWidget(self.l4RhoSkyLineEdit)
         vBox2.addWidget(l4NIRCorrectionLabel)
         vBox2.addWidget(self.l4NIRCorrectionCheckBox)
+        #vBox2.addWidget(l4EnablePercentLtLabel)
+        #vBox2.addWidget(self.l4EnablePercentLtCheckBox)
         vBox2.addWidget(l4PercentLtLabel)
         vBox2.addWidget(self.l4PercentLtLineEdit)
         vBox2.addSpacing(25)
@@ -374,6 +411,51 @@ class ConfigWindow(QtWidgets.QDialog):
         self.setCalibrationSettings()
 
 
+    def l0CheckCoordsCheckBoxUpdate(self):
+        print("ConfigWindow - l0CheckCoordsCheckBoxUpdate")
+
+        disabled = (not self.l0CheckCoordsCheckBox.isChecked())
+        self.lonMinLabel.setDisabled(disabled)
+        self.lonMinLineEdit.setDisabled(disabled)
+        self.lonMaxLabel.setDisabled(disabled)
+        self.lonMaxLineEdit.setDisabled(disabled)
+        self.directionLabel.setDisabled(disabled)
+        self.directionComboBox.setDisabled(disabled)
+
+    def l0CleanRotatorAngleCheckBoxUpdate(self):
+        print("ConfigWindow - l0CleanRotatorAngleCheckBoxUpdate")
+        
+        disabled = (not self.l0CleanRotatorAngleCheckBox.isChecked())
+        self.l0RotatorAngleMinLabel.setDisabled(disabled)
+        self.l0RotatorAngleMinLineEdit.setDisabled(disabled)
+        self.l0RotatorAngleMaxLabel.setDisabled(disabled)
+        self.l0RotatorAngleMaxLineEdit.setDisabled(disabled)
+        self.l0RotatorDelayLabel.setDisabled(disabled)
+        self.l0RotatorDelayLineEdit.setDisabled(disabled)
+
+    def l0CleanSunAngleCheckBoxUpdate(self):
+        print("ConfigWindow - l0CleanSunAngleCheckBoxUpdate")
+        
+        disabled = (not self.l0CleanSunAngleCheckBox.isChecked())
+        self.l0SunAngleMinLabel.setDisabled(disabled)
+        self.l0SunAngleMinLineEdit.setDisabled(disabled)
+        self.l0SunAngleMaxLabel.setDisabled(disabled)
+        self.l0SunAngleMaxLineEdit.setDisabled(disabled)
+        self.l0RotatorHomeAngleLabel.setDisabled(disabled)
+        self.l0RotatorHomeAngleLineEdit.setDisabled(disabled)
+
+    def l4QualityFlagCheckBoxUpdate(self):
+        print("ConfigWindow - l4QualityFlagCheckBoxUpdate")
+        
+        disabled = (not self.l4QualityFlagCheckBox.isChecked())
+        self.l4EsFlagLabel.setDisabled(disabled)
+        self.l4EsFlagLineEdit.setDisabled(disabled)
+        self.l4DawnDuskFlagLabel.setDisabled(disabled)
+        self.l4DawnDuskFlagLineEdit.setDisabled(disabled)
+        self.l4RainfallHumidityFlagLabel.setDisabled(disabled)
+        self.l4RainfallHumidityFlagLineEdit.setDisabled(disabled)
+
+
     def saveButtonPressed(self):
         print("ConfigWindow - Save Pressed")
 
@@ -401,6 +483,7 @@ class ConfigWindow(QtWidgets.QDialog):
         ConfigFile.settings["fL4DefaultWindSpeed"] = float(self.l4DefaultWindSpeedLineEdit.text())
         ConfigFile.settings["fL4RhoSky"] = float(self.l4RhoSkyLineEdit.text())
         ConfigFile.settings["bL4PerformNIRCorrection"] = int(self.l4NIRCorrectionCheckBox.isChecked())
+        #ConfigFile.settings["bL4EnablePercentLtCorrection"] = int(self.l4EnablePercentLtCheckBox.isChecked())
         ConfigFile.settings["fL4PercentLt"] = float(self.l4PercentLtLineEdit.text())
 
         ConfigFile.saveConfig(self.name)
