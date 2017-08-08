@@ -31,9 +31,11 @@ class ConfigFile:
         print("fL4SignificantEsFlag", ConfigFile.settings["fL4SignificantEsFlag"])
         print("fL4DawnDuskFlag", ConfigFile.settings["fL4DawnDuskFlag"])
         print("fL4RainfallHumidityFlag", ConfigFile.settings["fL4RainfallHumidityFlag"])
-        print("fL4DefaultWindSpeed", ConfigFile.settings["fL4DefaultWindSpeed"])
         print("fL4RhoSky", ConfigFile.settings["fL4RhoSky"])
+        print("bL4EnableWindSpeedCalculation", ConfigFile.settings["bL4EnableWindSpeedCalculation"])
+        print("fL4DefaultWindSpeed", ConfigFile.settings["fL4DefaultWindSpeed"])
         print("bL4PerformNIRCorrection", ConfigFile.settings["bL4PerformNIRCorrection"])
+        print("bL4EnablePercentLt", ConfigFile.settings["bL4EnablePercentLt"])
         print("fL4PercentLt", ConfigFile.settings["fL4PercentLt"])
 
 
@@ -76,9 +78,11 @@ class ConfigFile:
         ConfigFile.settings["fL4SignificantEsFlag"] = 2.0
         ConfigFile.settings["fL4DawnDuskFlag"] = 1.0
         ConfigFile.settings["fL4RainfallHumidityFlag"] = 1.095
+        ConfigFile.settings["fL4RhoSky"] = 0.0256
+        ConfigFile.settings["bL4EnableWindSpeedCalculation"] = 1
         ConfigFile.settings["fL4DefaultWindSpeed"] = 0.0
-        ConfigFile.settings["fL4RhoSky"] = 0.0
         ConfigFile.settings["bL4PerformNIRCorrection"] = 0
+        #ConfigFile.settings["bL4EnablePercentLt"] = 0
         ConfigFile.settings["fL4PercentLt"] = 5
 
         if not name.endswith(".cfg"):

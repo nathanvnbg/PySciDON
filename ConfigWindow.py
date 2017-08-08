@@ -186,15 +186,23 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l4TimeIntervalLineEdit.setText(str(ConfigFile.settings["fL4TimeInterval"]))
         self.l4TimeIntervalLineEdit.setValidator(intValidator)
 
-        l4DefaultWindSpeedLabel = QtWidgets.QLabel("Default Wind Speed (m/s)", self)
-        self.l4DefaultWindSpeedLineEdit = QtWidgets.QLineEdit(self)
-        self.l4DefaultWindSpeedLineEdit.setText(str(ConfigFile.settings["fL4DefaultWindSpeed"]))
-        self.l4DefaultWindSpeedLineEdit.setValidator(doubleValidator)
-
         l4RhoSkyLabel = QtWidgets.QLabel("Rho Sky", self)
         self.l4RhoSkyLineEdit = QtWidgets.QLineEdit(self)
         self.l4RhoSkyLineEdit.setText(str(ConfigFile.settings["fL4RhoSky"]))
         self.l4RhoSkyLineEdit.setValidator(doubleValidator)
+
+        l4EnableWindSpeedCalculationLabel = QtWidgets.QLabel("Enable Wind Speed Calculation", self)
+        self.l4EnableWindSpeedCalculationCheckBox = QtWidgets.QCheckBox("", self)
+        if int(ConfigFile.settings["bL4EnableWindSpeedCalculation"]) == 1:
+            self.l4EnableWindSpeedCalculationCheckBox.setChecked(True)
+
+        self.l4DefaultWindSpeedLabel = QtWidgets.QLabel("Default Wind Speed (m/s)", self)
+        self.l4DefaultWindSpeedLineEdit = QtWidgets.QLineEdit(self)
+        self.l4DefaultWindSpeedLineEdit.setText(str(ConfigFile.settings["fL4DefaultWindSpeed"]))
+        self.l4DefaultWindSpeedLineEdit.setValidator(doubleValidator)
+        
+        self.l4EnableWindSpeedCalculationCheckBoxUpdate()
+        
 
         l4NIRCorrectionLabel = QtWidgets.QLabel("Enable Near-infrared Correction", self)
         self.l4NIRCorrectionCheckBox = QtWidgets.QCheckBox("", self)
@@ -221,6 +229,7 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l0CleanRotatorAngleCheckBox.clicked.connect(self.l0CleanRotatorAngleCheckBoxUpdate)
         self.l0CleanSunAngleCheckBox.clicked.connect(self.l0CleanSunAngleCheckBoxUpdate)
         self.l4QualityFlagCheckBox.clicked.connect(self.l4QualityFlagCheckBoxUpdate)
+        self.l4EnableWindSpeedCalculationCheckBox.clicked.connect(self.l4EnableWindSpeedCalculationCheckBoxUpdate)
             
         self.saveButton.clicked.connect(self.saveButtonPressed)
         self.cancelButton.clicked.connect(self.cancelButtonPressed)
@@ -305,10 +314,12 @@ class ConfigWindow(QtWidgets.QDialog):
 
         vBox2.addWidget(l4TimeIntervalLabel)
         vBox2.addWidget(self.l4TimeIntervalLineEdit)
-        vBox2.addWidget(l4DefaultWindSpeedLabel)
-        vBox2.addWidget(self.l4DefaultWindSpeedLineEdit)
         vBox2.addWidget(l4RhoSkyLabel)
         vBox2.addWidget(self.l4RhoSkyLineEdit)
+        vBox2.addWidget(l4EnableWindSpeedCalculationLabel)
+        vBox2.addWidget(self.l4EnableWindSpeedCalculationCheckBox)        
+        vBox2.addWidget(self.l4DefaultWindSpeedLabel)
+        vBox2.addWidget(self.l4DefaultWindSpeedLineEdit)
         vBox2.addWidget(l4NIRCorrectionLabel)
         vBox2.addWidget(self.l4NIRCorrectionCheckBox)
         #vBox2.addWidget(l4EnablePercentLtLabel)
@@ -455,6 +466,13 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l4RainfallHumidityFlagLabel.setDisabled(disabled)
         self.l4RainfallHumidityFlagLineEdit.setDisabled(disabled)
 
+    def l4EnableWindSpeedCalculationCheckBoxUpdate(self):
+        print("ConfigWindow - l4EnableWindSpeedCalculationCheckBoxUpdate")
+        
+        disabled = (not self.l4EnableWindSpeedCalculationCheckBox.isChecked())
+        self.l4DefaultWindSpeedLabel.setDisabled(disabled)
+        self.l4DefaultWindSpeedLineEdit.setDisabled(disabled)
+
 
     def saveButtonPressed(self):
         print("ConfigWindow - Save Pressed")
@@ -480,8 +498,9 @@ class ConfigWindow(QtWidgets.QDialog):
         ConfigFile.settings["fL4DawnDuskFlag"] = float(self.l4DawnDuskFlagLineEdit.text())
         ConfigFile.settings["fL4RainfallHumidityFlag"] = float(self.l4RainfallHumidityFlagLineEdit.text())
         ConfigFile.settings["fL4TimeInterval"] = int(self.l4TimeIntervalLineEdit.text())
-        ConfigFile.settings["fL4DefaultWindSpeed"] = float(self.l4DefaultWindSpeedLineEdit.text())
         ConfigFile.settings["fL4RhoSky"] = float(self.l4RhoSkyLineEdit.text())
+        ConfigFile.settings["bL4EnableWindSpeedCalculation"] = int(self.l4EnableWindSpeedCalculationCheckBox.isChecked())
+        ConfigFile.settings["fL4DefaultWindSpeed"] = float(self.l4DefaultWindSpeedLineEdit.text())
         ConfigFile.settings["bL4PerformNIRCorrection"] = int(self.l4NIRCorrectionCheckBox.isChecked())
         #ConfigFile.settings["bL4EnablePercentLtCorrection"] = int(self.l4EnablePercentLtCheckBox.isChecked())
         ConfigFile.settings["fL4PercentLt"] = float(self.l4PercentLtLineEdit.text())

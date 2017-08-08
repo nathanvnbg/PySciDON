@@ -114,7 +114,7 @@ class ProcessL4:
     @staticmethod
     def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, \
                               percentLt, enableQualityCheck, performNIRCorrection, \
-                              defaultWindSpeed=0.0, windSpeedColumns=None, rhoSky=0.0256):
+                              rhoSky=0.0256, enableWindSpeedCalculation=1, defaultWindSpeed=0.0, windSpeedColumns=None):
 
         #print("calculateReflectance2")
         
@@ -278,14 +278,12 @@ class ProcessL4:
 
 
         # ToDo: sunny/wind calculations
-        if rhoSky != 0:
+        if not enableWindSpeedCalculation or sky750 > 0.05:
             p_sky = rhoSky
-        elif sky750 > 0.05:
-            p_sky = 0.0256
         else:
             # Set wind speed here
             w = windSpeedMean
-            p_sky = 0.0256 + 0.00039 * w + 0.000034 * w * w
+            p_sky = rhoSky + 0.00039 * w + 0.000034 * w * w
             #p_sky = 0.0256
 
 
@@ -430,7 +428,7 @@ class ProcessL4:
 
     @staticmethod
     def calculateReflectance(root, node, interval, enableQualityCheck, percentLt, performNIRCorrection, \
-                             defaultWindSpeed=0.0, windSpeedData=None, rhoSky=0.0256):
+                             rhoSky=0.0256, enableWindSpeedCalculation=1, defaultWindSpeed=0.0, windSpeedData=None):
     #def calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
 
         print("calculateReflectance")
@@ -522,7 +520,7 @@ class ProcessL4:
                 ltSlice = ProcessL4.columnToSlice(ltColumns, i, i+1)
                 ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
                                                 percentLt, enableQualityCheck, performNIRCorrection, \
-                                                defaultWindSpeed, windSpeedColumns, rhoSky)
+                                                rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedColumns)
 
         else:
             start = 0
@@ -537,7 +535,7 @@ class ProcessL4:
                     ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
                     ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
                                                     percentLt, enableQualityCheck, performNIRCorrection, \
-                                                    defaultWindSpeed, windSpeedColumns, rhoSky)
+                                                    rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedColumns)
     
                     start = i
                     endTime = time + interval
@@ -551,7 +549,7 @@ class ProcessL4:
                 ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
                 ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
                                                 percentLt, enableQualityCheck, performNIRCorrection, \
-                                                defaultWindSpeed, windSpeedColumns, rhoSky)
+                                                rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedColumns)
 
 
 
@@ -587,13 +585,14 @@ class ProcessL4:
 
         interval = float(ConfigFile.settings["fL4TimeInterval"])
         performNIRCorrection = int(ConfigFile.settings["bL4PerformNIRCorrection"])
-        defaultWindSpeed = float(ConfigFile.settings["fL4DefaultWindSpeed"])
         rhoSky = float(ConfigFile.settings["fL4RhoSky"])
+        enableWindSpeedCalculation = int(ConfigFile.settings["bL4EnableWindSpeedCalculation"])
+        defaultWindSpeed = float(ConfigFile.settings["fL4DefaultWindSpeed"])
         percentLt = float(ConfigFile.settings["fL4PercentLt"])
 
         # Can change time resolution here
         if not ProcessL4.calculateReflectance(root, node, interval, enableQualityCheck, percentLt, performNIRCorrection, \
-                                              defaultWindSpeed, windSpeedData, rhoSky):
+                                              rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedData):
             return None
 
         return root
