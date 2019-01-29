@@ -15,40 +15,50 @@ class ProcessL4a:
         n = len(list(rrsData.columns.values())[0])
         m = len(band["lambda"])
         result = []
+
+        # For each row of rrs data
         for i in range(n):
             srf_sum = 0
+            c_sum = 0.0
+
+            # For each lamda in band
             for j in range(m):
                 ld = str(band["lambda"][j]) + ".0"
                 srf = band["response"][j]
                 #print("ld, srf",ld,srf)
+
+                # Check if lamda in rrs
                 if ld in rrsData.columns:
                     rrs = rrsData.columns[ld][i]
                     #print("srf, rrs", srf, rrs)
                     srf_sum += rrs*srf
-            c = 1/sum(band["response"])
+                    c_sum += band["response"][j]
+
+            # Calculate srf value for that band
+            c = 1/c_sum
             result.append(c * srf_sum)
+
         return result
 
     
     @staticmethod
     def processMODISBands(rrsData, bandData):
         print("Process MODIS Bands")
-        if rrsData.data is None:
-            return
-
         rrsData.datasetToColumns()
         rrsColumns = rrsData.columns
-
+        
         date = rrsColumns["Datetag"]
         tt2 = rrsColumns["Timetag2"]
-        latpos = rrsColumns["Latpos"]
-        lonpos = rrsColumns["Lonpos"]
-
+        
         bandData.columns["Datetag"] = date
         bandData.columns["Timetag2"] = tt2
-        bandData.columns["Latpos"] = latpos
-        bandData.columns["Lonpos"] = lonpos
 
+        if "Latpos" in rrsColumns:
+            latpos = rrsColumns["Latpos"]
+            lonpos = rrsColumns["Lonpos"]
+            bandData.columns["Latpos"] = latpos
+            bandData.columns["Lonpos"] = lonpos
+        
         bandData.columns["Band1"] = ProcessL4a.calculateBand(rrsData, MODIS.band1)
         bandData.columns["Band3"] = ProcessL4a.calculateBand(rrsData, MODIS.band3)
         bandData.columns["Band4"] = ProcessL4a.calculateBand(rrsData, MODIS.band4)
@@ -60,28 +70,27 @@ class ProcessL4a:
         bandData.columns["Band13"] = ProcessL4a.calculateBand(rrsData, MODIS.band13)
         bandData.columns["Band14"] = ProcessL4a.calculateBand(rrsData, MODIS.band14)
         bandData.columns["Band15"] = ProcessL4a.calculateBand(rrsData, MODIS.band15)
-
+        
         bandData.columnsToDataset()
 
 
     @staticmethod
     def processSentinel3Bands(rrsData, bandData):
         print("Process Sentinel3 Bands")
-        if rrsData.data is None:
-            return
-
         rrsData.datasetToColumns()
         rrsColumns = rrsData.columns
-
+        
         date = rrsColumns["Datetag"]
         tt2 = rrsColumns["Timetag2"]
-        latpos = rrsColumns["Latpos"]
-        lonpos = rrsColumns["Lonpos"]
-
+        
         bandData.columns["Datetag"] = date
         bandData.columns["Timetag2"] = tt2
-        bandData.columns["Latpos"] = latpos
-        bandData.columns["Lonpos"] = lonpos
+
+        if "Latpos" in rrsColumns:
+            latpos = rrsColumns["Latpos"]
+            lonpos = rrsColumns["Lonpos"]
+            bandData.columns["Latpos"] = latpos
+            bandData.columns["Lonpos"] = lonpos
 
         bandData.columns["Band1"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band1)
         bandData.columns["Band2"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band2)
@@ -96,7 +105,7 @@ class ProcessL4a:
         bandData.columns["Band11"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band11)
         bandData.columns["Band12"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band12)
         bandData.columns["Band13"] = ProcessL4a.calculateBand(rrsData, Sentinel3.band13)
-
+        
         bandData.columnsToDataset()
 
 
@@ -114,12 +123,11 @@ class ProcessL4a:
         #bandData = satelliteGroup.addDataset("Bands")
         modisData = satelliteGroup.addDataset("MODIS")
         sentinel3Data = satelliteGroup.addDataset("Sentinel3")
-
+        
         reflectanceGroup = node.getGroup("Reflectance")
-        if reflectanceGroup:
-            rrsData = reflectanceGroup.getDataset("Rrs")
-            if rrsData:
-                ProcessL4a.processMODISBands(rrsData, modisData)
-                ProcessL4a.processSentinel3Bands(rrsData, sentinel3Data)
+        rrsData = reflectanceGroup.getDataset("Rrs")
+
+        ProcessL4a.processMODISBands(rrsData, modisData)
+        ProcessL4a.processSentinel3Bands(rrsData, sentinel3Data)
 
         return root
