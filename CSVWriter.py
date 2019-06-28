@@ -18,7 +18,7 @@ class CSVWriter:
         filename = name + "_" + sensorName + "_" + level
         csvPath = os.path.join(csvdir, filename + ".csv")
         #np.savetxt(csvPath, data, delimiter=',')
-        with open(csvPath, 'w') as f:
+        with open(csvPath, 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerows(data)
 
