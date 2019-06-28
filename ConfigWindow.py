@@ -220,6 +220,12 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l4PercentLtLineEdit.setText(str(ConfigFile.settings["fL4PercentLt"]))
         self.l4PercentLtLineEdit.setValidator(doubleValidator)
 
+        # Wavelength used for Rrs calculation
+        l4PercentLtWavelengthLabel = QtWidgets.QLabel("Percent Lt Wavelength", self)
+        self.l4PercentLtWavelengthLineEdit = QtWidgets.QLineEdit(self)
+        self.l4PercentLtWavelengthLineEdit.setText(str(ConfigFile.settings["fL4PercentLtWavelength"]))
+        self.l4PercentLtWavelengthLineEdit.setValidator(doubleValidator)
+
 
         self.saveButton = QtWidgets.QPushButton("Save")
         self.cancelButton = QtWidgets.QPushButton("Cancel")
@@ -242,21 +248,19 @@ class ConfigWindow(QtWidgets.QDialog):
         vBox.addSpacing(10)
 
 
+        vBox0 = QtWidgets.QVBoxLayout()
+
+        vBox0.addWidget(self.addCalibrationFileButton)
+        vBox0.addWidget(self.calibrationFileComboBox)
+        vBox0.addWidget(self.calibrationEnabledCheckBox)
+        vBox0.addWidget(calibrationFrameTypeLabel)
+        vBox0.addWidget(self.calibrationFrameTypeComboBox)
+        vBox0.addStretch(1)
+
+
         vBox1 = QtWidgets.QVBoxLayout()
+        #vBox1.addSpacing(25)
 
-        #vBox.addStretch(1)
-        vBox1.addWidget(self.addCalibrationFileButton)
-        vBox1.addWidget(self.calibrationFileComboBox)
-        vBox1.addWidget(self.calibrationEnabledCheckBox)
-        vBox1.addWidget(calibrationFrameTypeLabel)
-        vBox1.addWidget(self.calibrationFrameTypeComboBox)
-        vBox1.addSpacing(25)
-
-
-        #vBox1 = QtWidgets.QVBoxLayout()
-
-        #vBox = QtWidgets.QVBoxLayout()
-        #vBox.addStretch(1)
         vBox1.addWidget(l0Label)
         vBox1.addWidget(l0CheckCoordsLabel)
         vBox1.addWidget(self.l0CheckCoordsCheckBox)
@@ -326,9 +330,13 @@ class ConfigWindow(QtWidgets.QDialog):
         #vBox2.addWidget(self.l4EnablePercentLtCheckBox)
         vBox2.addWidget(l4PercentLtLabel)
         vBox2.addWidget(self.l4PercentLtLineEdit)
+        vBox2.addWidget(l4PercentLtWavelengthLabel)
+        vBox2.addWidget(self.l4PercentLtWavelengthLineEdit)
         vBox2.addSpacing(25)
         
         hBox = QtWidgets.QHBoxLayout()
+        hBox.addLayout(vBox0, 2)
+        hBox.addSpacing(50)
         hBox.addLayout(vBox1)
         hBox.addSpacing(50)
         hBox.addLayout(vBox2)        
@@ -346,7 +354,7 @@ class ConfigWindow(QtWidgets.QDialog):
 
         self.setLayout(vBox)
 
-        self.setGeometry(300, 200, 400, 750)
+        self.setGeometry(300, 200, 700, 700)
         self.setWindowTitle('Edit Config')
         #self.show()
         print("ConfigWindow - initUI Done")
@@ -504,6 +512,7 @@ class ConfigWindow(QtWidgets.QDialog):
         ConfigFile.settings["bL4PerformNIRCorrection"] = int(self.l4NIRCorrectionCheckBox.isChecked())
         #ConfigFile.settings["bL4EnablePercentLtCorrection"] = int(self.l4EnablePercentLtCheckBox.isChecked())
         ConfigFile.settings["fL4PercentLt"] = float(self.l4PercentLtLineEdit.text())
+        ConfigFile.settings["fL4PercentLtWavelength"] = float(self.l4PercentLtWavelengthLineEdit.text())
 
         ConfigFile.saveConfig(self.name)
 

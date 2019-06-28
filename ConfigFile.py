@@ -37,6 +37,7 @@ class ConfigFile:
         print("bL4PerformNIRCorrection", ConfigFile.settings["bL4PerformNIRCorrection"])
         print("bL4EnablePercentLt", ConfigFile.settings["bL4EnablePercentLt"])
         print("fL4PercentLt", ConfigFile.settings["fL4PercentLt"])
+        print("fL4PercentLtWavelength", ConfigFile.settings["fL4PercentLtWavelength"])
 
 
     # Creates the calibration file folder if not exist
@@ -84,6 +85,7 @@ class ConfigFile:
         ConfigFile.settings["bL4PerformNIRCorrection"] = 0
         #ConfigFile.settings["bL4EnablePercentLt"] = 0
         ConfigFile.settings["fL4PercentLt"] = 5
+        ConfigFile.settings["fL4PercentLtWavelength"] = 780.0
 
         if not name.endswith(".cfg"):
             name = name + ".cfg"
@@ -105,7 +107,6 @@ class ConfigFile:
         ConfigFile.createCalibrationFolder()
 
     # Loads the cfg file
-    # ToDo: Apply default values to any settings that are missing (in case settings are updated)
     @staticmethod
     def loadConfig(filename):
         print("ConfigFile - Load Config")
@@ -117,6 +118,10 @@ class ConfigFile:
                 text = f.read()
                 ConfigFile.settings = json.loads(text, object_pairs_hook=collections.OrderedDict)
                 ConfigFile.createCalibrationFolder()
+                
+                # Apply fixes to settings due to updates to the config file format
+                if "fL4PercentLtWavelength" not in ConfigFile.settings:
+                    ConfigFile.settings["fL4PercentLtWavelength"] = 780.0
 
 
     # Deletes a config
