@@ -239,75 +239,6 @@ class Controller:
 
 
 
-    # Saving data to a formatted csv file for testing
-    @staticmethod
-    def outputCSV_L4(fp):
-        (dirpath, filename) = os.path.split(fp)
-        filename = os.path.splitext(filename)[0]
-
-        filepath = os.path.join(dirpath, filename + "_L4.hdf")
-        if not os.path.isfile(filepath):
-            return
-
-        root = HDFRoot.readHDF5(filepath)
-        if root is None:
-            print("outputCSV: root is None")
-            return
-
-        Controller.outputCSV(fp, root, "Reflectance", "ES")
-        Controller.outputCSV(fp, root, "Reflectance", "LI")
-        Controller.outputCSV(fp, root, "Reflectance", "LT")
-        Controller.outputCSV(fp, root, "Reflectance", "Rrs")
-
-
-    @staticmethod
-    def outputCSV(fp, root, gpName, dsName):
-        (dirpath, filename) = os.path.split(fp)
-        filename = os.path.splitext(filename)[0]
-
-        gp = root.getGroup(gpName)
-        ds = gp.getDataset(dsName)
-        #np.savetxt('Data/test.out', ds.data)
-
-        if not ds:
-            print("Warning - outputCSV: missing dataset")
-            return
-
-        #dirpath = "csv"
-        #name = filename[28:43]
-        dirpath = os.path.join(dirpath, 'csv')
-        name = filename[0:15]
-
-        outList = []
-        columnName = dsName.lower()
-        
-        names = list(ds.data.dtype.names)
-        names.remove("Datetag")
-        names.remove("Timetag2")
-        names.remove("Latpos")
-        names.remove("Lonpos")
-        data = ds.data[names]
-
-        total = ds.data.shape[0]
-        #ls = ["wl"] + [k for k,v in sorted(ds.data.dtype.fields.items(), key=lambda k: k[1])]
-        ls = ["wl"] + list(data.dtype.names)
-        outList.append(ls)
-        for i in range(total):
-            n = str(i+1)
-            ls = [columnName + "_" + name + '_' + n] + ['%f' % num for num in data[i]]
-            outList.append(ls)
-
-        outList = zip(*outList)
-
-        filename = dsName.upper() + "_" + name
-        #filename = name + "_" + dsName.upper()
-        csvPath = os.path.join(dirpath, filename + ".csv")
-
-        with open(csvPath, 'w') as f:
-            writer = csv.writer(f)
-            writer.writerows(outList)
-
-
     # Process all to level 4 for testing
     @staticmethod
     def processAll(fp, calibrationMap):
@@ -320,7 +251,6 @@ class Controller:
         Controller.processL3a(fp)
         windSpeedData = Controller.processWindData(fp)
         Controller.processL4(fp, windSpeedData)
-        #Controller.outputCSV_L4(fp)
         #CSVWriter.outputTXT_L1a(fp)   
         #CSVWriter.outputTXT_L1b(fp)
         #CSVWriter.outputTXT_L2(fp)
@@ -375,7 +305,6 @@ class Controller:
         if level >= 4:
             windSpeedData = Controller.processWindData(windFile)
             Controller.processL4(fp, windSpeedData)
-            #Controller.outputCSV_L4(fp)
         print("Output CSV: " + fp)
         CSVWriter.outputTXT_L1a(fp)
         CSVWriter.outputTXT_L1b(fp)
