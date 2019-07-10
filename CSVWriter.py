@@ -255,3 +255,23 @@ class CSVWriter:
         CSVWriter.writeCSV(name, dirpath, li, "LI", level)
         CSVWriter.writeCSV(name, dirpath, lt, "LT", level)
         CSVWriter.writeCSV(name, dirpath, rrs, "RRS", level)
+        
+        
+        
+        # Convert MODIS/Sentinel3 data to csv file
+        gp = root.getGroup("Satellite")
+
+        modisData = gp.getDataset("MODIS")
+        sentinel3Data = gp.getDataset("Sentinel3")
+
+        if modisData is None or sentinel3Data is None:
+            return
+
+        # Format for output
+        modis = CSVWriter.formatData3(modisData)
+        sentinel3 = CSVWriter.formatData3(sentinel3Data)
+
+        # Write csv files
+        CSVWriter.writeCSV(name, dirpath, modis, "MODIS", level)
+        CSVWriter.writeCSV(name, dirpath, sentinel3, "Sentinel3", level)
+
