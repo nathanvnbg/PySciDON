@@ -24,16 +24,16 @@ class CSVWriter:
 
 
     @staticmethod
-    def outputTXT_L1a(fp):
-        CSVWriter.outputTXT_Type1(fp, "L1a")
+    def writeL1a(fp):
+        CSVWriter.convertType1(fp, "L1a")
 
     @staticmethod
-    def outputTXT_L1b(fp):
-        CSVWriter.outputTXT_Type1(fp, "L1b")
+    def writeL1b(fp):
+        CSVWriter.convertType1(fp, "L1b")
 
     @staticmethod
-    def outputTXT_L2(fp):
-        CSVWriter.outputTXT_Type1(fp, "L2")
+    def writeL2(fp):
+        CSVWriter.convertType1(fp, "L2")
 
     # Converts the data into a list of rows
     @staticmethod
@@ -56,7 +56,7 @@ class CSVWriter:
 
     # Convert Level 1a, 1b, & 2 data to csv file
     @staticmethod
-    def outputTXT_Type1(fp, level):
+    def convertType1(fp, level):
 
         # Get filepath of input hdf
         (dirpath, filename) = os.path.split(fp)
@@ -109,12 +109,12 @@ class CSVWriter:
 
 
     @staticmethod
-    def outputTXT_L2s(fp):
-        CSVWriter.outputTXT_Type2(fp, "L2s")
+    def writeL2s(fp):
+        CSVWriter.convertType2(fp, "L2s")
 
     @staticmethod
-    def outputTXT_L3a(fp):
-        CSVWriter.outputTXT_Type2(fp, "L3a")
+    def writeL3a(fp):
+        CSVWriter.convertType2(fp, "L3a")
 
     # Converts the data into a list of rows
     @staticmethod
@@ -140,7 +140,7 @@ class CSVWriter:
 
     # Convert Level 2s & 3a data to csv file
     @staticmethod
-    def outputTXT_Type2(fp, level):
+    def convertType2(fp, level):
 
         # Get filepath of input hdf
         (dirpath, filename) = os.path.split(fp)
@@ -191,9 +191,9 @@ class CSVWriter:
 
 
     @staticmethod
-    def outputTXT_L4(fp):
-        CSVWriter.outputTXT_Type3(fp, "L4")
-        CSVWriter.outputTXT_Type3(fp, "L4-flags")
+    def writeL4(fp):
+        CSVWriter.convertType3(fp, "L4")
+        CSVWriter.convertType3(fp, "L4-flags")
 
     # Converts the data into a list of rows
     @staticmethod
@@ -214,7 +214,7 @@ class CSVWriter:
 
     # Convert Level 4 data to csv file
     @staticmethod
-    def outputTXT_Type3(fp, level):
+    def convertType3(fp, level):
 
         # Get filepath of input hdf
         (dirpath, filename) = os.path.split(fp)
@@ -255,4 +255,3 @@ class CSVWriter:
         CSVWriter.writeCSV(name, dirpath, li, "LI", level)
         CSVWriter.writeCSV(name, dirpath, lt, "LT", level)
         CSVWriter.writeCSV(name, dirpath, rrs, "RRS", level)
-
