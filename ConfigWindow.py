@@ -158,6 +158,42 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l3InterpIntervalLineEdit.setValidator(doubleValidator)
 
 
+
+        # Settings to determine how to calculate Rrs
+        self.l4RrsCalculationTypeBox = QtWidgets.QGroupBox("L4 Rrs Calculation Type")
+
+        self.l4MeanButton = QtWidgets.QRadioButton("Mean")
+        self.l4MeanButton.setChecked(ConfigFile.settings["iL4CalculationType"] == 0)
+        
+        self.l4MedianButton = QtWidgets.QRadioButton("Median")
+        self.l4MedianButton.setChecked(ConfigFile.settings["iL4CalculationType"] == 1)
+        
+        
+        # Settings to determine how to split Rrs data
+        self.l4SplitDataBox = QtWidgets.QGroupBox("Split L4 Data")
+
+        self.l4TimeButton = QtWidgets.QRadioButton("Time (seconds)")
+        self.l4TimeButton.setChecked(ConfigFile.settings["iL4SplitDataType"] == 0)
+        self.l4TimeIntervalLineEdit = QtWidgets.QLineEdit(self)
+        self.l4TimeIntervalLineEdit.setText(str(ConfigFile.settings["fL4TimeInterval"]))
+        self.l4TimeIntervalLineEdit.setValidator(intValidator)
+        
+        self.l4LatitudeButton = QtWidgets.QRadioButton("Latitude")
+        self.l4LatitudeButton.setChecked(ConfigFile.settings["iL4SplitDataType"] == 1)
+        self.l4LatitudeStepLineEdit = QtWidgets.QLineEdit(self)
+        self.l4LatitudeStepLineEdit.setText(str(ConfigFile.settings["fL4LatitudeStep"]))
+        self.l4LatitudeStepLineEdit.setValidator(doubleValidator)
+        
+        self.l4LongitudeButton = QtWidgets.QRadioButton("Longitude")
+        self.l4LongitudeButton.setChecked(ConfigFile.settings["iL4SplitDataType"] == 2)
+        self.l4LongitudeStepLineEdit = QtWidgets.QLineEdit(self)
+        self.l4LongitudeStepLineEdit.setText(str(ConfigFile.settings["fL4LongitudeStep"]))
+        self.l4LongitudeStepLineEdit.setValidator(doubleValidator)
+        
+        self.l4SplitDataButtonUpdate()
+        
+        
+        # Settings for Meteorologial flags
         l4QualityFlagLabel = QtWidgets.QLabel("Enable Meteorological Flags", self)
         self.l4QualityFlagCheckBox = QtWidgets.QCheckBox("", self)
         if int(ConfigFile.settings["bL4EnableQualityFlags"]) == 1:
@@ -181,16 +217,12 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l4QualityFlagCheckBoxUpdate()
 
 
-        l4TimeIntervalLabel = QtWidgets.QLabel("Rrs Time Interval (seconds)", self)
-        self.l4TimeIntervalLineEdit = QtWidgets.QLineEdit(self)
-        self.l4TimeIntervalLineEdit.setText(str(ConfigFile.settings["fL4TimeInterval"]))
-        self.l4TimeIntervalLineEdit.setValidator(intValidator)
-
         l4RhoSkyLabel = QtWidgets.QLabel("Rho Sky", self)
         self.l4RhoSkyLineEdit = QtWidgets.QLineEdit(self)
         self.l4RhoSkyLineEdit.setText(str(ConfigFile.settings["fL4RhoSky"]))
         self.l4RhoSkyLineEdit.setValidator(doubleValidator)
 
+        # Wind speed settings
         l4EnableWindSpeedCalculationLabel = QtWidgets.QLabel("Enable Wind Speed Calculation", self)
         self.l4EnableWindSpeedCalculationCheckBox = QtWidgets.QCheckBox("", self)
         if int(ConfigFile.settings["bL4EnableWindSpeedCalculation"]) == 1:
@@ -208,6 +240,12 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l4NIRCorrectionCheckBox = QtWidgets.QCheckBox("", self)
         if int(ConfigFile.settings["bL4PerformNIRCorrection"]) == 1:
             self.l4NIRCorrectionCheckBox.setChecked(True)
+            
+        # Ship noise value to subtract from Rrs
+        l4ShipNoiseCorrectionLabel = QtWidgets.QLabel("Ship Noise (Subtract from Rrs)", self)
+        self.l4ShipNoiseCorrectionLineEdit = QtWidgets.QLineEdit(self)
+        self.l4ShipNoiseCorrectionLineEdit.setText(str(ConfigFile.settings["fL4ShipNoiseCorrection"]))
+        self.l4ShipNoiseCorrectionLineEdit.setValidator(doubleValidator)
 
         #l4EnablePercentLtLabel = QtWidgets.QLabel("Level 4 - Enable Percent Lt Calculation", self)
         #self.l4EnablePercentLtCheckBox = QtWidgets.QCheckBox("", self)
@@ -234,6 +272,9 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l0CheckCoordsCheckBox.clicked.connect(self.l0CheckCoordsCheckBoxUpdate)
         self.l0CleanRotatorAngleCheckBox.clicked.connect(self.l0CleanRotatorAngleCheckBoxUpdate)
         self.l0CleanSunAngleCheckBox.clicked.connect(self.l0CleanSunAngleCheckBoxUpdate)
+        self.l4TimeButton.clicked.connect(self.l4SplitDataButtonUpdate)
+        self.l4LatitudeButton.clicked.connect(self.l4SplitDataButtonUpdate)
+        self.l4LongitudeButton.clicked.connect(self.l4SplitDataButtonUpdate)
         self.l4QualityFlagCheckBox.clicked.connect(self.l4QualityFlagCheckBoxUpdate)
         self.l4EnableWindSpeedCalculationCheckBox.clicked.connect(self.l4EnableWindSpeedCalculationCheckBoxUpdate)
             
@@ -295,44 +336,78 @@ class ConfigWindow(QtWidgets.QDialog):
 
 
         vBox2 = QtWidgets.QVBoxLayout()
-        vBox2.setAlignment(QtCore.Qt.AlignBottom)
+        vBox2.setAlignment(QtCore.Qt.AlignTop)
+        #vBox2.setAlignment(QtCore.Qt.AlignBottom)
+                
 
         vBox2.addWidget(l3Label)
         vBox2.addWidget(l3InterpIntervalLabel)
         vBox2.addWidget(self.l3InterpIntervalLineEdit)
 
+        vBox2.addSpacing(50)
+
+
+
+        vBoxRrsCalculationType = QtWidgets.QVBoxLayout()
+
+        vBoxRrsCalculationType.addWidget(self.l4MeanButton)
+        vBoxRrsCalculationType.addWidget(self.l4MedianButton)
+        
+        self.l4RrsCalculationTypeBox.setLayout(vBoxRrsCalculationType)
+        vBox2.addWidget(self.l4RrsCalculationTypeBox)
+        
+        vBox2.addSpacing(25)
+        
+        
+        vBoxSplitData = QtWidgets.QVBoxLayout()
+
+        vBoxSplitData.addWidget(self.l4TimeButton)
+        vBoxSplitData.addWidget(self.l4TimeIntervalLineEdit)
+        vBoxSplitData.addWidget(self.l4LatitudeButton)
+        vBoxSplitData.addWidget(self.l4LatitudeStepLineEdit)
+        vBoxSplitData.addWidget(self.l4LongitudeButton)
+        vBoxSplitData.addWidget(self.l4LongitudeStepLineEdit)
+        
+        self.l4SplitDataBox.setLayout(vBoxSplitData)
+        vBox2.addWidget(self.l4SplitDataBox)
+        
         vBox2.addSpacing(25)
 
 
-        vBox2.addWidget(l4Label)
-        vBox2.addWidget(l4QualityFlagLabel)
-        vBox2.addWidget(self.l4QualityFlagCheckBox)
-        vBox2.addWidget(self.l4EsFlagLabel)
-        vBox2.addWidget(self.l4EsFlagLineEdit)
-        vBox2.addWidget(self.l4DawnDuskFlagLabel)
-        vBox2.addWidget(self.l4DawnDuskFlagLineEdit)
-        vBox2.addWidget(self.l4RainfallHumidityFlagLabel)
-        vBox2.addWidget(self.l4RainfallHumidityFlagLineEdit)
+        vBox3 = QtWidgets.QVBoxLayout()
+        vBox3.setAlignment(QtCore.Qt.AlignTop)
+        #vBox3.setAlignment(QtCore.Qt.AlignBottom)
+        
+        vBox3.addWidget(l4Label)
+        vBox3.addWidget(l4QualityFlagLabel)
+        vBox3.addWidget(self.l4QualityFlagCheckBox)
+        vBox3.addWidget(self.l4EsFlagLabel)
+        vBox3.addWidget(self.l4EsFlagLineEdit)
+        vBox3.addWidget(self.l4DawnDuskFlagLabel)
+        vBox3.addWidget(self.l4DawnDuskFlagLineEdit)
+        vBox3.addWidget(self.l4RainfallHumidityFlagLabel)
+        vBox3.addWidget(self.l4RainfallHumidityFlagLineEdit)
 
-        vBox2.addSpacing(25)
+        vBox3.addSpacing(25)
 
-        vBox2.addWidget(l4TimeIntervalLabel)
-        vBox2.addWidget(self.l4TimeIntervalLineEdit)
-        vBox2.addWidget(l4RhoSkyLabel)
-        vBox2.addWidget(self.l4RhoSkyLineEdit)
-        vBox2.addWidget(l4EnableWindSpeedCalculationLabel)
-        vBox2.addWidget(self.l4EnableWindSpeedCalculationCheckBox)        
-        vBox2.addWidget(self.l4DefaultWindSpeedLabel)
-        vBox2.addWidget(self.l4DefaultWindSpeedLineEdit)
-        vBox2.addWidget(l4NIRCorrectionLabel)
-        vBox2.addWidget(self.l4NIRCorrectionCheckBox)
-        #vBox2.addWidget(l4EnablePercentLtLabel)
-        #vBox2.addWidget(self.l4EnablePercentLtCheckBox)
-        vBox2.addWidget(l4PercentLtLabel)
-        vBox2.addWidget(self.l4PercentLtLineEdit)
-        vBox2.addWidget(l4PercentLtWavelengthLabel)
-        vBox2.addWidget(self.l4PercentLtWavelengthLineEdit)
-        vBox2.addSpacing(25)
+        vBox3.addWidget(l4RhoSkyLabel)
+        vBox3.addWidget(self.l4RhoSkyLineEdit)
+        vBox3.addWidget(l4EnableWindSpeedCalculationLabel)
+        vBox3.addWidget(self.l4EnableWindSpeedCalculationCheckBox)        
+        vBox3.addWidget(self.l4DefaultWindSpeedLabel)
+        vBox3.addWidget(self.l4DefaultWindSpeedLineEdit)
+        vBox3.addWidget(l4NIRCorrectionLabel)
+        vBox3.addWidget(self.l4NIRCorrectionCheckBox)
+        vBox3.addWidget(l4ShipNoiseCorrectionLabel)
+        vBox3.addWidget(self.l4ShipNoiseCorrectionLineEdit)
+        #vBox3.addWidget(l4EnablePercentLtLabel)
+        #vBox3.addWidget(self.l4EnablePercentLtCheckBox)
+        vBox3.addWidget(l4PercentLtLabel)
+        vBox3.addWidget(self.l4PercentLtLineEdit)
+        vBox3.addWidget(l4PercentLtWavelengthLabel)
+        vBox3.addWidget(self.l4PercentLtWavelengthLineEdit)
+        vBox3.addSpacing(25)
+        
         
         hBox = QtWidgets.QHBoxLayout()
         hBox.addLayout(vBox0, 2)
@@ -340,6 +415,8 @@ class ConfigWindow(QtWidgets.QDialog):
         hBox.addLayout(vBox1)
         hBox.addSpacing(50)
         hBox.addLayout(vBox2)        
+        hBox.addSpacing(50)
+        hBox.addLayout(vBox3)      
 
 
         saveHBox = QtWidgets.QHBoxLayout()
@@ -463,6 +540,17 @@ class ConfigWindow(QtWidgets.QDialog):
         self.l0RotatorHomeAngleLabel.setDisabled(disabled)
         self.l0RotatorHomeAngleLineEdit.setDisabled(disabled)
 
+    def l4SplitDataButtonUpdate(self):
+        print("ConfigWindow - l4SplitDataButtonUpdate")
+        
+        disabled = (not self.l4TimeButton.isChecked())
+        #self.l4TimeIntervalLabel.setDisabled(disabled)
+        self.l4TimeIntervalLineEdit.setDisabled(disabled)
+        disabled = (not self.l4LatitudeButton.isChecked())
+        self.l4LatitudeStepLineEdit.setDisabled(disabled)
+        disabled = (not self.l4LongitudeButton.isChecked())
+        self.l4LongitudeStepLineEdit.setDisabled(disabled)
+
     def l4QualityFlagCheckBoxUpdate(self):
         print("ConfigWindow - l4QualityFlagCheckBoxUpdate")
         
@@ -501,15 +589,32 @@ class ConfigWindow(QtWidgets.QDialog):
 
         ConfigFile.settings["fL3aInterpInterval"] = float(self.l3InterpIntervalLineEdit.text())
 
+
+        if self.l4MeanButton.isChecked():
+            ConfigFile.settings["iL4CalculationType"] = 0
+        elif self.l4MedianButton.isChecked():
+            ConfigFile.settings["iL4CalculationType"] = 1
+        
+        if self.l4TimeButton.isChecked():
+            ConfigFile.settings["iL4SplitDataType"] = 0
+        elif self.l4LatitudeButton.isChecked():
+            ConfigFile.settings["iL4SplitDataType"] = 1
+        elif self.l4LongitudeButton.isChecked():
+            ConfigFile.settings["iL4SplitDataType"] = 2
+            
+        ConfigFile.settings["fL4TimeInterval"] = int(self.l4TimeIntervalLineEdit.text())
+        ConfigFile.settings["fL4LatitudeStep"] = float(self.l4LatitudeStepLineEdit.text())
+        ConfigFile.settings["fL4LongitudeStep"] = float(self.l4LongitudeStepLineEdit.text())
+
         ConfigFile.settings["bL4EnableQualityFlags"] = int(self.l4QualityFlagCheckBox.isChecked())
         ConfigFile.settings["fL4SignificantEsFlag"] = float(self.l4EsFlagLineEdit.text())
         ConfigFile.settings["fL4DawnDuskFlag"] = float(self.l4DawnDuskFlagLineEdit.text())
         ConfigFile.settings["fL4RainfallHumidityFlag"] = float(self.l4RainfallHumidityFlagLineEdit.text())
-        ConfigFile.settings["fL4TimeInterval"] = int(self.l4TimeIntervalLineEdit.text())
         ConfigFile.settings["fL4RhoSky"] = float(self.l4RhoSkyLineEdit.text())
         ConfigFile.settings["bL4EnableWindSpeedCalculation"] = int(self.l4EnableWindSpeedCalculationCheckBox.isChecked())
         ConfigFile.settings["fL4DefaultWindSpeed"] = float(self.l4DefaultWindSpeedLineEdit.text())
         ConfigFile.settings["bL4PerformNIRCorrection"] = int(self.l4NIRCorrectionCheckBox.isChecked())
+        ConfigFile.settings["fL4ShipNoiseCorrection"] = float(self.l4ShipNoiseCorrectionLineEdit.text())
         #ConfigFile.settings["bL4EnablePercentLtCorrection"] = int(self.l4EnablePercentLtCheckBox.isChecked())
         ConfigFile.settings["fL4PercentLt"] = float(self.l4PercentLtLineEdit.text())
         ConfigFile.settings["fL4PercentLtWavelength"] = float(self.l4PercentLtWavelengthLineEdit.text())

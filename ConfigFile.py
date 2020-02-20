@@ -26,7 +26,11 @@ class ConfigFile:
 
         print("fL3aInterpInterval", ConfigFile.settings["fL3aInterpInterval"])
 
+        print("iL4CalculationType", ConfigFile.settings["iL4CalculationType"])
+        print("iL4SplitDataType", ConfigFile.settings["iL4SplitDataType"])
         print("fL4TimeInterval", ConfigFile.settings["fL4TimeInterval"])
+        print("fL4LatitudeStep", ConfigFile.settings["fL4LatitudeStep"])
+        print("fL4LongitudeStep", ConfigFile.settings["fL4LongitudeStep"])
         print("bL4EnableQualityFlags", ConfigFile.settings["bL4EnableQualityFlags"])
         print("fL4SignificantEsFlag", ConfigFile.settings["fL4SignificantEsFlag"])
         print("fL4DawnDuskFlag", ConfigFile.settings["fL4DawnDuskFlag"])
@@ -35,7 +39,8 @@ class ConfigFile:
         print("bL4EnableWindSpeedCalculation", ConfigFile.settings["bL4EnableWindSpeedCalculation"])
         print("fL4DefaultWindSpeed", ConfigFile.settings["fL4DefaultWindSpeed"])
         print("bL4PerformNIRCorrection", ConfigFile.settings["bL4PerformNIRCorrection"])
-        print("bL4EnablePercentLt", ConfigFile.settings["bL4EnablePercentLt"])
+        print("fL4ShipNoiseCorrection", ConfigFile.settings["fL4ShipNoiseCorrection"])
+        #print("bL4EnablePercentLt", ConfigFile.settings["bL4EnablePercentLt"])
         print("fL4PercentLt", ConfigFile.settings["fL4PercentLt"])
         print("fL4PercentLtWavelength", ConfigFile.settings["fL4PercentLtWavelength"])
 
@@ -74,7 +79,11 @@ class ConfigFile:
 
         ConfigFile.settings["fL3aInterpInterval"] = 1.0
 
+        ConfigFile.settings["iL4CalculationType"] = 0 # 0 - Mean, 1 - Median
+        ConfigFile.settings["iL4SplitDataType"] = 0 # 0 - Time, 1 - Latitude, 2 - Longitude
         ConfigFile.settings["fL4TimeInterval"] = 60
+        ConfigFile.settings["fL4LatitudeStep"] = 0.012
+        ConfigFile.settings["fL4LongitudeStep"] = 0.012
         ConfigFile.settings["bL4EnableQualityFlags"] = 1
         ConfigFile.settings["fL4SignificantEsFlag"] = 2.0
         ConfigFile.settings["fL4DawnDuskFlag"] = 1.0
@@ -83,6 +92,7 @@ class ConfigFile:
         ConfigFile.settings["bL4EnableWindSpeedCalculation"] = 1
         ConfigFile.settings["fL4DefaultWindSpeed"] = 0.0
         ConfigFile.settings["bL4PerformNIRCorrection"] = 0
+        ConfigFile.settings["fL4ShipNoiseCorrection"] = 0.0
         #ConfigFile.settings["bL4EnablePercentLt"] = 0
         ConfigFile.settings["fL4PercentLt"] = 5
         ConfigFile.settings["fL4PercentLtWavelength"] = 780.0
@@ -122,6 +132,16 @@ class ConfigFile:
                 # Apply fixes to settings due to updates to the config file format
                 if "fL4PercentLtWavelength" not in ConfigFile.settings:
                     ConfigFile.settings["fL4PercentLtWavelength"] = 780.0
+                if "iL4CalculationType" not in ConfigFile.settings:
+                    ConfigFile.settings["iL4CalculationType"] = 0
+                if "iL4SplitDataType" not in ConfigFile.settings:
+                    ConfigFile.settings["iL4SplitDataType"] = 0
+                if "fL4LatitudeStep" not in ConfigFile.settings:
+                    ConfigFile.settings["fL4LatitudeStep"] = 0.012
+                if "fL4LongitudeStep" not in ConfigFile.settings:
+                    ConfigFile.settings["fL4LongitudeStep"] = 0.012
+                if "fL4ShipNoiseCorrection" not in ConfigFile.settings:
+                    ConfigFile.settings["fL4ShipNoiseCorrection"] = 0.0
 
 
     # Deletes a config

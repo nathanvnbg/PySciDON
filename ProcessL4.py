@@ -1,6 +1,6 @@
 
 import collections
-import sys
+#import sys
 import warnings
 
 import numpy as np
@@ -113,7 +113,8 @@ class ProcessL4:
 
     @staticmethod
     def calculateReflectance2(root, esColumns, liColumns, ltColumns, newRrsData, newESData, newLIData, newLTData, \
-                              percentLt, percentLtWavelength, enableQualityCheck, performNIRCorrection, \
+                              calculationType, percentLt, percentLtWavelength, \
+                              enableQualityCheck, performNIRCorrection, shipNoiseCorrection=0.0, \
                               rhoSky=0.0256, enableWindSpeedCalculation=1, defaultWindSpeed=0.0, windSpeedColumns=None):
 
         #print("calculateReflectance2")
@@ -224,30 +225,39 @@ class ProcessL4:
         li5Columns = collections.OrderedDict()
         lt5Columns = collections.OrderedDict()
         windSpeedMean = defaultWindSpeed
-
-
-        # Checks if the data has NaNs
-        hasNan = False
+        
+        
+        # Get the values for lowest percent lt
+        hasNan = False # Checks if the data has NaNs
         # Ignore runtime warnings when array is all NaNs
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
             for k in esColumns:
-                v = [esColumns[k][i] for i in y]
-                mean = np.nanmean(v)
-                es5Columns[k] = [mean]
-                if np.isnan(mean):
+                column = [esColumns[k][i] for i in y]
+                if calculationType == 0:
+                    v = np.nanmean(column)
+                else:
+                    v = np.nanmedian(column)
+                es5Columns[k] = [v]
+                if np.isnan(v):
                     hasNan = True
             for k in liColumns:
-                v = [liColumns[k][i] for i in y]
-                mean = np.nanmean(v)
-                li5Columns[k] = [mean]
-                if np.isnan(mean):
+                column = [liColumns[k][i] for i in y]
+                if calculationType == 0:
+                    v = np.nanmean(column)
+                else:
+                    v = np.nanmedian(column)
+                li5Columns[k] = [v]
+                if np.isnan(v):
                     hasNan = True
             for k in ltColumns:
-                v = [ltColumns[k][i] for i in y]
-                mean = np.nanmean(v)
-                lt5Columns[k] = [mean]
-                if np.isnan(mean):
+                column = [ltColumns[k][i] for i in y]
+                if calculationType == 0:
+                    v = np.nanmean(column)
+                else:
+                    v = np.nanmedian(column)
+                lt5Columns[k] = [v]
+                if np.isnan(v):
                     hasNan = True
 
         # Mean of wind speed for data
@@ -259,7 +269,7 @@ class ProcessL4:
                 hasNan = True
 
 
-        # Exit if detect NaN
+        # Exit if detect NaN values
         if hasNan:
             print("Error NaN Found")
             return False
@@ -392,6 +402,7 @@ class ProcessL4:
                 li = li5Columns[k][0]
                 lt = lt5Columns[k][0]
                 rrs = (lt - (p_sky * li)) / es
+                rrs -= shipNoiseCorrection
                 #esColumns[k] = [es]
                 #liColumns[k] = [li]
                 #ltColumns[k] = [lt]
@@ -427,8 +438,8 @@ class ProcessL4:
 
 
     @staticmethod
-    def calculateReflectance(root, node, interval, enableQualityCheck, \
-                             percentLt, percentLtWavelength, performNIRCorrection, \
+    def calculateReflectance(root, node, calculationType, splitDataType, interval, enableQualityCheck, \
+                             percentLt, percentLtWavelength, performNIRCorrection, shipNoiseCorrection=0.0, \
                              rhoSky=0.0256, enableWindSpeedCalculation=1, defaultWindSpeed=0.0, windSpeedData=None):
     #def calculateReflectance(esData, liData, ltData, newRrsData, newESData, newLIData, newLTData):
 
@@ -514,55 +525,77 @@ class ProcessL4:
 
         #print("items:", esColumns.values())
         #print(ltLength,resolution)
-        if interval == 0:
-            for i in range(0, len(tt2)-1):
-                esSlice = ProcessL4.columnToSlice(esColumns, i, i+1)
-                liSlice = ProcessL4.columnToSlice(liColumns, i, i+1)
-                ltSlice = ProcessL4.columnToSlice(ltColumns, i, i+1)
-                ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
-                                                percentLt, percentLtWavelength, enableQualityCheck, performNIRCorrection, \
-                                                rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedColumns)
-
-        else:
-            start = 0
-            #end = 0
-            endTime = Utilities.timeTag2ToSec(tt2[0]) + interval
-            for i in range(0, len(tt2)):
-                time = Utilities.timeTag2ToSec(tt2[i])
-                if time > endTime:
-                    end = i-1
-                    esSlice = ProcessL4.columnToSlice(esColumns, start, end)
-                    liSlice = ProcessL4.columnToSlice(liColumns, start, end)
-                    ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
+        # Split data using longitude coordinates
+        if splitDataType != 0:
+            if splitDataType == 1:
+                column = esColumns["LATPOS"]
+            else:
+                column = esColumns["LONPOS"]
+            
+            # If interval is 0, process everything as single values
+            if interval == 0:
+                for i in range(0, len(column)-1):
+                    esSlice = ProcessL4.columnToSlice(esColumns, i, i+1)
+                    liSlice = ProcessL4.columnToSlice(liColumns, i, i+1)
+                    ltSlice = ProcessL4.columnToSlice(ltColumns, i, i+1)
                     ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
-                                                    percentLt, percentLtWavelength, enableQualityCheck, performNIRCorrection, \
+                                                    calculationType, percentLt, percentLtWavelength, \
+                                                    enableQualityCheck, performNIRCorrection, shipNoiseCorrection, \
                                                     rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedColumns)
     
-                    start = i
-                    endTime = time + interval
+            # Split data based on lonStep
+            else:
+                start = 0
+                #end = 0
+                endPos = column[0] + interval
+                for i in range(0, len(column)):
+                    currentPos = column[i]
+                    if currentPos > endPos:
+                        end = i-1
+                        #if start != end:
+                        esSlice = ProcessL4.columnToSlice(esColumns, start, end)
+                        liSlice = ProcessL4.columnToSlice(liColumns, start, end)
+                        ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
+                        ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
+                                                        calculationType, percentLt, percentLtWavelength, \
+                                                        enableQualityCheck, performNIRCorrection, shipNoiseCorrection, \
+                                                        rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedColumns)
+        
+                        start = i
+                        endPos = currentPos + interval
 
-            # Try converting any remaining
-            end = len(tt2)-1
-            time = Utilities.timeTag2ToSec(tt2[end])
-            if time < endTime:
-                esSlice = ProcessL4.columnToSlice(esColumns, start, end)
-                liSlice = ProcessL4.columnToSlice(liColumns, start, end)
-                ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
-                ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
-                                                percentLt, percentLtWavelength, enableQualityCheck, performNIRCorrection, \
-                                                rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedColumns)
-
-
-
-#        for i in range(0, int(esLength/resolution)):
-#            #print(i)
-#            start = i*resolution
-#            end = start+resolution
-#            esSlice = ProcessL4.columnToSlice(esColumns, start, end, i, resolution)
-#            liSlice = ProcessL4.columnToSlice(liColumns, start, end, i, resolution)
-#            ltSlice = ProcessL4.columnToSlice(ltColumns, start, end, i, resolution)
-#
-#            ProcessL4.calculateReflectance2(root, node, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, enableQualityCheck, defaultWindSpeed, windSpeedColumns)
+        # Split data based on time
+        else:
+            # If interval is 0, process everything as single values
+            if interval == 0:
+                for i in range(0, len(tt2)-1):
+                    esSlice = ProcessL4.columnToSlice(esColumns, i, i+1)
+                    liSlice = ProcessL4.columnToSlice(liColumns, i, i+1)
+                    ltSlice = ProcessL4.columnToSlice(ltColumns, i, i+1)
+                    ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
+                                                    calculationType, percentLt, percentLtWavelength, \
+                                                    enableQualityCheck, performNIRCorrection, shipNoiseCorrection, \
+                                                    rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedColumns)
+    
+            # Split data based on interval
+            else:
+                start = 0
+                #end = 0
+                endTime = Utilities.timeTag2ToSec(tt2[0]) + interval
+                for i in range(0, len(tt2)):
+                    time = Utilities.timeTag2ToSec(tt2[i])
+                    if time > endTime:
+                        end = i-1
+                        esSlice = ProcessL4.columnToSlice(esColumns, start, end)
+                        liSlice = ProcessL4.columnToSlice(liColumns, start, end)
+                        ltSlice = ProcessL4.columnToSlice(ltColumns, start, end)
+                        ProcessL4.calculateReflectance2(root, esSlice, liSlice, ltSlice, newRrsData, newESData, newLIData, newLTData, \
+                                                        calculationType, percentLt, percentLtWavelength, \
+                                                        enableQualityCheck, performNIRCorrection, shipNoiseCorrection, \
+                                                        rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedColumns)
+        
+                        start = i
+                        endTime = time + interval
 
 
         newESData.columnsToDataset()
@@ -584,8 +617,16 @@ class ProcessL4:
 
         root.addGroup("Reflectance")
 
-        interval = float(ConfigFile.settings["fL4TimeInterval"])
+        calculationType = int(ConfigFile.settings["iL4CalculationType"])
+        splitDataType = int(ConfigFile.settings["iL4SplitDataType"])
+        if splitDataType == 0:
+            interval = float(ConfigFile.settings["fL4TimeInterval"])
+        elif splitDataType == 1:
+            interval = float(ConfigFile.settings["fL4LatitudeStep"])
+        else:
+            interval = float(ConfigFile.settings["fL4LongitudeStep"])
         performNIRCorrection = int(ConfigFile.settings["bL4PerformNIRCorrection"])
+        shipNoiseCorrection = float(ConfigFile.settings["fL4ShipNoiseCorrection"])
         rhoSky = float(ConfigFile.settings["fL4RhoSky"])
         enableWindSpeedCalculation = int(ConfigFile.settings["bL4EnableWindSpeedCalculation"])
         defaultWindSpeed = float(ConfigFile.settings["fL4DefaultWindSpeed"])
@@ -593,8 +634,8 @@ class ProcessL4:
         percentLtWavelength = float(ConfigFile.settings["fL4PercentLtWavelength"])
 
         # Can change time resolution here
-        if not ProcessL4.calculateReflectance(root, node, interval, enableQualityCheck, \
-                                              percentLt, percentLtWavelength, performNIRCorrection, \
+        if not ProcessL4.calculateReflectance(root, node, calculationType, splitDataType, interval, enableQualityCheck, \
+                                              percentLt, percentLtWavelength, performNIRCorrection, shipNoiseCorrection, \
                                               rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedData):
             return None
 
