@@ -433,14 +433,15 @@ class Window(QtWidgets.QWidget):
         #Controller.preprocessData(preprocessDirectory, dataDirectory, calibrationMap, \
         #                          checkCoords, startLongitude, endLongitude, direction, \
         #                          doCleaning, angleMin, angleMax)
-        PreprocessRawFile.processFiles(fileNames, dataDirectory, calibrationMap, \
+        files = PreprocessRawFile.processFiles(fileNames, dataDirectory, calibrationMap, \
                                   checkCoords, startLongitude, endLongitude, direction, \
                                   cleanRotatorAngle, cleanSunAngle, angleMin, angleMax, \
                                   rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay, \
                                   splitRawFile)
         print("Process Raw Files")
-        Controller.processDirectory(dataDirectory, calibrationMap, level, windFile)
-        #Controller.processFilesMultiLevel(fnames[0], calibrationMap, level)
+        #print(files)
+        #Controller.processDirectory(dataDirectory, calibrationMap, level, windFile)
+        Controller.processFilesMultiLevel(files, calibrationMap, level, windFile)
 
     def multi1Clicked(self):
         self.processMulti(1)

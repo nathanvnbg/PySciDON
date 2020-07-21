@@ -33,6 +33,10 @@ class PreprocessRawFile:
     # messageEnd - End index of message in raw file
     @staticmethod
     def createRawFile(dataDir, gpGPSStart, gpGPSEnd, direction, f, header, iStart, iEnd):
+        
+        # Path to output file
+        filepath = None
+        
         # Determine filename from date/time
         startDate = str(int(gpGPSStart.getDataset("DATE").columns["NONE"][0]))
         endDate = str(int(gpGPSEnd.getDataset("DATE").columns["NONE"][0]))
@@ -62,15 +66,21 @@ class PreprocessRawFile:
 
             # Write file
             data = header + message
-            with open(os.path.join(dataDir, filename), 'wb') as fout:
+            filepath = os.path.join(dataDir, filename)
+            with open(filepath, 'wb') as fout:
                 fout.write(data)
             #message = ""
+        return filepath
+    
 
     # Reads a raw file
     @staticmethod
     def processSplitLonFlag(filepath, dataDir, calibrationMap, startLongitude, endLongitude, direction):
 
         print("Read: " + filepath)
+        
+        # File paths of new files after splitting data
+        newFilepaths = []
 
         # gpsState: set to 1 if within start/end longitude, else 0
         gpsState = 0
@@ -182,7 +192,9 @@ class PreprocessRawFile:
                                     else:
                                         if gpsState == 1:
                                             #print("Test")
-                                            PreprocessRawFile.createRawFile(dataDir, gpGPSStart, gpGPSEnd, direction, f, header, iStart, iEnd)
+                                            fp = PreprocessRawFile.createRawFile(dataDir, gpGPSStart, gpGPSEnd, direction, f, header, iStart, iEnd)
+                                            if fp is not None:
+                                                newFilepaths.append(fp)
                                         gpsState = 0
 
                                 break
@@ -191,7 +203,12 @@ class PreprocessRawFile:
             # In case file finished processing without reaching endLongitude
             if gpsState == 1:
                 if gpGPSStart is not None and gpGPSEnd is not None:
-                    PreprocessRawFile.createRawFile(dataDir, gpGPSStart, gpGPSEnd, direction, f, header, iStart, iEnd)
+                    fp = PreprocessRawFile.createRawFile(dataDir, gpGPSStart, gpGPSEnd, direction, f, header, iStart, iEnd)
+                    if fp is not None:
+                        newFilepaths.append(fp)
+        
+        return newFilepaths
+
 
     @staticmethod
     def normalizeAngle(angle):
@@ -466,41 +483,41 @@ class PreprocessRawFile:
             fout.write(message)
 
 
+    # Creates a raw file containing data within start/end time
     @staticmethod
-    def createRawFile(dataDir, gpGPSStart, gpGPSEnd, direction, f, header, iStart, iEnd):
+    def createRawFileTimer(dataDir, timerStart, timerEnd, f, header, iStart, iEnd):
+        
+        # Path to output file
+        filepath = None
+        
         # Determine filename from date/time
-        startDate = str(int(gpGPSStart.getDataset("DATE").columns["NONE"][0]))
-        endDate = str(int(gpGPSEnd.getDataset("DATE").columns["NONE"][0]))
-        startTime = str(int(gpGPSStart.getDataset("UTCPOS").columns["NONE"][0])).zfill(6)
-        endTime = str(int(gpGPSEnd.getDataset("UTCPOS").columns["NONE"][0])).zfill(6)
+        startTime = int(timerStart.getDataset("TIMETAG2").columns["NONE"][0])
+        endTime = int(timerEnd.getDataset("TIMETAG2").columns["NONE"][0])
 
-        # Reformate date
-        startDate = PreprocessRawFile.dateFromInt(startDate)
-        endDate = PreprocessRawFile.dateFromInt(endDate)
+        # Convert to UTC
+        startTime = str(int(Utilities.secToUtc(startTime/1000)))
+        endTime = str(int(Utilities.secToUtc(endTime/1000)))
 
-        # Determine direction
-        lonStart = gpGPSStart.getDataset("LONPOS").columns["NONE"][0]
-        lonEnd = gpGPSEnd.getDataset("LONPOS").columns["NONE"][0]
-        course = 'W'
-        if lonStart > lonEnd:
-            course = 'E'
+        # Get the date
+        date = int(timerStart.getDataset("DATETAG").columns["NONE"][0])
+        date = Utilities.dateTagToDate(date)
 
-        if direction == course:
-            # Copy block of messages between start and end
-            pos = f.tell()
-            f.seek(iStart)
-            message = f.read(iEnd-iStart)
-            f.seek(pos)
+        # Copy block of messages between start and end
+        pos = f.tell()
+        f.seek(iStart)
+        message = f.read(iEnd-iStart)
+        f.seek(pos)
 
-            filename = startDate + "T" + startTime + "_" + endDate + "T" + endTime + ".raw"
-            print("Write:" + filename)
+        filename = date + "T" + startTime + "_" + date + "T" + endTime + ".raw"
+        #filename = startTime + "_" + endTime + ".raw"
+        print("Write:" + filename)
 
-            # Write file
-            data = header + message
-            with open(os.path.join(dataDir, filename), 'wb') as fout:
-                fout.write(data)
-            #message = ""
-
+        # Write file
+        data = header + message
+        filepath = os.path.join(dataDir, filename)
+        with open(filepath, 'wb') as fout:
+            fout.write(data)
+        return filepath
 
 
     # Reads a raw file
@@ -508,6 +525,9 @@ class PreprocessRawFile:
     def processSplitTimer(filepath, dataDir, calibrationMap):
 
         print("Split Timer: " + filepath)
+        
+        # File paths of new files after splitting data
+        newFilepaths = []
 
         # Used to detect when the timer is reset
         saveTime = -1
@@ -552,7 +572,7 @@ class PreprocessRawFile:
                         header += f.read(PreprocessRawFile.SATHDR_READ)
 
                         break
-                    # Reads messages that starts with \$GPRMC and retrieves the CalibrationFile from map
+                    # Retrieves the CalibrationFile from map
                     else:
                         bytesRead = 0
                         for key in calibrationMap:
@@ -580,9 +600,11 @@ class PreprocessRawFile:
                                     timerData = gp.getDataset("TIMER")
                                     time = timerData.columns["NONE"][0]
                                     #print(time)
-                                    # Detect if we are in specified longitude
+                                    # Detect if we are in specified time
                                     if time < saveTime:
-                                        PreprocessRawFile.createRawFileTimer(dataDir, timerStart, timerEnd, f, header, iStart, iEnd)
+                                        fp = PreprocessRawFile.createRawFileTimer(dataDir, timerStart, timerEnd, f, header, iStart, iEnd)
+                                        if fp is not None:
+                                            newFilepaths.append(fp)
                                         timerStart = gp
                                         iStart = pos
                                         saveTime = time
@@ -596,40 +618,7 @@ class PreprocessRawFile:
                                 break
                         if bytesRead > 0:
                             break
-            # In case file finished processing without reaching endLongitude
-            #if gpsState == 1:
-            #    if gpGPSStart is not None and gpGPSEnd is not None:
-            #        PreprocessRawFile.createRawFile(dataDir, gpGPSStart, gpGPSEnd, direction, f, header, iStart, iEnd)
-
-
-    @staticmethod
-    def createRawFileTimer(dataDir, timerStart, timerEnd, f, header, iStart, iEnd):
-        # Determine filename from date/time
-        startTime = int(timerStart.getDataset("TIMETAG2").columns["NONE"][0])
-        endTime = int(timerEnd.getDataset("TIMETAG2").columns["NONE"][0])
-
-        # Convert to UTC
-        startTime = str(int(Utilities.secToUtc(startTime/1000)))
-        endTime = str(int(Utilities.secToUtc(endTime/1000)))
-
-        # Get the date
-        date = int(timerStart.getDataset("DATETAG").columns["NONE"][0])
-        date = Utilities.dateTagToDate(date)
-
-        # Copy block of messages between start and end
-        pos = f.tell()
-        f.seek(iStart)
-        message = f.read(iEnd-iStart)
-        f.seek(pos)
-
-        filename = date + "T" + startTime + "_" + date + "T" + endTime + ".raw"
-        #filename = startTime + "_" + endTime + ".raw"
-        print("Write:" + filename)
-
-        # Write file
-        data = header + message
-        with open(os.path.join(dataDir, filename), 'wb') as fout:
-            fout.write(data)
+        return newFilepaths
 
 
     @staticmethod
@@ -637,41 +626,42 @@ class PreprocessRawFile:
                      cleanRotatorAngle, cleanSunAngle, angleMin, angleMax, \
                      rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay, splitRawFile):
         print("Preprocess Files")
+        files = []
         if checkCoords:
             for fp in filePaths:
                 #print("infile:", name)
                 if os.path.splitext(fp)[1].lower() == ".raw":
-                    PreprocessRawFile.processSplitLonFlag(fp, dataDir, calibrationMap, startLongitude, endLongitude, direction)
+                    files = PreprocessRawFile.processSplitLonFlag(fp, dataDir, calibrationMap, startLongitude, endLongitude, direction)
         else:
             for fp in filePaths:
                 (dirPath, fileName) = os.path.split(fp)
                 outputPath = os.path.join(dataDir, fileName)
                 shutil.copy2(fp, outputPath)
+                files.append(outputPath)
 
         if cleanRotatorAngle:
-            for (dirPath, dirNames, fileNames) in os.walk(dataDir):
-                for name in sorted(fileNames):
-                    #print("infile:", name)
-                    if os.path.splitext(name)[1].lower() == ".raw":
-                        PreprocessRawFile.cleanRotatorAngle(os.path.join(dirPath, name), calibrationMap, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay)
-                break
+            for fp in files:
+                #print("infile:", fp)
+                if os.path.splitext(fp)[1].lower() == ".raw":
+                    PreprocessRawFile.cleanRotatorAngle(fp, calibrationMap, rotatorAngleMin, rotatorAngleMax, rotatorHomeAngle, rotatorDelay)
+
         if cleanSunAngle:
-            for (dirPath, dirNames, fileNames) in os.walk(dataDir):
-                for name in sorted(fileNames):
-                    #print("infile:", name)
-                    if os.path.splitext(name)[1].lower() == ".raw":
-                        PreprocessRawFile.cleanSunAngle(os.path.join(dirPath, name), calibrationMap, angleMin, angleMax, rotatorHomeAngle)
-                break
+            for fp in files:
+                #print("infile:", fp)
+                if os.path.splitext(fp)[1].lower() == ".raw":
+                    PreprocessRawFile.cleanSunAngle(fp, calibrationMap, angleMin, angleMax, rotatorHomeAngle)
 
         if splitRawFile:
-            for (dirPath, dirNames, fileNames) in os.walk(dataDir):
-                for name in sorted(fileNames):
-                    #print("infile:", name)
-                    if os.path.splitext(name)[1].lower() == ".raw":
-                        PreprocessRawFile.processSplitTimer(os.path.join(dirPath, name), dataDir, calibrationMap)
-                    os.remove(os.path.join(dirPath, name))
-                break
+            newFiles = []
+            for fp in files:
+                #print("infile:", name)
+                if os.path.splitext(fp)[1].lower() == ".raw":
+                    newFiles += PreprocessRawFile.processSplitTimer(fp, dataDir, calibrationMap)
+                os.remove(fp)
+            files = newFiles
+
         print("Preprocess Files - DONE")
+        return files
 
 
     @staticmethod
