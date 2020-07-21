@@ -562,7 +562,9 @@ class ProcessL4:
                                                         rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedColumns)
         
                         start = i
-                        endPos = currentPos + interval
+                        # make sure start is within the interval
+                        while endPos < currentPos:
+                            endPos += interval
 
         # Split data based on time
         else:
@@ -595,7 +597,9 @@ class ProcessL4:
                                                         rhoSky, enableWindSpeedCalculation, defaultWindSpeed, windSpeedColumns)
         
                         start = i
-                        endTime = time + interval
+                        # make sure start is within the interval
+                        while endTime < time:
+                            endTime += interval
 
 
         newESData.columnsToDataset()
